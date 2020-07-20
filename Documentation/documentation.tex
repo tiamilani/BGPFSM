@@ -1,0 +1,302 @@
+\documentclass[10pt,conference,letterpaper]{IEEEtran}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{silence}\WarningsOff[latexfont]
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+
+\usepackage{graphicx}
+\graphicspath{figures/}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{subfig}
+\usepackage{float}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+\SetKwProg{Fn}{Event}{}{}
+\SetKw{And}{and}
+\usepackage[binary-units,per-mode=symbol]{siunitx}
+\sisetup{list-final-separator = {, and },detect-weight=true, detect-family=true}
+\usepackage{booktabs}
+\usepackage{pifont}
+\usepackage{microtype}
+\usepackage{textcomp}
+\usepackage[american]{babel}
+\usepackage[capitalise]{cleveref}
+\def\figname{\csname cref@figure@name\endcsname\xspace}
+\def\tabname{\csname cref@table@name\endcsname\xspace}
+\def\secname{\csname cref@section@name\endcsname\xspace}
+\def\eqpname{\csname cref@equation@name@plural\endcsname\xspace}
+\crefname{algorithm}{Listing}{Lists.}
+\Crefname{algorithm}{Listing}{Listings}
+\SetAlgorithmName{Listing}{Listing}{List of Listings}
+\crefname{lstlisting}{listing}{listings}
+\Crefname{lstlisting}{Listing}{Listings}
+\usepackage{xspace}
+\usepackage{hyphenat}
+\usepackage[draft,inline,nomargin,index]{fixme}
+\fxsetup{theme=color}
+\usepackage{grffile}
+\usepackage{xfrac}
+\usepackage{multirow}
+%\usepackage[para]{footmisc}
+\usepackage[font={small}]{caption}
+
+\usepackage{tikz}
+\usetikzlibrary{calc,shapes,arrows,fit,positioning}
+
+\usepackage{listings}
+\lstset{
+   language=sh,
+   columns=fixed,
+   breaklines=true,
+   breakatwhitespace=true,
+   prebreak=\textbackslash,
+   basicstyle=\ttfamily\small,
+   showstringspaces=false,
+   upquote=true,
+   keywordstyle=\ttfamily\small
+}
+
+\usepackage{color}
+\definecolor{gray}{rgb}{0.4,0.4,0.4}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.6}
+\definecolor{cyan}{rgb}{0.0,0.6,0.6}
+
+
+\lstdefinelanguage{XML}
+{
+  morestring=[b]",
+  morestring=[s]{>}{<},
+  morecomment=[s]{<?}{?>},
+  stringstyle=\color{black},
+  identifierstyle=\color{darkblue},
+  keywordstyle=\color{cyan},
+  morekeywords={xmlns,version,type}% list your attributes here
+}
+
+
+% fix cleveref and breqn
+\makeatletter
+\let\cref@old@eq@setnumberOld\eq@setnumber
+\def\eq@setnumber{%
+\cref@old@eq@setnumberOld%
+\cref@constructprefix{equation}{\cref@result}%
+\protected@xdef\cref@currentlabel{%
+[equation][\arabic{equation}][\cref@result]\p@equation\eq@number}}
+\makeatother
+
+% reduce verbatim font size
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\@verbatim}
+  %%%{\verbatim@font} %% blow up TexMaker formatting ???!!! 
+  {\verbatim@font\small}
+  {}{}
+\makeatother
+
+\RequirePackage{xstring}
+\RequirePackage{xparse}
+\RequirePackage[index=true]{acro}
+\NewDocumentCommand\acrodef{mO{#1}mG{}}{\DeclareAcronym{#1}{short={#2}, long={#3}, #4}}
+\NewDocumentCommand\acused{m}{\acuse{#1}}
+
+
+\acrodef{ADV}{advertisement}
+\acrodef{AS}{Autonomous System}{short-plural=es}
+\acrodef{BGP}{Border Gateway Protocol}
+\acrodef{BIRD}{BGP Internet Routing Daemon}
+\acrodef{DPC}{Destination Partial Centrality}
+\acrodef{eBGP}{Exterior BGP}
+\acrodef{ERP}{Exterior Routing Protocol}
+\acrodef{IoF}{Internet on FIRE}
+\acrodef{IP}{Internet Protocol}
+\acrodef{MRAI}{Minimum Route Advertisement Interval}
+\acrodef{NH}{Next Hop}
+\acrodef{RFC}{Request For Comment} 
+\acrodef{TCP}{Transmission Control Protocol}
+
+\newcommand\useallac{
+\acused{IP}
+\acused{TCP}
+\acused{RFC}
+}
+
+\useallac
+
+\newcommand{\figwidthfour}{0.78}
+\newcommand{\figwidth}{0.78}
+\newcommand{\figvspace}{-1.5em}
+\newcommand{\update}{\texttt{UPDATE}\xspace}
+\newcommand{\nodeset}{\ensuremath{\mathcal{V}}\xspace}
+\newcommand{\destinationset}{\ensuremath{\mathcal{C}}\xspace}
+\newcommand{\edgeset}{\ensuremath{\mathcal{E}}\xspace}
+\newcommand{\graph}{\ensuremath{\mathcal{G(\nodeset,\edgeset)}}\xspace}
+\newcommand{\pathset}{\ensuremath{\mathcal{C}}\xspace}
+\newcommand{\ascentg}{\ensuremath{\mathcal{G_{A}}\xspace}}
+\newcommand{\ascentnodeset}{\ensuremath{\mathcal{V^{\ascentg}}}\xspace}
+\newcommand{\ascentedgeset}{\ensuremath{\mathcal{E^{\ascentg}}}\xspace}
+\newcommand{\ascentgraph}{\ensuremath{\mathcal{\ascentg(\ascentnodeset,\ascentedgeset)}}\xspace}
+\newcommand{\dpc}{\ensuremath{\Delta}\xspace}
+\newcommand{\tr}{\ensuremath{T_{R}}\xspace}
+
+\newcommand{\tierg}{\ensuremath{\mathcal{G_{T}}\xspace}}
+\newcommand{\tiernodeset}{\ensuremath{\mathcal{V^{\tierg}}}\xspace}
+\newcommand{\tieredgeset}{\ensuremath{\mathcal{E^{\tierg}}}\xspace}
+\newcommand{\tiergraph}{\ensuremath{\mathcal{\tierg(\tiernodeset,\tieredgeset)}}\xspace}
+\newcommand{\descentg}{\ensuremath{\mathcal{G_{D}}\xspace}}
+\newcommand{\descentnodeset}{\ensuremath{\mathcal{V^{\descentg}}}\xspace}
+\newcommand{\descentedgeset}{\ensuremath{\mathcal{E^{\descentg}}}\xspace}
+\newcommand{\descentgraph}{\ensuremath{\mathcal{\descentg(\descentnodeset,\descentedgeset)}}\xspace}
+
+\IEEEoverridecommandlockouts
+
+\begin{document}
+
+\title{BGPFSMSym WorkFlow plan}
+\author{
+	\IEEEauthorblockN{Mattia Milani\IEEEauthorrefmark{1}}
+    \IEEEauthorblockA{\IEEEauthorrefmark{1}Dept. of Information Engineering and Computer Science, University of Trento, Italy}
+    \texttt{mattia.milani@studenti.unitn.it}
+}
+
+
+\maketitle
+
+\section{Main Idea}
+\label{sec:mainIdea}
+The main idea of this tool is to emulate and log the FSM of BGP nodes described
+in \cite{griffinFSM}.
+The tool should have a double function, emulate a random evolution of the nodes
+grpah and the possibility to calculate all the possible states that a node can
+assume from an input message.
+
+\section{Goals}
+\label{sec:goals}
+This tool should help us to model the fact that \ac{MRAI} in \ac{BGP} is essential
+to prevent the occurence of wedgies \fixme{insert citetion} or persistant 
+instability situations.
+
+\section{Inputs of the environment}
+\label{sec:input}
+The software will require two mandatory inputs:
+\begin{itemize}
+		\item Graph, this file would describe the graph and how is structured.
+			a more deep explanation of the graph is provided in \cref{sec:graph};
+		\item Environment descriptor, this file would describe the simulation
+			environment, providing arguments to the simulator, this file is
+			described more deeply in \cref{sec:envDesc}.
+\end{itemize}
+
+\section{Output of the environment}
+The software output would depend on the type of the simulation:
+\begin{itemize}
+		\item Evolutional experiment this experiment would produce e simple CSV
+			as output that can describe all the sates that a node assumes during
+			the evolution.
+		\item Compleate experiment, this type of experimetn goal is to describe
+			all the possible states that nodes can assume, so the CSV presented
+			as output will include all the states, even rare states that could
+			happen.
+\end{itemize}
+
+\section{External Libraries and their use}
+\label{sec:extLib}
+
+\begin{itemize}
+		\item ArgParse, used for the argument parsing;
+		\item NetworkX, used for the graph/network handl;
+		\item SimPy, could be used to simulate the entire environment.
+		\item Pandas, data handling for easy manipulation of outputs in CSV
+		\item ...
+\end{itemize}
+
+\section{Input Graph}
+\label{sec:graph}
+The input of the graph is fundamental for the software, its mandatory.
+The graph is directed.
+The graph file format is GraphML, a markup language for graphs.
+Is possible to import and export graphml files from networks.
+This format should give us the maximum possible degree of freedom.
+
+Arguments of nodes (in red mandatory arguments):
+\begin{itemize}
+		\item \colorbox{red}{NodeId}: identifier of the node, would be treated
+			as an integer, not integer Ids will raise an execption
+		\item destination: in the future will be an ip prefix, for now it's a
+			bool value that identify the node that will be reached from the 
+			others.
+\end{itemize}
+
+Arguments for the edges (in red mandatory arguments):
+\begin{itemize}
+		\item delay: this argument will describe the delay that will be used
+			for the communications on this link, is composed by two values
+			min and max delay.
+\end{itemize}
+
+future arguments:
+implementation of destinations like ip address, with the possibility to have
+more ip addresses per node.
+Insertion of \ac{MRAI} in the edge
+
+\section{Input arguments}
+\label{sec:envDesc}
+It's mandatory to give an environment descriptor.
+This file will be taken in consideration by the Argparse library to correctly
+set up all the simulation variables and inputs.
+
+All the arguments that could be used are:
+\begin{itemize}
+		\item graph, this argument describe the position of the graph file taken
+			in consideration for the experiment
+		\item experiment, this argument describe which type of experiment should
+			be done, the possible values are "evolutional" "compleate"
+		\item outputdir, this argument describe the directory that should be
+			used as output for the CSV files, the if it does not exists will be
+			created, if a directory with the same name already exists a new 
+			directory will be created
+		\item verbose, this argument describe how much verbose should be the
+			output of the program
+		\item delaydistribution, this argument describe the distribution that
+			should be taken in consideration for the delays on the edges
+		\item defaultdelay, this argumnet set the default delay min and max
+			will be overrided by the graph argument if present
+\end{itemize}
+
+\section{Tests}
+\label{sec:test}
+Is possible to run the unit test that are present in the "test" folder to
+check if the software is working properly
+
+\section{Templates}
+\label{sec:templates}
+In the folder templates are present some templates experiments that could
+be useful.
+
+\section{Software main components}
+\label{sec:softwarecomp}
+
+The main components of the software are:
+\begin{itemize}
+		\item argument pareser, this component checks the arguments that are
+			present in the environment file
+		\item graph converter, this component is responsible to convert the
+			graph passed as input in simpy components
+		\item simulation environment, this is the main component for the simulation
+			it takes as input the environment configuration and the components
+			created for the simulation, is also responsible for the start and
+			the stop of the simulation
+		\item logger, this component is responsible for the inline output
+			is possible to check the evolution of a simulation with the inline
+			output
+		\item CSV writer, this component is responsible for the output of the 
+			system, the output must be a CSV in the predefined format.
+\end{itemize}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
