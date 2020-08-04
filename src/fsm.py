@@ -14,18 +14,9 @@
 #
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
-from object import waiting_obj
-import simpy
-from object import Car
-from object import random_interruption
+from bgp_sim import sim
 
-# Environment creation
-env = simpy.Environment()
-# Buffer creation
-bcs = simpy.Resource(env, capacity=2)
-# Object and interrupter spawning
-for i in range(4):
-    obj = waiting_obj(env, "ev-{}".format(i), bcs)
-    interrupter = random_interruption(env, obj)
-# Execute the environment for at most 60 ticks
-env.run(until=60)
+if __name__ == "__main__":
+   simulation = sim.Instance() 
+   simulation.config("new_log_file.log")
+   simulation.initialize()
