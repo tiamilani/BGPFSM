@@ -22,70 +22,35 @@ class Packet:
     # used to create a unique ID for the packet
     __packets_count = 0
 
-    # possible packet states
-    # packet currently under reception
-    PKT_RECEIVING = 0
-    # packet has been correctly received
-    PKT_RECEIVED = 1
-    # packet has been corrupted due to, for example, a collision
-    PKT_CORRUPTED = 2
-
-    def __init__(self, size, duration):
+    def __init__(self, content):
         """
         Creates a packet automatically assigning a unique ID to it
         :param size: size of the packet in bytes
         :param duration: packet duration in seconds
         """
-        self.size = size
-        self.duration = duration
-        self.state = Packet.PKT_RECEIVING
-        self.id = Packet.__packets_count
-        self.content = None
+        self._id = Packet.__packets_count
         Packet.__packets_count = Packet.__packets_count + 1
+        self._content = content 
 
-    def get_id(self):
+    @property
+    def id(self):
         """
         Returns packet id
         :returns: id of the packet
         """
-        return self.id
+        return self._id
 
-    def get_state(self):
+    @property
+    def content(self):
         """
-        Returns state of a packet
-        :returns: state of the packet
+        Returns packet content
+        :returns: content of the packet
         """
-        return self.state
-
-    def set_state(self, state):
-        """
-        Sets packet state.
-        :param state: either PKT_RECEIVING, PKT_RECEIVED, or PKT_CORRUPTED
-        """
-        self.state = state
-
-    def get_size(self):
-        """
-        Returns packet size
-        :returns: packet size in bytes
-        """
-        return self.size
-
-    def get_duration(self):
-        """
-        Returns packet duration
-        :returns: packet duration in seconds
-        """
-        return self.duration
+        return self._content
 
     def __str__(self):
         """
         Prints the packet in a human readable format
         """
-        if self.state == Packet.PKT_RECEIVING:
-            t = "UNDER RECEPTION"
-        elif self.state == Packet.PKT_RECEIVED:
-            t = "CORRECTLY RECEIVED"
-        elif self.state == Packet.PKT_CORRUPTED:
-            t = "CORRUPTED"
-        print("Packet state: %s\n\n" % t)
+        res = "Packet id: {}".format(self._id)
+        return res

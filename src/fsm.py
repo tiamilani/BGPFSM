@@ -14,9 +14,52 @@
 #
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
+from optparse import OptionParser
 from bgp_sim import sim
+import sys
+
+# setup command line parameters
+parser = OptionParser(usage="usage: %prog [options]",
+                      description="Runs a simulation configured in the "
+                                  "specified config file under the specified "
+                                  "section")
+parser.add_option("-l", "--list", dest="list", default=False,
+                  action="store_true", help="list the available runs and exit")
+parser.add_option("-L", "--LIST", dest="verbose_list", default=False,
+                  action="store_true", help="list the available runs with "
+                                            "simulation parameters and exit")
+parser.add_option("-r", "--run", dest="run", default=0, action="store",
+                  help="run simulation number RUN [default: %default]",
+                  metavar="RUN", type="int")
+parser.add_option("-c", "--config", dest="config", default="config.json",
+                  action="store",
+                  help="simulation config file [default: %default]")
+parser.add_option("-s", "--section", dest="section", default="simulation",
+                  action="store",
+                  help="section inside configuration file [default: %default]")
 
 if __name__ == "__main__":
-   simulation = sim.Instance() 
-   simulation.config("new_log_file.log")
-   simulation.initialize()
+    (options, args) = parser.parse_args()
+
+    if options.config == "" or options.section == "":
+        print("Required parameters config and section missing")
+        print(parser.get_usage())
+        sys.exit(1)
+
+    simulation = sim.Instance() 
+    simulation.set_config(options.config, options.section)
+
+    # list simulation runs and exit
+    if options.list or options.verbose_list:
+        runs_count = simulation.get_runs_count()
+        for i in range(runs_count):
+            if options.list:
+                print("./fsm.py -c %s -s %s -r %d" %
+                      (options.config, options.section, i))
+            else:
+                print("./fsm.py -c %s -s %s -r %d: %s" %
+                      (options.config, options.section, i, simulation.get_params(i)))
+        sys.exit(0)
+
+    simulation.initialize(options.run)
+    simulation.run()

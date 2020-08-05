@@ -32,13 +32,13 @@ class Event:
         :param source: module generating the event
         :param obj: optional object to be attached to the event
         """
-        self.event_id = Event.event_counter
+        self._event_id = Event.event_counter
         Event.event_counter += 1
-        self.event_duration = event_duration
-        self.event_type = event_type
-        self.destination = destination
-        self.source = source
-        self.obj = obj
+        self._event_duration = event_duration
+        self._event_type = event_type
+        self._destination = destination
+        self._source = source
+        self._obj = obj
 
     def __eq__(self, other):
         if not isinstance(other, Event):
@@ -64,43 +64,43 @@ class Event:
         """
         Returns event time
         """
-        return self.event_duration
+        return self._event_duration
 
     @property
     def event_type(self):
         """
         Returns event type
         """
-        return self.event_type
+        return self._event_type
 
     @property
     def destination(self):
         """
         Returns event destination
         """
-        return self.destination
+        return self._destination
 
     @property
     def source(self):
         """
         Returns event generator
         """
-        return self.source
+        return self._source
 
     @property
     def obj(self):
         """
         Returns the object attached to the event
         """
-        return self.obj
+        return self._obj
 
     def __str__(self):
         """
         Prints the event in a human readable format
         """
-        res = "Event time: %f\n" % self.event_duration
+        res = "Event time: %f\n" % self._event_duration
         t = ""
-        if self.event_type == Events.STATE_CHANGE:
+        if self._event_type == Events.STATE_CHANGE:
             t = "STATE_CHANGE"
         res += "Event type: %s\n" % t
         res += "Source node: %d\n" % self.source.id

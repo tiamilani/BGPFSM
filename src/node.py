@@ -1,4 +1,3 @@
-
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -14,13 +13,17 @@
 #
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
+import sys
+sys.path.insert(1, 'util')
+
 import simpy
 import bgp_sim
 from module import Module
-from random import Random, randint, expovariate
+from random import Random, randint, expovariate, choice
 import time
 from event import Event
 from events import Events
+from packet import Packet
 
 class Node(Module):
     """Node.
@@ -56,14 +59,22 @@ class Node(Module):
         # Event handler of a node
         self.reception = self._env.process(self.handle_event())
         # Neighbor of the node
-        self.neighbor = None 
+        self._neighbors = {} 
 
     def _print(self, msg):
         """_print.
 
         :param msg: Message that needs to be printed on sysout
         """
-        print("{}-{} ".format(self._env.now, self._id) + msg)
+        if self.verbose:
+            print("{}-{} ".format(self._env.now, self._id) + msg)
+
+    def add_neighbor(self, node):
+        if node.id not in self._neighbors:
+            self._neighbors[node.id] = node
+        else:
+            print("{} - Neighbor {} already in the set".format(self._id, node.id))
+            exit(1)
 
     def run(self, rate):
         """run.
@@ -74,15 +85,17 @@ class Node(Module):
             # Wait for the corresponding rate with an exponential distribution
             yield self._env.timeout(self.g.expovariate(rate))
             # Create the event
-            change_state_evt = Event(2, Events.STATE_CHANGE, self, self.neighbor)
+            packet = Packet("packet content")
+            dst = choice(list(self._neighbors.values()))
+            change_state_evt = Event(2, Events.STATE_CHANGE, self, dst, obj=packet)
             # Send the event
-            self.neighbor.recept(change_state_evt)
+            dst.recept(change_state_evt)
 
-    def change_state(self):
+    def change_state(self, packet):
         """change_state.
             Change the state of a node, test function
         """
-        self._print("changing state")
+        self._print("changing state thanks to packet: " + str(packet.id))
         self._state = Node.STATE_CHANGING
         self.logger.log_state(self)
 
@@ -115,9 +128,11 @@ class Node(Module):
                 # Check if the event is known
                 if event.event_type == Events.STATE_CHANGE:
                     # If the event is a state changer change the state
-                    self.change_state()
+                    packet = event.obj
+                    self.change_state(packet)
                 # Delete the processed event
                 del event
+                del packet
             # If there are no events in the queue pass to the idle state
             # and wait for the next event
             if len(self.queue) == 0:
@@ -136,14 +151,14 @@ class Node(Module):
         return self._id
 
     @property
-    def neighbor():
+    def neighbors():
         """neighbor."""
-        return self.neighbor
+        return self._neighbors
 
-    @property
-    def neighbor(value):
-        """neighbor.
-
-        :param value:
+    def __str__(self):
         """
-        self.neighbor = value
+        Return the node as a human readable object
+        """
+        res = "Node: {}\n".format(self._id)
+        res += "Neighborhood: {}".format([n.id for n in self._neighbors.values()])
+        return res

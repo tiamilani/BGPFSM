@@ -1,10 +1,9 @@
-import simpy 
-from random import expovariate,Random
+import simpy
+from random import Random
 import time
-import sys
+
 
 class Node:
-
     MESSAGE_IDENTIFIER = 0
 
     def __init__(self, env, id):
@@ -12,14 +11,10 @@ class Node:
         self.id = id
         self.queue = []
         self.rec_ev = self.env.event()
-        self.g = Random(time.time()*hash(id))
+        self.g = Random(time.time() * hash(id))
         self.proc = self.env.process(self.run(1))
         self.neigh = None
         self.reception = self.env.process(self.recept())
-
-    @property
-    def neigh(value):
-        self.neigh = value
 
     def _print(self, msg):
         print("{}-{} ".format(self.env.now, self.id) + msg)
@@ -29,12 +24,12 @@ class Node:
             yield self.env.timeout(self.g.expovariate(rate))
             msg = "msg: " + str(Node.MESSAGE_IDENTIFIER)
             Node.MESSAGE_IDENTIFIER += 1
-            self._print("Sending msg: " + msg )
-            self.neigh.event_handler(msg) 
+            self._print("Sending msg: " + msg)
+            self.neigh.event_handler(msg)
 
     def event_handler(self, event):
         self.queue.insert(0, event)
-        self._print("Message received: " + event) 
+        self._print("Message received: " + event)
         self.rec_ev.succeed()
         self.rec_ev = self.env.event()
 
