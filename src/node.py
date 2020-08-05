@@ -14,16 +14,17 @@
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
 import sys
-sys.path.insert(1, 'util')
-
+import time
 import simpy
 import bgp_sim
+
+sys.path.insert(1, 'util')
 from module import Module
 from random import Random, randint, expovariate, choice
-import time
 from event import Event
 from events import Events
 from packet import Packet
+
 
 class Node(Module):
     """Node.
@@ -47,10 +48,13 @@ class Node(Module):
         # Initialization of commond modules
         Module.__init__(self)
         # Message queue of a node
-        #FIXME don't use a list but use a queue structure
         self.queue = []
+        # Events queue, events that needs to be handle by the node
+        self.event_queue = []
+        # Event to trigger when there is a new event to handle
+        self.new_event = self._env.event()
         # Random used to generate traffic
-        self.g = Random(time.time()*hash(self._id))
+        self.g = Random(time.time() * hash(self._id))
         # Event to trigger the management of a reception
         self.rec_ev = self._env.event()
         # Basic processing unit of a node, this unit generate traffic
@@ -59,10 +63,11 @@ class Node(Module):
         # Event handler of a node
         self.reception = self._env.process(self.handle_event())
         # Neighbor of the node
-        self._neighbors = {} 
+        self._neighbors = {}
 
     def _print(self, msg):
         """_print.
+        Print evaluate the verbose level before printing a message
 
         :param msg: Message that needs to be printed on sysout
         """
@@ -70,6 +75,13 @@ class Node(Module):
             print("{}-{} ".format(self._env.now, self._id) + msg)
 
     def add_neighbor(self, node):
+        """
+        Add a neighbor to the set of neighbors
+        If the neighbor is already in the set it throws an error 
+        and terminate
+        
+        :param node: node that has to be setted
+        """
         if node.id not in self._neighbors:
             self._neighbors[node.id] = node
         else:
@@ -81,15 +93,19 @@ class Node(Module):
 
         :param rate: Message rate
         """
-        while True: 
+        while True:
             # Wait for the corresponding rate with an exponential distribution
             yield self._env.timeout(self.g.expovariate(rate))
             # Create the event
             packet = Packet("packet content")
+            # Chose a neighbor randomly
             dst = choice(list(self._neighbors.values()))
-            change_state_evt = Event(2, Events.STATE_CHANGE, self, dst, obj=packet)
-            # Send the event
-            dst.recept(change_state_evt)
+            transmission_event = Event(1, Events.TX, self, dst, obj=packet)
+            # Send the event to the handler
+            self.event_queue.insert(0, transmission_event)
+            self._print("Required packet transmission pkt_id: " + str(packet.id))
+            self.new_event.succeed()
+            self.new_event = self._env.event()
 
     def change_state(self, packet):
         """change_state.
@@ -99,19 +115,24 @@ class Node(Module):
         self._state = Node.STATE_CHANGING
         self.logger.log_state(self)
 
-    def recept(self, event):
+    def rx_pkt(self, packet):
         """recept.
-        Function to handle input events
+        Function to handle packet reception 
 
-        :param event: Event that needs to be handled
+        :param packet: packet received 
         """
-        # Insertion of the event
-        self.queue.insert(0, event)
-        self._print("event received")
-        # Unlock the event hendler in the case it is locked with an empty queue
-        self.rec_ev.succeed()
-        # Regenerate the event for the reception
-        self.rec_ev = self._env.event()
+        self._print("Packet received: " + str(packet.id))
+
+    def tx_pkt(self, event):
+        dst = event.destination
+        packet = event.obj
+        self._print("Packet transmission: " + str(packet.id))
+        # Create the event for the reception
+        reception_event = Event(1, Events.RX, self, dst, obj=packet)
+        dst.event_queue.insert(0, reception_event)
+        dst.new_event.succeed()
+        dst.new_event = self._env.event()
+
 
     def handle_event(self):
         """handle_event.
@@ -120,9 +141,9 @@ class Node(Module):
 
         while True:
             # Operate only if there is something on the queue
-            if len(self.queue) > 0:
+            if len(self.event_queue) > 0:
                 # Pop the event
-                event = self.queue.pop()
+                event = self.event_queue.pop()
                 # Wait the corresponding time to process the event
                 yield self._env.timeout(event.event_duration)
                 # Check if the event is known
@@ -130,15 +151,19 @@ class Node(Module):
                     # If the event is a state changer change the state
                     packet = event.obj
                     self.change_state(packet)
+                    del packet
+                if event.event_type == Events.TX:
+                    self.tx_pkt(event)
+                if event.event_type == Events.RX:
+                    self.rx_pkt(event.obj)
                 # Delete the processed event
                 del event
-                del packet
             # If there are no events in the queue pass to the idle state
             # and wait for the next event
-            if len(self.queue) == 0:
+            if len(self.event_queue) == 0:
                 self._state = Node.IDLE
                 self.logger.log_state(self)
-                yield self.rec_ev
+                yield self.new_event
 
     @property
     def state(self):
@@ -151,7 +176,7 @@ class Node(Module):
         return self._id
 
     @property
-    def neighbors():
+    def neighbors(self):
         """neighbor."""
         return self._neighbors
 

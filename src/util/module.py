@@ -24,6 +24,7 @@ class Module:
         Module.__modules_count = Module.__modules_count + 1
         # get data logger from simulator
         self.logger = self.sim.logger
+        # Get verbose flag from simulator
         self.verbose = self.sim.verbose
 
     def initialize(self):

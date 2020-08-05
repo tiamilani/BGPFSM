@@ -15,18 +15,19 @@
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
 import sys
-sys.path.insert(1, 'util')
-
 import simpy
 import time
 import random
 import networkx as nx
+
+sys.path.insert(1, 'util')
 from config import Config
 from log import Log
 from singleton import Singleton
 from node import Node
 from event import Event
 from events import Events
+
 
 @Singleton
 class sim:
@@ -50,21 +51,28 @@ class sim:
         """__init__
             Init of the simulation class
         """
+        # Loacl variables initialization
         self._env = simpy.Environment()
         self.nodes = {}
         self._configFile = ""
         self._section = ""
         self.verbose = False
+        self._initialize = False
+        self._config = None
+        self._logger = None
+        self.duration = 0
+        self.seed = 0
+
 
     def set_config(self, config_file, section):
         """config.
             Configuration function for the current simulation
-            FUTURE:
-            - pass a file with the conf environment
-        :param outFile: output for the logger
+        :param config_file: file that contains the configuration
+        :param section: section of the file that have to be considered
         """
-        self._configFile = config_file 
+        self._configFile = config_file
         self._section = section
+        # Save the configuration object
         self._config = Config(self._configFile, self._section)
 
     def get_runs_count(self):
@@ -72,10 +80,13 @@ class sim:
         Returns the number of runs for the fiven config file and section
         :returns: the total number of runs
         """
+
+        # Check if the configuration has been done
         if self._configFile == "" or self._section == "":
             print("Configuration error. Call set_config() before "
-                    "get_runs_count()")
+                  "get_runs_count()")
             sys.exit(1)
+        # Return the set of runs
         return self._config.get_runs_count()
 
     def get_params(self, run_number):
@@ -92,6 +103,7 @@ class sim:
         :param run: the index of the simulation to be run
         """
 
+        # Check if the configuration has been setted
         if self._configFile == "" or self._section == "":
             print("Configuration error. Call set_config() before initialize()")
             sys.exit(1)
@@ -100,28 +112,34 @@ class sim:
         self.run_number = run
         if self.run_number >= self._config.get_runs_count():
             print("Simulation error. Run number %d does not exist. Please run "
-                "the simulator with the --list option to list all possible "
-                "runs" % run_number)
+                  "the simulator with the --list option to list all possible "
+                  "runs" % run_number)
             sys.exit(1)
 
+        # Set run number
         self._config.set_run_number(self.run_number)
-        self._logger = Log(self._config.get_output_file(), log_states = True)
+        # Set the logger
+        self._logger = Log(self._config.get_output_file(), log_states=True)
         # Get simulation duration
         self.duration = self._config.get_param(self.PAR_DURATION)
         # Get seeds, each seed generates a simulation repetition
         self.seed = self._config.get_param(self.PAR_SEED)
         random.seed(self.seed)
+        # Check the verbose param
         if self._config.get_param(self.PAR_VERBOSE) is not None:
             self.verbose = self._config.get_param(self.PAR_VERBOSE) in ("True", "true")
 
-        self.graphFile = self._config.get_param(self.PAR_GRAPH)
-        self.G = nx.read_graphml(self.graphFile)
-        for v in self.G.nodes(data=True):
+        # Setup the graph and nodes
+        graphFile = self._config.get_param(self.PAR_GRAPH)
+        G = nx.read_graphml(graphFile)
+        for v in G.nodes(data=True):
             node = Node(v[0])
             self.nodes[node.id] = node
 
-        for e in self.G.edges(data=True):
+        for e in G.edges(data=True):
             self.nodes[e[0]].add_neighbor(self.nodes[e[1]])
+
+        # Mark the initialization as done
         self._initialize = True
 
     def run(self):
@@ -130,15 +148,17 @@ class sim:
             print("Cannot run the simulation. Call initialize() first")
             sys.exit(1)
 
+        # Register the start time
         start_time = time.time()
         # Execute the simulation
         self._env.run(until=self.duration)
+        # Register the end time and do the subtraction
         end_time = time.time()
         total_time = round(end_time - start_time)
         print("\nMaximum simulation time reached. Terminating")
         print("Total simulation time: %d hours, %d minutes, %d seconds" %
-                (total_time // 3600, total_time % 3600 // 60,
-                total_time % 3600 % 60))
+              (total_time // 3600, total_time % 3600 // 60,
+               total_time % 3600 % 60))
 
     @property
     def env(self):
@@ -149,7 +169,7 @@ class sim:
     def env(self):
         """env."""
         del self._env
-    
+
     @property
     def logger(self):
         """logger."""

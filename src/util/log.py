@@ -17,10 +17,11 @@
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
 import sys
-sys.path.insert(1, '..')
 
+sys.path.insert(1, '..')
 import bgp_sim
 from events import Events
+
 
 class Log:
     """

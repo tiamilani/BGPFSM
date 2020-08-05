@@ -21,3 +21,5 @@ class Events:
 
     # Change state event 
     STATE_CHANGE = 0
+    TX = 1
+    RX = 2

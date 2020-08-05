@@ -39,13 +39,16 @@ parser.add_option("-s", "--section", dest="section", default="simulation",
                   help="section inside configuration file [default: %default]")
 
 if __name__ == "__main__":
+    # Parse the arguments
     (options, args) = parser.parse_args()
 
+    # Check the config and section to be setted
     if options.config == "" or options.section == "":
         print("Required parameters config and section missing")
         print(parser.get_usage())
         sys.exit(1)
 
+    # Set the configuration
     simulation = sim.Instance() 
     simulation.set_config(options.config, options.section)
 
@@ -61,5 +64,7 @@ if __name__ == "__main__":
                       (options.config, options.section, i, simulation.get_params(i)))
         sys.exit(0)
 
+    # Initialize the simulation
     simulation.initialize(options.run)
+    # Run the simulation
     simulation.run()
