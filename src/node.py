@@ -17,6 +17,8 @@ import sys
 import time
 import simpy
 import bgp_sim
+import ipaddress
+from copy import copy, deepcopy
 
 sys.path.insert(1, 'util')
 from module import Module
@@ -24,6 +26,9 @@ from random import Random, randint, expovariate, choice
 from event import Event
 from events import Events
 from packet import Packet
+from routingTable import RoutingTable
+from route import Route
+from distribution import Distribution
 
 
 class Node(Module):
@@ -35,7 +40,16 @@ class Node(Module):
     IDLE = 0
     STATE_CHANGING = 1
 
-    def __init__(self, id):
+    # Param that the node can get from the configuration
+    # Distribution for the message transmission
+    PAR_DATARATE = "datarate"
+    # Processing time distribution
+    PAR_PROC_TIME = "processing"
+    # Message arrival time distribution
+    PAR_DELAY = "delay"
+    
+
+    def __init__(self, id, config):
         """__init__.
 
         :param id: identifier of the node
@@ -47,23 +61,29 @@ class Node(Module):
         self._env = bgp_sim.sim.Instance().env
         # Initialization of commond modules
         Module.__init__(self)
-        # Message queue of a node
-        self.queue = []
         # Events queue, events that needs to be handle by the node
         self.event_queue = []
+        # Destinations queue, this queue contains the destinations
+        # That are not yet distributed to neighbors
+        # The structure is a dictionary, the key is the destination
+        # And the object is a list of neighbor that didn't receive from
+        # us the destination yet
+        self.destination_queue = {}
+        # Routing table, This table represent the routing knowledge
+        # actually present in the nod
+        self.routing_table = RoutingTable()
         # Event to trigger when there is a new event to handle
         self.new_event = self._env.event()
         # Random used to generate traffic
         self.g = Random(time.time() * hash(self._id))
-        # Event to trigger the management of a reception
-        self.rec_ev = self._env.event()
-        # Basic processing unit of a node, this unit generate traffic
-        # The generation rate is 0.2
-        self.proc = self._env.process(self.run(0.2))
         # Event handler of a node
         self.reception = self._env.process(self.handle_event())
         # Neighbor of the node
         self._neighbors = {}
+        # Distributions used inside the node
+        self.rate = Distribution(config.get_param(Node.PAR_DATARATE))
+        self.proc_time = Distribution(config.get_param(Node.PAR_PROC_TIME))
+        self.delay = Distribution(config.get_param(Node.PAR_DELAY))
 
     def _print(self, msg):
         """_print.
@@ -84,28 +104,55 @@ class Node(Module):
         """
         if node.id not in self._neighbors:
             self._neighbors[node.id] = node
+            for route in self.routing_table:
+                dst = route.addr
+                if dst in self.destination_queue:
+                    self.destination_queue[dst].append(node.id)
+                else:
+                    self.destination_queue[dst] = [node.id]
+
+                if route.nh in self.destination_queue[dst]:
+                    self.destination_queue[dst].remove(route.nh)
+
+                if len(self.destination_queue[dst]) > 0:
+                    proc_time = self.proc_time.get_value()
+                    new_dst_event = Event(proc_time, Events.NEW_DST, self, self)
+                    self.event_queue.insert(0, new_dst_event)
+                    self.new_event.succeed()
+                    self.new_event = self._env.event()
+
         else:
             print("{} - Neighbor {} already in the set".format(self._id, node.id))
             exit(1)
 
-    def run(self, rate):
-        """run.
-
-        :param rate: Message rate
+    def add_destination(self, destination, path, nh):
         """
-        while True:
-            # Wait for the corresponding rate with an exponential distribution
-            yield self._env.timeout(self.g.expovariate(rate))
-            # Create the event
-            packet = Packet("packet content")
-            # Chose a neighbor randomly
-            dst = choice(list(self._neighbors.values()))
-            transmission_event = Event(1, Events.TX, self, dst, obj=packet)
-            # Send the event to the handler
-            self.event_queue.insert(0, transmission_event)
-            self._print("Required packet transmission pkt_id: " + str(packet.id))
-            self.new_event.succeed()
-            self.new_event = self._env.event()
+        Function that adds a destination to the data structure
+        that manage destinations that needs to be shared inside the node
+
+        :param destination: destination that is originated by the node
+        """
+        network = ipaddress.ip_network(destination)
+        r = Route(network, path, nh)
+
+        if self.routing_table.insert(network, r) != None:
+            self.logger.log_rt_change(self, r)
+
+            if len(self._neighbors.keys()) > 0:
+                self.destination_queue[network] = list(self._neighbors.keys())
+            else:
+                self.destination_queue[network] = []
+            
+            if nh in self.destination_queue[network]:
+                self.destination_queue[network].remove(nh)
+
+            if len(self.destination_queue[network]) > 0:
+                new_dst_event = Event(0.1, Events.NEW_DST, self, self)
+                self.event_queue.insert(0, new_dst_event)
+                self.new_event.succeed()
+                self.new_event = self._env.event()
+            else:
+                del self.destination_queue[network]
 
     def change_state(self, packet):
         """change_state.
@@ -121,18 +168,51 @@ class Node(Module):
 
         :param packet: packet received 
         """
-        self._print("Packet received: " + str(packet.id))
+        self._print("Packet_RX: " + str(packet))
+        route = packet.content
+        self.add_destination(route.addr, route.path, route.nh)
 
     def tx_pkt(self, event):
         dst = event.destination
         packet = event.obj
-        self._print("Packet transmission: " + str(packet.id))
+        self._print("Packet_tx: " + str(packet))
         # Create the event for the reception
-        reception_event = Event(1, Events.RX, self, dst, obj=packet)
+        delay = self.delay.get_value()
+        reception_event = Event(delay, Events.RX, self, dst, obj=packet)
         dst.event_queue.insert(0, reception_event)
         dst.new_event.succeed()
         dst.new_event = self._env.event()
 
+    def share_dst(self):
+        del_dst = []
+        for dst in self.destination_queue:
+            del_neigh = []
+            for neigh in self.destination_queue[dst]:
+                # self._print("I should send {} to {}".format(dst,neigh))
+                route = deepcopy(self.routing_table[dst])
+                route.add_to_path(self._id)
+                route.nh = self._id
+
+                # Create the event
+                packet = Packet(route)
+                dst_node = self._neighbors[neigh]
+                # self._print("dst node: " + str(neigh))
+                interrarival = self.rate.get_value()
+                transmission_event = Event(interrarival, Events.TX, 
+                                    self, dst_node, obj=packet)
+                # Send the event to the handler
+                self.event_queue.insert(0, transmission_event)
+                # self._print("Required packet transmission pkt_id: " + str(packet.id))
+                self.new_event.succeed()
+                self.new_event = self._env.event()
+
+                del_neigh.append(neigh)
+            for del_elem in del_neigh:
+                self.destination_queue[dst].remove(del_elem)
+            if len(self.destination_queue[dst]) == 0:
+                del_dst.append(dst)
+        for del_elem in del_dst:
+            del self.destination_queue[del_elem]
 
     def handle_event(self):
         """handle_event.
@@ -156,6 +236,8 @@ class Node(Module):
                     self.tx_pkt(event)
                 if event.event_type == Events.RX:
                     self.rx_pkt(event.obj)
+                if event.event_type == Events.NEW_DST:
+                    self.share_dst()
                 # Delete the processed event
                 del event
             # If there are no events in the queue pass to the idle state
@@ -185,5 +267,9 @@ class Node(Module):
         Return the node as a human readable object
         """
         res = "Node: {}\n".format(self._id)
-        res += "Neighborhood: {}".format([n.id for n in self._neighbors.values()])
+        res += "Neighborhood: {}\n".format([n.id for n in self._neighbors.values()])
+        res += "Destinations queue: "
+        for dst in self.destination_queue:
+            res += "{}-{} ".format(str(dst), str(self.destination_queue[dst]))
+        res += "\n" + str(self.routing_table)
         return res

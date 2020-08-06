@@ -28,7 +28,8 @@ class Log:
     Defines data logging utilities
     """
 
-    def __init__(self, output_file, log_packets=True, log_states=False):
+    def __init__(self, output_file, log_routing_change=True,
+            log_packets=False, log_states=False):
         """
         Constructor.
         :param output_file: output file name. will be overwritten if already
@@ -38,24 +39,47 @@ class Log:
         """
         self.sim = bgp_sim.sim.Instance()
         self.log_file = open(output_file, "w")
-        self.log_file.write("time,src,dst,event,value\n")
+        self.log_file.write("event,time,node,value\n")
         self.log_packets = log_packets
         self.log_states = log_states
+        self.log_routing_change = log_routing_change
 
     def __delete__(self, instance):
         self.log_file.close()
 
-    def log_packet(self, source, destination, packet):
+    def log_rt_change(self, node, route):
         """
-        Logs the result of a packet reception.
-        :param source: source node
-        :param destination: destination node id
+        Logs the result of a routing table change
+        :param route: the new route in the routing table
+        """
+        if self.log_routing_change:
+            self.log_file.write("{},{},{},{}\n".format(Events.RT_CHANGE,
+                                            self.sim.env.now, node.id,
+                                            route))
+
+    def log_packet_tx(self, node, packet):
+        """
+        Logs a packet tx.
+        :param node: source node
         :param packet: the packet to log
         """
         if self.log_packets:
-            self.log_file.write("{},{},{},{}\n".format(self.sim.env.now, 
-                                                source.id, destination.id, 
-                                                packet.id))
+            self.log_file.write("{},{},{},{}\n".format(Events.TX,
+                                                self.sim.env.now, 
+                                                node.id, 
+                                                packet))
+    
+    def log_packet_RX(self, node, packet):
+        """
+        Logs a packet tx.
+        :param node: source node
+        :param packet: the packet to log
+        """
+        if self.log_packets:
+            self.log_file.write("{},{},{},{}\n".format(Events.RX,
+                                                self.sim.env.now, 
+                                                node.id, 
+                                                packet))
 
     def log_state(self, node):
         """
@@ -64,7 +88,6 @@ class Log:
         :param state: state of the node
         """
         if self.log_states:
-            self.log_file.write("{},{},{},{},{}\n".format(self.sim.env.now, 
-                                                    node.id, node.id, 
-                                                    Events.STATE_CHANGE, 
-                                                    node.state))
+            self.log_file.write("{},{},{},{}\n".format(Events.STATE_CHANGE,
+                                                    self.sim.env.now, 
+                                                    node.id, node.state))

@@ -46,6 +46,8 @@ class sim:
     PAR_GRAPH = "graph"
     # Verbose param
     PAR_VERBOSE = "verbose"
+    # Destnations param
+    PAR_NETWORK = "destinations"
 
     def __init__(self):
         """__init__
@@ -133,8 +135,11 @@ class sim:
         graphFile = self._config.get_param(self.PAR_GRAPH)
         G = nx.read_graphml(graphFile)
         for v in G.nodes(data=True):
-            node = Node(v[0])
+            node = Node(v[0], self._config)
             self.nodes[node.id] = node
+            if self.PAR_NETWORK in v[1]:
+                for net in v[1][self.PAR_NETWORK].split(','):
+                    node.add_destination(net, [], None)
 
         for e in G.edges(data=True):
             self.nodes[e[0]].add_neighbor(self.nodes[e[1]])
@@ -155,6 +160,8 @@ class sim:
         # Register the end time and do the subtraction
         end_time = time.time()
         total_time = round(end_time - start_time)
+        for node in self.nodes:
+            print(self.nodes[node])
         print("\nMaximum simulation time reached. Terminating")
         print("Total simulation time: %d hours, %d minutes, %d seconds" %
               (total_time // 3600, total_time % 3600 // 60,

@@ -52,5 +52,5 @@ class Packet:
         """
         Prints the packet in a human readable format
         """
-        res = "Packet id: {}".format(self._id)
+        res = "id: {} content: {}".format(self._id, self._content)
         return res

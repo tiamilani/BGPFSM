@@ -23,7 +23,7 @@ class Event:
     # counter used for assigning unique IDs to events
     event_counter = 0
 
-    def __init__(self, event_duration, event_type, destination, source, obj=None):
+    def __init__(self, event_duration, event_type, source, destination, obj=None):
         """
         Creates an event.
         :param event_duration: time at which the event should be scheduled

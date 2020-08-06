@@ -23,3 +23,5 @@ class Events:
     STATE_CHANGE = 0
     TX = 1
     RX = 2
+    NEW_DST = 3
+    RT_CHANGE = 4
