@@ -29,6 +29,7 @@ from packet import Packet
 from routingTable import RoutingTable
 from route import Route
 from distribution import Distribution
+from rib import Rib
 
 
 class Node(Module):
@@ -70,8 +71,11 @@ class Node(Module):
         # us the destination yet
         self.destination_queue = {}
         # Routing table, This table represent the routing knowledge
-        # actually present in the nod
+        # actually present in the node
         self.routing_table = RoutingTable()
+        # Rib table, this table represent all the routing knowledge
+        # present in the node, plus routes that are not the best
+        self.rib = Rib()
         # Random used to generate traffic
         self.g = Random(time.time() * hash(self._id))
         # Event handler of a node
@@ -138,7 +142,11 @@ class Node(Module):
         network = ipaddress.ip_network(destination)
         r = Route(network, path, nh)
 
-        if self.routing_table.insert(network, r) != None:
+        old_best = self.rib[network]
+        self.rib.insert(network, r)
+        new_best = self.rib[network]
+        if new_best != old_best:
+            self.routing_table[network] = r
             self.logger.log_rt_change(self, r)
 
             if len(self._neighbors.keys()) > 0:
@@ -273,4 +281,5 @@ class Node(Module):
         for dst in self.destination_queue:
             res += "{}-{} ".format(str(dst), str(self.destination_queue[dst]))
         res += "\n" + str(self.routing_table)
+        res += str(self.rib)
         return res

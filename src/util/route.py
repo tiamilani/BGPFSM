@@ -58,6 +58,21 @@ class Route():
             # Check the nh id
             if int(self.nh) < int(route.nh):
                 return True
+            elif self.nh == route.nh:
+                # check the path without the first as
+                actual = Route(self.addr, self.path[1:], self.path[1])
+                new = Route(route.addr, route.path[1:], route.path[1])
+                return actual < new
+        return False
+
+    def __eq__(self, route):
+        NoneType = type(None)
+        if not isinstance(self, NoneType) and \
+            not isinstance(route, NoneType) and \
+            self.addr == route.addr and \
+            self.path == route.path and \
+            self.nh == route.nh:
+                return True
         return False
 
     def __copy__(self):

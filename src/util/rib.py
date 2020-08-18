@@ -21,7 +21,7 @@ sys.path.insert(1, '..')
 from route import Route
 
 
-class RoutingTableIterator():
+class RibIterator():
     """
     Iterator class for the routing table object
     """
@@ -43,9 +43,9 @@ class RoutingTableIterator():
         raise StopIteration
 
 
-class RoutingTable(collections.MutableSequence):
-    """RoutingTable.
-    Class used to handle the routing table of a node
+class Rib(collections.MutableSequence):
+    """Rib.
+    Class used to handle the routing information base of a node
     """
 
     def __init__(self):
@@ -56,23 +56,36 @@ class RoutingTable(collections.MutableSequence):
         if not isinstance(v, self.oktype):
             raise TypeError(v)
 
-    def __len__(self): return len(self._table)
+    def __len__(self): 
+        return len(self._table)
 
     def __getitem__(self, i): 
         if i in self._table:
-            return self._table[i]
+            return self._table[i][0]
         else:
             return None
 
     def __delitem__(self, i): 
-        del self._table[i]
+        del self._table[i][0]
 
-    def __setitem__(self, i, v):
+    def __setitem__(self, i, j, v):
         self.check(v)
-        self._table[i] = v
+        self._table[i][j] = v
+
+    def filter(self, route):
+        return True
 
     def insert(self, i, v):
-        pass
+        self.check(v)
+        if i not in self._table:
+            self._table[i] = [v]
+            return self._table[i][0]
+        else:
+            if self.filter(v):
+                self._table[i].append(v)
+                self._table[i] = sorted(self._table[i])
+                return self._table[i][0]
+        return None
 
     def getKey(self, i):
         if i < len(self):
@@ -80,15 +93,15 @@ class RoutingTable(collections.MutableSequence):
         return None
 
     def __iter__(self):
-        return RoutingTableIterator(self)
+        return RibIterator(self)
 
     def __str__(self):
         """
-        Function to return the routing table in a human readable format
+        Function to return the RIB in a human readable format
         :returns: string with all the routing information
         """
-        res = "Routing table:\n"
+        res = "RIB:\n"
         rt = sorted(self._table)
         for route in rt:
-            res += str(self._table[route]) + "\n"
+            res += str([str(x) for x in self._table[route]]) + "\n"
         return res
