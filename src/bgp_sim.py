@@ -27,6 +27,7 @@ from singleton import Singleton
 from node import Node
 from event import Event
 from events import Events
+from link import Link
 
 
 @Singleton
@@ -142,7 +143,9 @@ class sim:
                     node.add_destination(net, [], None)
 
         for e in G.edges(data=True):
-            self.nodes[e[0]].add_neighbor(self.nodes[e[1]])
+            link_res = simpy.Resource(self._env, capacity=1)
+            l = Link(self._env, self.nodes[e[1]], link_res, e[2])
+            self.nodes[e[0]].add_neighbor(l)
 
         # Mark the initialization as done
         self._initialize = True

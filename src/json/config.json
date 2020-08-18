@@ -5,13 +5,13 @@
 		// duration of each simulation in seconds
 		"duration" : 60,
 		// Graph file to simulate
-		"graph": "graphs/first_graph.graphml",
+		"graph": "graphs/propagation_graph.graphml",
 		// log file name using configuration parameters
 		"output" : "output_{seed}.csv",
 		// Verbose value
 		"verbose": "True",
 		// Transmission datarate in 1/seconds
-		"datarate": {"distribution": "exp", "lambda" : 300},
+		"datarate": {"distribution": "exp", "lambda" : 100},
 		// Processing time distribution
 		"processing": {"distribution": "const", "mean": 0.00001},
 		// Network delay distribution

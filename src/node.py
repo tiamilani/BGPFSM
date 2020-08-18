@@ -62,7 +62,7 @@ class Node(Module):
         # Initialization of commond modules
         Module.__init__(self)
         # Events queue, events that needs to be handle by the node
-        self.event_queue = []
+        self.event_store = simpy.Store(self._env)
         # Destinations queue, this queue contains the destinations
         # That are not yet distributed to neighbors
         # The structure is a dictionary, the key is the destination
@@ -72,8 +72,6 @@ class Node(Module):
         # Routing table, This table represent the routing knowledge
         # actually present in the nod
         self.routing_table = RoutingTable()
-        # Event to trigger when there is a new event to handle
-        self.new_event = self._env.event()
         # Random used to generate traffic
         self.g = Random(time.time() * hash(self._id))
         # Event handler of a node
@@ -94,35 +92,40 @@ class Node(Module):
         if self.verbose:
             print("{}-{} ".format(self._env.now, self._id) + msg)
 
-    def add_neighbor(self, node):
+    def add_neighbor(self, link):
         """
         Add a neighbor to the set of neighbors
         If the neighbor is already in the set it throws an error 
         and terminate
         
-        :param node: node that has to be setted
+        :param link: link that has to be added 
         """
-        if node.id not in self._neighbors:
-            self._neighbors[node.id] = node
+        if link.id not in self._neighbors:
+            self._neighbors[link.node.id] = link
             for route in self.routing_table:
                 dst = route.addr
                 if dst in self.destination_queue:
-                    self.destination_queue[dst].append(node.id)
+                    self.destination_queue[dst].append(link.node.id)
                 else:
-                    self.destination_queue[dst] = [node.id]
+                    self.destination_queue[dst] = [link.node.id]
 
                 if route.nh in self.destination_queue[dst]:
                     self.destination_queue[dst].remove(route.nh)
 
+                """rm_list = []
+                for l in self.destination_queue[dst]:
+                    if self._neighbors[l].node.id == route.nh:
+                        rm_list.append(l)
+                for elem in rm_list:
+                    self.destination_queue[dst].remove(elem)"""
+
                 if len(self.destination_queue[dst]) > 0:
                     proc_time = self.proc_time.get_value()
                     new_dst_event = Event(proc_time, Events.NEW_DST, self, self)
-                    self.event_queue.insert(0, new_dst_event)
-                    self.new_event.succeed()
-                    self.new_event = self._env.event()
+                    self.event_store.put(new_dst_event)
 
         else:
-            print("{} - Neighbor {} already in the set".format(self._id, node.id))
+            print("{} - Neighbor {} already in the set".format(self._id, link.node.id))
             exit(1)
 
     def add_destination(self, destination, path, nh):
@@ -148,9 +151,7 @@ class Node(Module):
 
             if len(self.destination_queue[network]) > 0:
                 new_dst_event = Event(0.1, Events.NEW_DST, self, self)
-                self.event_queue.insert(0, new_dst_event)
-                self.new_event.succeed()
-                self.new_event = self._env.event()
+                self.event_store.put(new_dst_event)
             else:
                 del self.destination_queue[network]
 
@@ -175,13 +176,17 @@ class Node(Module):
     def tx_pkt(self, event):
         dst = event.destination
         packet = event.obj
-        self._print("Packet_tx: " + str(packet))
+        link = self._neighbors[dst.id]
+        self._print("Packet_TX: " + str(packet))
         # Create the event for the reception
-        delay = self.delay.get_value()
-        reception_event = Event(delay, Events.RX, self, dst, obj=packet)
-        dst.event_queue.insert(0, reception_event)
-        dst.new_event.succeed()
-        dst.new_event = self._env.event()
+        if link.delay is not None:
+            delay = link.delay.get_value()
+        else: 
+            delay = self.delay.get_value()
+        reception_event = Event(0, Events.RX, self, dst, obj=packet, 
+                                sent_time=self._env.now)
+        #dst.event_store.put(reception_event)
+        link.tx(reception_event, delay)
 
     def share_dst(self):
         del_dst = []
@@ -195,16 +200,14 @@ class Node(Module):
 
                 # Create the event
                 packet = Packet(route)
-                dst_node = self._neighbors[neigh]
+                dst_node = self._neighbors[neigh].node
                 # self._print("dst node: " + str(neigh))
                 interrarival = self.rate.get_value()
                 transmission_event = Event(interrarival, Events.TX, 
                                     self, dst_node, obj=packet)
                 # Send the event to the handler
-                self.event_queue.insert(0, transmission_event)
+                self.event_store.put(transmission_event)
                 # self._print("Required packet transmission pkt_id: " + str(packet.id))
-                self.new_event.succeed()
-                self.new_event = self._env.event()
 
                 del_neigh.append(neigh)
             for del_elem in del_neigh:
@@ -221,31 +224,29 @@ class Node(Module):
 
         while True:
             # Operate only if there is something on the queue
-            if len(self.event_queue) > 0:
-                # Pop the event
-                event = self.event_queue.pop()
-                # Wait the corresponding time to process the event
-                yield self._env.timeout(event.event_duration)
-                # Check if the event is known
-                if event.event_type == Events.STATE_CHANGE:
-                    # If the event is a state changer change the state
-                    packet = event.obj
-                    self.change_state(packet)
-                    del packet
-                if event.event_type == Events.TX:
-                    self.tx_pkt(event)
-                if event.event_type == Events.RX:
-                    self.rx_pkt(event.obj)
-                if event.event_type == Events.NEW_DST:
-                    self.share_dst()
-                # Delete the processed event
-                del event
-            # If there are no events in the queue pass to the idle state
-            # and wait for the next event
-            if len(self.event_queue) == 0:
-                self._state = Node.IDLE
-                self.logger.log_state(self)
-                yield self.new_event
+            # Pop the event
+            event = yield self.event_store.get()
+            waiting_time = event.event_duration
+            if event.event_type == Events.RX:
+                waiting_time = event.event_duration - (self._env.now - event.sent_time)
+                if waiting_time < 0:
+                    waiting_time = self.proc_time.get_value()
+            # Wait the corresponding time to process the event
+            yield self._env.timeout(waiting_time)
+            # Check if the event is known
+            if event.event_type == Events.STATE_CHANGE:
+                # If the event is a state changer change the state
+                packet = event.obj
+                self.change_state(packet)
+                del packet
+            if event.event_type == Events.TX:
+                self.tx_pkt(event)
+            if event.event_type == Events.RX:
+                self.rx_pkt(event.obj)
+            if event.event_type == Events.NEW_DST:
+                self.share_dst()
+            # Delete the processed event
+            del event
 
     @property
     def state(self):
@@ -267,7 +268,7 @@ class Node(Module):
         Return the node as a human readable object
         """
         res = "Node: {}\n".format(self._id)
-        res += "Neighborhood: {}\n".format([n.id for n in self._neighbors.values()])
+        res += "Neighborhood: {}\n".format([n.node.id for n in self._neighbors.values()])
         res += "Destinations queue: "
         for dst in self.destination_queue:
             res += "{}-{} ".format(str(dst), str(self.destination_queue[dst]))

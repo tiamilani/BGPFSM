@@ -96,6 +96,7 @@ class RoutingTable(collections.MutableSequence):
         :returns: string with all the routing information
         """
         res = "Routing table:\n"
-        for route in self._table:
+        rt = sorted(self._table)
+        for route in rt:
             res += str(self._table[route]) + "\n"
         return res
