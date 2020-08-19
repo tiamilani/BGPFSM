@@ -27,6 +27,10 @@ class RoutingTableIterator():
     """
 
     def __init__(self, rt):
+        """__init__.
+
+        :param rt:
+        """
         self._rt = rt
         self._idx = 0
 
@@ -49,37 +53,68 @@ class RoutingTable(collections.MutableSequence):
     """
 
     def __init__(self):
+        """__init__."""
         self._table = {}
         self.oktype = Route
 
     def check(self, v):
+        """check.
+
+        :param v: check that V is a route instance
+        """
         if not isinstance(v, self.oktype):
             raise TypeError(v)
 
-    def __len__(self): return len(self._table)
+    def __len__(self): 
+        """__len__."""
+        return len(self._table)
 
     def __getitem__(self, i): 
+        """__getitem__.
+
+        :param i: key addr
+        """
         if i in self._table:
             return self._table[i]
         else:
             return None
 
     def __delitem__(self, i): 
-        del self._table[i]
+        """__delitem__.
+
+        :param i: key addr
+        """
+        if i in self._table:
+            del self._table[i]
 
     def __setitem__(self, i, v):
+        """__setitem__.
+
+        :param i: key addr
+        :param v: route
+        """
         self.check(v)
         self._table[i] = v
 
     def insert(self, i, v):
+        """insert.
+
+        :param i:
+        :param v:
+        """
         pass
 
     def getKey(self, i):
+        """getKey.
+
+        :param i: index
+        """
         if i < len(self):
             return list(self._table.keys())[i]
         return None
 
     def __iter__(self):
+        """__iter__."""
         return RoutingTableIterator(self)
 
     def __str__(self):

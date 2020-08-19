@@ -122,7 +122,8 @@ class sim:
         # Set run number
         self._config.set_run_number(self.run_number)
         # Set the logger
-        self._logger = Log(self._config.get_output_file(), log_states=True)
+        self._logger = Log(self._config.get_output_file(), log_packets=True,
+                            log_paths=True)
         # Get simulation duration
         self.duration = self._config.get_param(self.PAR_DURATION)
         # Get seeds, each seed generates a simulation repetition
@@ -163,8 +164,8 @@ class sim:
         # Register the end time and do the subtraction
         end_time = time.time()
         total_time = round(end_time - start_time)
-        for node in self.nodes:
-            print(self.nodes[node])
+        """for node in self.nodes:
+            print(self.nodes[node])"""
         print("\nMaximum simulation time reached. Terminating")
         print("Total simulation time: %d hours, %d minutes, %d seconds" %
               (total_time // 3600, total_time % 3600 // 60,

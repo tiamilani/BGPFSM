@@ -4,7 +4,7 @@
   <key attr.name="delay" attr.type="string" for="edge" id="d1" />
   <graph edgedefault="directed">
     <node id="0">
-		<data key="d0">10.0.0.0/24,10.0.1.0/24</data>
+		<data key="d0">10.0.0.0/24</data>
     </node>
 	<node id="1" />
     <node id="2" />

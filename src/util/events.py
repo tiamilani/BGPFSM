@@ -21,7 +21,17 @@ class Events:
 
     # Change state event 
     STATE_CHANGE = 0
+    # Transmission event
     TX = 1
+    # Reception event
     RX = 2
+    # New destination event
     NEW_DST = 3
+    # Routing table change event
     RT_CHANGE = 4
+    # New path for a destination event
+    NEW_PATH = 5
+    # Withdraw event
+    WITHDRAW = 6
+    # Reannouncement event
+    REANNOUNCE = 7

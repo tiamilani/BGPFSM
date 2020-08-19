@@ -22,14 +22,19 @@ class Packet:
     # used to create a unique ID for the packet
     __packets_count = 0
 
-    def __init__(self, content):
+    # Types of packets
+    UPDATE = 0
+    WITHDRAW = 1
+
+    def __init__(self, packet_type, content):
         """
         Creates a packet automatically assigning a unique ID to it
-        :param size: size of the packet in bytes
-        :param duration: packet duration in seconds
+        :param packet_type: type of the packet 
+        :param content: content of the packet 
         """
         self._id = Packet.__packets_count
         Packet.__packets_count = Packet.__packets_count + 1
+        self._packet_type = packet_type
         self._content = content 
 
     @property
@@ -48,9 +53,18 @@ class Packet:
         """
         return self._content
 
+    @property
+    def packet_type(self):
+        """
+        Returns packet type
+        :returns: the type of the packet defined at the initialization
+        """
+        return self._packet_type
+
     def __str__(self):
         """
         Prints the packet in a human readable format
         """
-        res = "id: {} content: {}".format(self._id, self._content)
+        res = "id: {} type: {} content: {}".format(self._id, self._packet_type,
+                                                self._content)
         return res

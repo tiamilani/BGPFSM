@@ -10,6 +10,14 @@
 		"output" : "output_{seed}.csv",
 		// Verbose value
 		"verbose": "True",
+		// Withdraw signaling 
+		"withdraw": "True",
+		// Reannouncement of a destination after a withdraw
+		"reannouncement": "True",
+		// Withdraw interval distribution from the announcement
+		"withdraw_dist": {"distribution": "unif", "min": 0.1, "max": 10, "int": 0.1},
+		// announcement interval distribution from the withdraw 
+		"reannouncement_dist": {"distribution": "unif", "min": 0.1, "max": 10, "int": 0.1},
 		// Transmission datarate in 1/seconds
 		"datarate": {"distribution": "exp", "lambda" : 100},
 		// Processing time distribution

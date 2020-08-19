@@ -22,35 +22,61 @@ class Route():
     """
 
     def __init__(self, addr, path, nh):
+        """__init__.
+
+        :param addr: addr of the route
+        :param path: Path to reach the destination
+        :param nh: Nh for the address
+        """
         self._addr = addr
+        # Check that the path is an instance of a list
         if not isinstance(path, list):
             raise TypeError(path)
         self._path = path
         self._nh = nh
 
     def add_to_path(self, value):
+        """add_to_path.
+
+        :param value: add a voice to the path list at the beginning
+        """
         self.path.insert(0, value)
 
     def remove_from_path(self, value):
+        """remove_from_path.
+
+        :param value: remove a voice from the path
+        """
         self.path.remove(value)
 
     @property
     def addr(self):
+        """addr."""
         return self._addr
 
     @property
     def path(self):
+        """path."""
         return self._path
 
     @property
     def nh(self):
+        """nh."""
         return self._nh
 
     @nh.setter
     def nh(self, value):
+        """nh.
+
+        :param value: set the Nh
+        """
         self._nh = value
 
     def __lt__(self, route):
+        """__lt__.
+
+        :param route: route to compare with the self one
+        """
         # Check the path len
         if len(self.path) < len(route.path):
             return True
@@ -66,6 +92,10 @@ class Route():
         return False
 
     def __eq__(self, route):
+        """__eq__.
+
+        :param route: route to compare with the local one
+        """
         NoneType = type(None)
         if not isinstance(self, NoneType) and \
             not isinstance(route, NoneType) and \
@@ -76,9 +106,14 @@ class Route():
         return False
 
     def __copy__(self):
+        """__copy__."""
         return type(self)(self.addr, self.path, self.nh)
 
     def __deepcopy__(self, memo):
+        """__deepcopy__.
+
+        :param memo: things to copy
+        """
         id_self = id(self)
         _copy = memo.get(id_self)
         if _copy is None:
@@ -90,4 +125,5 @@ class Route():
         return _copy
 
     def __str__(self):
+        """__str__."""
         return "{}-{}-{}".format(self.addr, self.nh, self.path)
