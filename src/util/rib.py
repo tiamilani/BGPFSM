@@ -52,6 +52,8 @@ class Rib(collections.MutableSequence):
     Class used to handle the routing information base of a node
     """
 
+    ROUTE_COUNTER = 0
+
     def __init__(self, node_id, logger):
         """__init__.
 
@@ -62,6 +64,8 @@ class Rib(collections.MutableSequence):
         self.oktype = Route
         self.id = node_id
         self.logger = logger
+        self._support_route_identifier = {}
+        self.actual_state = set()
 
     def check(self, v):
         """check.
@@ -106,6 +110,20 @@ class Rib(collections.MutableSequence):
         self.check(v)
         self._table[i][j] = v
 
+    def update_rib_state(self, route, insertion=True):
+        # Concatenation of all route ids
+        if insertion:
+            if str(route) not in self._support_route_identifier.keys():
+                self._support_route_identifier[str(route)] = self.ROUTE_COUNTER
+                self.ROUTE_COUNTER += 1
+            if self._support_route_identifier[str(route)] not in self.actual_state:
+                self.actual_state.add(self._support_route_identifier[str(route)])
+                self.logger.log_rib_change(self.id, self.actual_state)
+        if not insertion:
+            self.actual_state.remove(self._support_route_identifier[str(route)])
+            # Log the state change
+            self.logger.log_rib_change(self.id, self.actual_state)
+
     def contains(self, i, v):
         """contains.
         check if the table contains the object v in the vector for the addr i
@@ -128,6 +146,7 @@ class Rib(collections.MutableSequence):
         if i in self._table:
             if v in self._table[i]:
                 self._table[i].remove(v)
+                self.update_rib_state(v, insertion=False)
                 return None
         return v
 
@@ -161,6 +180,8 @@ class Rib(collections.MutableSequence):
                 self._table[i] = sorted(self._table[i])
             # Log the new path to the destination
             self.logger.log_path(self.id, v)
+            # Update the rib state
+            self.update_rib_state(v)
             # Return the best route
             return self._table[i][0]
         # If it was not possible to enter the path then return None

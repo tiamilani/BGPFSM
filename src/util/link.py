@@ -25,6 +25,7 @@ class Link:
     """
 
     __link_counter = 0
+    __waiter = 0.00001
 
     DELAY = "delay"
 
@@ -62,6 +63,7 @@ class Link:
         request = self._res.request()
         yield self._env.timeout(delay) & request
         self._node.event_store.put(msg)
+        yield self._env.timeout(self.__waiter)
         self._res.release(request)
         
     def tx(self, msg, delay):

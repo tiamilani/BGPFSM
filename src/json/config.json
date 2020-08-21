@@ -5,24 +5,24 @@
 		// duration of each simulation in seconds
 		"duration" : 60,
 		// Graph file to simulate
-		"graph": "graphs/propagation_graph.graphml",
+		"graph": "graphs/fig_4_fsm_model.graphml",
 		// log file name using configuration parameters
 		"output" : "output_{seed}.csv",
 		// Verbose value
-		"verbose": "True",
+		"verbose": "False",
 		// Withdraw signaling 
 		"withdraw": "True",
 		// Reannouncement of a destination after a withdraw
 		"reannouncement": "True",
 		// Withdraw interval distribution from the announcement
-		"withdraw_dist": {"distribution": "unif", "min": 0.1, "max": 10, "int": 0.1},
+		"withdraw_dist": {"distribution": "unif", "min": 1, "max": 10, "int": 0.1},
 		// announcement interval distribution from the withdraw 
-		"reannouncement_dist": {"distribution": "unif", "min": 0.1, "max": 10, "int": 0.1},
+		"reannouncement_dist": {"distribution": "unif", "min": 1, "max": 5, "int": 0.1},
 		// Transmission datarate in 1/seconds
 		"datarate": {"distribution": "exp", "lambda" : 100},
 		// Processing time distribution
 		"processing": {"distribution": "const", "mean": 0.00001},
 		// Network delay distribution
-		"delay": {"distribution": "unif", "min": 0.001, "max": 0.1, "int": 0.001}
+		"delay": {"distribution": "unif", "min": 0.001, "max": 1, "int": 0.001}
 	}
 }

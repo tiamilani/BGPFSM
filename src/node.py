@@ -225,6 +225,7 @@ class Node(Module):
                 new_best = self.rib[route.addr]
                 if new_best == None:
                     del self.routing_table[route.addr]
+                    self.logger.log_rt_change(self, Route(route.addr, [], None))
                 elif new_best != old_best:
                     self.routing_table[route.addr] = new_best
                     self.logger.log_rt_change(self, new_best)
@@ -259,7 +260,8 @@ class Node(Module):
         else: 
             delay = self.delay.get_value()
         # Generate the reception event and pass it to the link
-        reception_event = Event(0, Events.RX, self, dst, obj=packet, 
+        evaluation = self.proc_time.get_value()
+        reception_event = Event(evaluation, Events.RX, self, dst, obj=packet, 
                                 sent_time=self._env.now)
         link.tx(reception_event, delay)
         # Log the transmission
@@ -345,6 +347,7 @@ class Node(Module):
 
         if new_best == None:
             del self.routing_table[route.addr]
+            self.logger.log_rt_change(self, Route(route.addr, [], None))
         elif new_best != old_best:
             self.routing_table[route.addr] = new_best
             self.logger.log_rt_change(self, new_best)

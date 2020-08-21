@@ -13,6 +13,7 @@
 #
 # Copyright (C) 2016 Michele Segata <segata@ccs-labs.org>
 
+import ast
 
 class Packet:
     """
@@ -26,16 +27,24 @@ class Packet:
     UPDATE = 0
     WITHDRAW = 1
 
-    def __init__(self, packet_type, content):
+    def __init__(self, packet_type, content, id=None):
         """
         Creates a packet automatically assigning a unique ID to it
         :param packet_type: type of the packet 
         :param content: content of the packet 
         """
-        self._id = Packet.__packets_count
-        Packet.__packets_count = Packet.__packets_count + 1
+        if id == None:
+            self._id = Packet.__packets_count
+            Packet.__packets_count = Packet.__packets_count + 1
+        else:
+            self._id = id
         self._packet_type = packet_type
         self._content = content 
+
+    @classmethod
+    def fromString(cls, string):
+        res = ast.literal_eval(string)
+        return cls(res["type"], res["content"], id=res["id"])
 
     @property
     def id(self):
@@ -53,6 +62,10 @@ class Packet:
         """
         return self._content
 
+    @content.setter
+    def content(self, content):
+        self._content = content
+
     @property
     def packet_type(self):
         """
@@ -65,6 +78,9 @@ class Packet:
         """
         Prints the packet in a human readable format
         """
-        res = "id: {} type: {} content: {}".format(self._id, self._packet_type,
-                                                self._content)
+        d = dict()
+        d["id"] = self.id
+        d["type"] = self.packet_type
+        d["content"] = str(self.content)
+        res = str(d) 
         return res

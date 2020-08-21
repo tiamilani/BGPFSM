@@ -35,3 +35,5 @@ class Events:
     WITHDRAW = 6
     # Reannouncement event
     REANNOUNCE = 7
+    # Rib state change event
+    RIB_CHANGE = 8

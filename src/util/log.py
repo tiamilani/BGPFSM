@@ -28,7 +28,7 @@ class Log:
     Defines data logging utilities
     """
 
-    def __init__(self, output_file, log_routing_change=True,
+    def __init__(self, output_file, log_routing_change=True, log_rib_change=True,
             log_packets=False, log_paths=False, log_states=False):
         """
         Constructor.
@@ -46,6 +46,7 @@ class Log:
         self.log_states = log_states
         self.log_routing_change = log_routing_change
         self.log_paths = log_paths
+        self.log_rib = log_rib_change
 
     def __delete__(self, instance):
         self.log_file.close()
@@ -60,6 +61,17 @@ class Log:
             self.log_file.write("{}|{}|{}|{}\n".format(Events.RT_CHANGE,
                                             self.sim.env.now, node.id,
                                             route))
+
+    def log_rib_change(self, node_id, state):
+        """
+        Logs the rib state change
+        It means that the knowledge of routes is changed in some way
+        :param node_id: id of the node that changed
+        :param state: the new state of the rib
+        """
+        if self.log_rib:
+            self.log_file.write("{}|{}|{}|{}\n".format(Events.RIB_CHANGE,
+                                            self.sim.env.now, node_id, state))
 
     def log_packet_tx(self, node, packet):
         """

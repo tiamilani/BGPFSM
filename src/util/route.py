@@ -15,6 +15,7 @@
 
 import ipaddress
 from copy import copy, deepcopy
+import ast
 
 class Route():
     """Route
@@ -34,6 +35,12 @@ class Route():
             raise TypeError(path)
         self._path = path
         self._nh = nh
+
+    @classmethod
+    def fromString(cls, string):
+        res = ast.literal_eval(string)
+        return cls(ipaddress.ip_network(res["addr"]), 
+                   res["path"], res["nh"])
 
     def add_to_path(self, value):
         """add_to_path.
@@ -126,4 +133,8 @@ class Route():
 
     def __str__(self):
         """__str__."""
-        return "{}-{}-{}".format(self.addr, self.nh, self.path)
+        d = dict()
+        d["addr"] = str(self.addr)
+        d["nh"] = self.nh
+        d["path"] = self.path
+        return str(d)
