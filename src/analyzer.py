@@ -47,8 +47,8 @@ if __name__ == "__main__":
     outputFile = Path(outputFile_path)
 
     # Check that the input file exists
-    try:
-        my_abs_path = inputFile.resolve(strict=True)
+    """try:
+        my_abs_path = inputFile.resolve()
     except FileNotFoundError:
         # doesn't exist
         print("Input file {} not found".format(inputFile_path))
@@ -56,12 +56,12 @@ if __name__ == "__main__":
         
     # Check that the output file does not exists
     try:
-        my_abs_path = outputFile.resolve(strict=True)
+        my_abs_path = outputFile.resolve()
         print("output file {} already exists".format(outputFile_path))
         exit(1)
     except FileNotFoundError:
         pass
-
+    """
     # Get the dataframe rep of the input file
     sf = SingleFileAnalysis(inputFile_path)
     sf.selectNode(node)
