@@ -3,13 +3,13 @@
 		// seed(s) to initialize PRNGs
 		"seed" : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
 		// duration of each simulation in seconds
-		"duration" : 600,
+		"duration" : 3600,
 		// Graph file to simulate
 		"graph": "graphs/fig_4_fsm_model.graphml",
 		// log file name using configuration parameters
 		"output" : "output_{seed}.csv",
 		// Verbose value
-		"verbose": "True",
+		"verbose": "False",
 		// Withdraw signaling 
 		"withdraw": "True",
 		// Reannouncement of a destination after a withdraw

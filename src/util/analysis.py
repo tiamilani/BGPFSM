@@ -118,8 +118,6 @@ class SingleFileAnalysis():
             self.actualState = new_state
             self.states.add(new_state)
             self.transitions.add(transition)
-        for trans in self.transitions:
-            print(trans)
 
     def get_fsm_graphviz(self, dot):
         for state in self.states:
