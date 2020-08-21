@@ -32,6 +32,7 @@ class SingleFileAnalysis():
         self.actualState = None
         self.transitions = set() 
         self.route_to_id = {}
+        self.id_to_route = {}
 
     def selectNode(self, node_id):
         self.df = self.df[self.df.node == node_id]
@@ -59,9 +60,7 @@ class SingleFileAnalysis():
             tmp_df = tmp_df.drop(first_pkt_index)
             if Events.RX not in tmp_df.event.values:
                 break
-            second_pkt_received = tmp_df[tmp_df.event == Events.RX].iloc[0]
-            second_pkt_index = second_pkt_received.name
-            events_in_between = tmp_df.loc[first_pkt_index:second_pkt_index][:-1]
+            events_in_between = tmp_df[tmp_df["event_cause"]==str(first_pkt_received["event_id"])]
             new_state = None
             transmitted_routes = set()
             for idx, row in events_in_between.iterrows():
@@ -75,6 +74,7 @@ class SingleFileAnalysis():
                     route = packet.content
                     if str(route) not in self.route_to_id.keys():
                         self.route_to_id[str(route)] = self.ROUTE_COUNTER
+                        self.id_to_route[str(self.ROUTE_COUNTER)] = Route.fromString(str(route))
                         self.ROUTE_COUNTER += 1
                     if packet.packet_type == Packet.UPDATE:
                         transmitted_routes.add("A" + str(self.route_to_id[str(route)]))
@@ -88,6 +88,7 @@ class SingleFileAnalysis():
             route = packet.content
             if str(route) not in self.route_to_id.keys():
                 self.route_to_id[str(route)] = self.ROUTE_COUNTER
+                self.id_to_route[str(self.ROUTE_COUNTER)] = Route.fromString(str(route))
                 self.ROUTE_COUNTER += 1
             if packet.packet_type == Packet.UPDATE:
                 inp = "A" + str(self.route_to_id[str(route)])
@@ -117,11 +118,48 @@ class SingleFileAnalysis():
             out = str(trans.output_state) if trans.output_state is not None \
                     else "{}"
             trans_output = str(trans.output) if trans.output is not None \
-                    else ""
+                    else " "
 
             dot.edge(inp, out, label="{}:{}".format(trans.input, trans_output))
         return dot
 
+    def get_detailed_fsm_graphviz(self, graph):
+        with graph.subgraph() as dot:
+            for state in self.states:
+                if state == None:
+                    dot.node("{}")
+                else:
+                    dot.node(str(state))
+            for trans in self.transitions:
+                inp = str(trans.init_state) if trans.init_state is not None \
+                        else "{}"
+                out = str(trans.output_state) if trans.output_state is not None \
+                        else "{}"
+                trans_output = str(trans.output) if trans.output is not None \
+                        else " "
+
+                dot.edge(inp, out, label="{}:{}".format(trans.input, trans_output))
+        with graph.subgraph(node_attr={'shape': 'record'}) as table:
+            # table.node('struct1', r'{{id|addr|nh|path}')
+            res = r'{{id|addr|nh|path}'
+            for _id in self.id_to_route:
+                res += '|{'
+                res += str(_id)
+                res += '|' + str(self.id_to_route[_id].addr)
+                res += '|' + str(self.id_to_route[_id].nh)
+                res += '|' + str(self.id_to_route[_id].path)
+                res += '}'
+            res += '}'
+            table.node('route_table', res)
+
+        return graph 
+
+    def __delitem__(self):
+        self.inputFile.close()
+        del self.df
+
+    def __str__(self):
+        return str(self.df)
 
 
     def __delitem__(self):

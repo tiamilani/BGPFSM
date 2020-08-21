@@ -68,7 +68,8 @@ if __name__ == "__main__":
     sf.translation()
     sf.evaluate_fsm()
     dot = Digraph(comment='Node Graph')
-    graph = sf.get_fsm_graphviz(dot)
+    # graph = sf.get_fsm_graphviz(dot)
+    graph = sf.get_detailed_fsm_graphviz(dot)
     graph.render(outputFile_path, format="pdf", view=True)
 
     # Check that the required node is inside the input file

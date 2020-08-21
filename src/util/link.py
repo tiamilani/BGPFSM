@@ -62,8 +62,10 @@ class Link:
         # can be delivered
         request = self._res.request()
         yield self._env.timeout(delay) & request
+        self._node._print("resource obtained, inserting msg: " + str(msg.obj))
         self._node.event_store.put(msg)
         yield self._env.timeout(self.__waiter)
+        self._node._print("resource releasing")
         self._res.release(request)
         
     def tx(self, msg, delay):

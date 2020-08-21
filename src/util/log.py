@@ -41,7 +41,7 @@ class Log:
         """
         self.sim = bgp_sim.sim.Instance()
         self.log_file = open(output_file, "w")
-        self.log_file.write("event|time|node|value\n")
+        self.log_file.write("event_id|event_cause|event|time|node|value\n")
         self.log_packets = log_packets
         self.log_states = log_states
         self.log_routing_change = log_routing_change
@@ -51,18 +51,20 @@ class Log:
     def __delete__(self, instance):
         self.log_file.close()
 
-    def log_rt_change(self, node, route):
+    def log_rt_change(self, node, event):
         """
         Logs the result of a routing table change
         :param node: The node that triggered the event
         :param route: the new route in the routing table
         """
         if self.log_routing_change:
-            self.log_file.write("{}|{}|{}|{}\n".format(Events.RT_CHANGE,
+            self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id, 
+                                            event.event_cause,
+                                            Events.RT_CHANGE,
                                             self.sim.env.now, node.id,
-                                            route))
+                                            event.obj))
 
-    def log_rib_change(self, node_id, state):
+    def log_rib_change(self, node_id, event):
         """
         Logs the rib state change
         It means that the knowledge of routes is changed in some way
@@ -70,44 +72,51 @@ class Log:
         :param state: the new state of the rib
         """
         if self.log_rib:
-            self.log_file.write("{}|{}|{}|{}\n".format(Events.RIB_CHANGE,
-                                            self.sim.env.now, node_id, state))
+            self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id,
+                                            event.event_cause, Events.RIB_CHANGE,
+                                            self.sim.env.now, node_id, event.obj))
 
-    def log_packet_tx(self, node, packet):
+    def log_packet_tx(self, node, event):
         """
         Logs a packet tx.
         :param node: source node
         :param packet: the packet to log
         """
         if self.log_packets:
-            self.log_file.write("{}|{}|{}|{}\n".format(Events.TX,
+            self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id,
+                                                event.event_cause,
+                                                Events.TX,
                                                 self.sim.env.now, 
                                                 node.id, 
-                                                packet))
+                                                event.obj))
     
-    def log_packet_rx(self, node, packet):
+    def log_packet_rx(self, node, event):
         """
         Logs a packet rx.
         :param node: source node
         :param packet: the packet to log
         """
         if self.log_packets:
-            self.log_file.write("{}|{}|{}|{}\n".format(Events.RX,
+            self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id,
+                                                event.event_cause,
+                                                Events.RX,
                                                 self.sim.env.now, 
                                                 node.id, 
-                                                packet))
+                                                event.obj))
 
-    def log_path(self, node_id, path):
+    def log_path(self, node_id, event):
         """
         Logs a new path to a dst.
         :param node_id: source node
         :param path: the path to log
         """
         if self.log_paths:
-            self.log_file.write("{}|{}|{}|{}\n".format(Events.NEW_PATH,
+            self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id,
+                                                event.event_cause,
+                                                Events.NEW_PATH,
                                                 self.sim.env.now, 
                                                 node_id, 
-                                                path))
+                                                event.obj))
 
     def log_state(self, node):
         """

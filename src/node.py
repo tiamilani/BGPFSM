@@ -98,8 +98,6 @@ class Node(Module):
         self.delay = Distribution(config.get_param(Node.PAR_DELAY))
         self.withdraw_dist = Distribution(config.get_param(Node.PAR_WITHDRAW_DIST))
         self.reannouncement_dist= Distribution(config.get_param(Node.PAR_REANNOUNCE_DIST))
-        # Network that needs to be reannounced after the withdraw
-        self.reannounce_net = set()
 
     def _print(self, msg):
         """_print.
@@ -138,14 +136,14 @@ class Node(Module):
                 # Table that needs to be shared
                 if len(self.destination_queue[dst]) > 0:
                     proc_time = self.proc_time.get_value()
-                    new_dst_event = Event(proc_time, Events.NEW_DST, self, self)
+                    new_dst_event = Event(proc_time, None, Events.NEW_DST, self, self)
                     self.event_store.put(new_dst_event)
 
         else:
             print("{} - Neighbor {} already in the set".format(self._id, link.node.id))
             exit(1)
 
-    def add_destination(self, destination, path, nh):
+    def add_destination(self, destination, path, nh, event=None):
         """
         Function that adds a destination to the data structure
         that manage destinations that needs to be shared inside the node
@@ -159,13 +157,19 @@ class Node(Module):
 
         # Insert the route in the rib
         old_best = self.rib[network]
-        new_best = self.rib.insert(network, r)
+        new_best = self.rib.insert(network, r, event=event)
         # Evaluate if the new route is the new best route for the destiantion
         if new_best != old_best:
             # If it is the new best route insert it in the routing table and 
             # Log the event
             self.routing_table[network] = r
-            self.logger.log_rt_change(self, r)
+            if event is not None:
+                rt_change_event = Event(0, event.id, Events.RT_CHANGE, 
+                                        self, self, obj=r)
+            else:
+                rt_change_event = Event(0, None, Events.RT_CHANGE, 
+                                        self, self, obj=r)
+            self.logger.log_rt_change(self, rt_change_event)
 
             # Share the destination with all the neighbors
             if len(self._neighbors.keys()) > 0:
@@ -180,7 +184,12 @@ class Node(Module):
             # Generate the new destination event that will trigger all the TX
             if len(self.destination_queue[network]) > 0:
                 proc_time = self.proc_time.get_value()
-                new_dst_event = Event(proc_time, Events.NEW_DST, self, self)
+                if event is not None:
+                    new_dst_event = Event(proc_time, event.id, Events.NEW_DST, 
+                                          self, self)
+                else:
+                    new_dst_event = Event(proc_time, None, Events.NEW_DST, 
+                                          self, self)
                 self.event_store.put(new_dst_event)
             else:
                 del self.destination_queue[network]
@@ -206,12 +215,12 @@ class Node(Module):
         yield self._env.timeout(waiting_time)
         # Log the reception
         self._print("Packet_RX: " + str(packet))
-        self.logger.log_packet_rx(self, packet)
+        self.logger.log_packet_rx(self, event)
         # Get the route
         route = packet.content
         # If the packet contains an update it will be evaluated
         if packet.packet_type == Packet.UPDATE:
-            self.add_destination(route.addr, route.path, route.nh)
+            self.add_destination(route.addr, route.path, route.nh, event=event)
         # If the packet contains a withdrow the evaluation depends on the number
         # Of neighbors
         # TODO better handling this part, remove the handling here and do it one
@@ -221,24 +230,25 @@ class Node(Module):
                 # Delete the route from the routing table and the rib
                 old_best = self.rib[route.addr]
                 if self.rib.contains(route.addr, route):
-                    self.rib.remove(route.addr, route)
+                    self.rib.remove(route.addr, route, event=event)
                 new_best = self.rib[route.addr]
                 if new_best == None:
                     del self.routing_table[route.addr]
-                    self.logger.log_rt_change(self, Route(route.addr, [], None))
+                    rt_change_event = Event(0, Events.RT_CHANGE, event.id,
+                                            self, self, obj=Route(route.addr, [], None))
+                    self.logger.log_rt_change(self, rt_change_event)
                 elif new_best != old_best:
                     self.routing_table[route.addr] = new_best
-                    self.logger.log_rt_change(self, new_best)
+                    rt_change_event = Event(0, Events.RT_CHANGE, event.id,
+                                            self, self, obj=new_best)
+                    self.logger.log_rt_change(self, rt_change_event)
             else:
-                # For each neighbor trigger a withdraw event with the route
-                for neigh in self._neighbors:
-                    route = deepcopy(packet.content)
-                    withdraw_packet = Packet(Packet.WITHDRAW, route)
-                    dst = self._neighbors[neigh].node
-                    withdraw_time = self.proc_time.get_value()
-                    withdraw_event = Event(withdraw_time, Events.WITHDRAW,
-                                           self, dst, obj=withdraw_packet)
-                    self.event_store.put(withdraw_event)
+                route = deepcopy(packet.content)
+                withdraw_packet = Packet(Packet.WITHDRAW, route)
+                withdraw_time = self.proc_time.get_value()
+                withdraw_event = Event(withdraw_time, event.id, Events.WITHDRAW, 
+                                       self, self, obj=withdraw_packet)
+                self.event_store.put(withdraw_event)
 
     def tx_pkt(self, event):
         """
@@ -246,6 +256,8 @@ class Node(Module):
         Function that transmit the packet to a destination
         :param event: Transmission event
         """
+        # TODO Reserve the transmission through a resource
+        # to avoid the transmission of messages in reverse order
         # Evaluation of the time necessary for the transmission
         waiting_time = event.event_duration
         yield self._env.timeout(waiting_time)
@@ -261,11 +273,11 @@ class Node(Module):
             delay = self.delay.get_value()
         # Generate the reception event and pass it to the link
         evaluation = self.proc_time.get_value()
-        reception_event = Event(evaluation, Events.RX, self, dst, obj=packet, 
-                                sent_time=self._env.now)
+        reception_event = Event(evaluation, event.id, Events.RX, self, dst, 
+                                obj=packet, sent_time=self._env.now)
         link.tx(reception_event, delay)
         # Log the transmission
-        self.logger.log_packet_tx(self, packet)
+        self.logger.log_packet_tx(self, event)
 
     def share_dst(self, event):
         """share_dst.
@@ -290,25 +302,24 @@ class Node(Module):
                 packet = Packet(Packet.UPDATE, route)
                 dst_node = self._neighbors[neigh].node
                 interrarival = self.rate.get_value()
-                transmission_event = Event(interrarival, Events.TX, 
-                                    self, dst_node, obj=packet)
+                transmission_event = Event(interrarival, event.event_cause,
+                                           Events.TX, self, dst_node, obj=packet)
                 # Send the event to the handler
                 self.event_store.put(transmission_event)
                 del_neigh.append(neigh)
 
-                # Check if a withdraw is needed
-                if self.withdraw:
-                    # Check if the route is originated by the current node
-                    if len(self.routing_table[dst].path) == 0:
-                        # Generate the withdraw event
-                        withdraw_packet = Packet(Packet.WITHDRAW, 
-                                                self.routing_table[dst])
-                        withdraw_time = self.withdraw_dist.get_value()
-                        withdraw_event = Event(withdraw_time, Events.WITHDRAW,
-                                                    self, dst_node, 
-                                                    obj=withdraw_packet)
-                        self.event_store.put(withdraw_event)
-                        self.reannounce_net.add(route.addr)
+            # Check if a withdraw is needed
+            if self.withdraw:
+                # Check if the route is originated by the current node
+                if len(self.routing_table[dst].path) == 0:
+                    # Generate the withdraw event
+                    withdraw_packet = Packet(Packet.WITHDRAW, 
+                                            self.routing_table[dst])
+                    withdraw_time = self.withdraw_dist.get_value()
+                    withdraw_event = Event(withdraw_time, event.event_cause,
+                                           Events.WITHDRAW, self, self, 
+                                           obj=withdraw_packet)
+                    self.event_store.put(withdraw_event)
 
             # Remove the neighbors that received the element from the queue
             for del_elem in del_neigh:
@@ -328,13 +339,18 @@ class Node(Module):
         """
         # Wait the time defined by the withdraw distribution
         yield self._env.timeout(event.event_duration)
-        # jet the route
+        # Get the route
         packet = event.obj
         route = deepcopy(packet.content)
         # Delete the route from the routing table and the rib
         old_best = self.rib[route.addr]
         if self.rib.contains(route.addr, route):
-            self.rib.remove(route.addr, route)
+            change_event = Event(0, event.event_cause, Events.RIB_CHANGE, 
+                    None, None)
+            change_event.id = event.event_cause
+            self.rib.remove(route.addr, route, event=change_event)
+        else:
+            return
         new_best = self.rib[route.addr]
 
         # Generate the withdraw packet
@@ -344,38 +360,47 @@ class Node(Module):
         withdraw_time = self.rate.get_value()
         # The update must be after the withdraw
         update_time = self.rate.get_value() + withdraw_time
+        packet_update = None
 
         if new_best == None:
             del self.routing_table[route.addr]
-            self.logger.log_rt_change(self, Route(route.addr, [], None))
+            rt_change_event = Event(0, event.event_cause, Events.RT_CHANGE,
+                                    self, self, obj=Route(route.addr, [], None))
+            self.logger.log_rt_change(self, rt_change_event)
         elif new_best != old_best:
             self.routing_table[route.addr] = new_best
-            self.logger.log_rt_change(self, new_best)
+            rt_change_event = Event(0, event.event_cause, Events.RT_CHANGE,
+                                    self, self, obj=new_best)
+            self.logger.log_rt_change(self, rt_change_event)
 
             route_update = deepcopy(self.routing_table[route.addr])
             route_update.add_to_path(self._id)
             route_update.nh = self._id
             # Create the event
             packet_update = Packet(Packet.UPDATE, route_update)
-            dst_node = event.destination 
-            transmission_event = Event(update_time, Events.TX, 
-                                self, dst_node, obj=packet_update)
+            # dst_node = event.destination 
+            # transmission_event = Event(update_time, Events.TX, 
+            #                     self, dst_node, obj=packet_update)
             # Send the event to the handler
-            self.event_store.put(transmission_event)
+            # self.event_store.put(transmission_event)
 
-        # Send the packet to the neighbor 
-        rate = self.rate.get_value()
-        dst_node = event.destination 
-        transmission_event = Event(rate, Events.TX, self, dst_node,
-                                    obj=withdraw_packet)
-        self.event_store.put(transmission_event)
+        # Send the packet to the neighborhod
+        for neigh in self._neighbors:
+            dst_node = self._neighbors[neigh].node
+            transmission_event = Event(withdraw_time, event.event_cause,
+                                        Events.TX, self, dst_node,
+                                        obj=withdraw_packet)
+            self.event_store.put(transmission_event)
+            if packet_update is not None:
+                transmission_event = Event(update_time, event.event_cause, 
+                                           Events.TX, self, dst_node, 
+                                           obj=packet_update)
+                self.event_store.put(transmission_event)
 
         # Check if it's needed a redistribution
-        if self.reannounce and len(packet.content.path) == 0 \
-                and packet.content.addr in self.reannounce_net:
-            self.reannounce_net.remove(packet.content.addr)
+        if self.reannounce and len(packet.content.path) == 0:
             reannouncement_timing = self.reannouncement_dist.get_value()
-            redistribute_event = Event(reannouncement_timing, Events.REANNOUNCE,
+            redistribute_event = Event(reannouncement_timing, None, Events.REANNOUNCE,
                                         self, self, obj=packet.content.addr)
             self.event_store.put(redistribute_event)
 

@@ -23,12 +23,13 @@ class Event:
     # counter used for assigning unique IDs to events
     event_counter = 0
 
-    def __init__(self, event_duration, event_type, source, destination, obj=None,
-            sent_time=None):
+    def __init__(self, event_duration, event_cause, event_type, source, 
+                destination, obj=None, sent_time=None):
         """
         Creates an event.
         :param event_duration: time at which the event should be scheduled
         :param event_type: type of event
+        :param event_cause: id of the event that caused this event
         :param destination: destination module that should be notified
         :param source: module generating the event
         :param obj: optional object to be attached to the event
@@ -41,6 +42,7 @@ class Event:
         self._source = source
         self._obj = obj
         self._sent_time = sent_time
+        self._event_cause = event_cause
 
     def __eq__(self, other):
         if not isinstance(other, Event):
@@ -62,6 +64,17 @@ class Event:
         return self.event_id < other.event_id
 
     @property
+    def id(self):
+        """
+        Returns the event id
+        """
+        return self._event_id
+
+    @id.setter
+    def id(self, v):
+        self._event_id = v
+
+    @property
     def event_duration(self):
         """
         Returns event time
@@ -74,6 +87,13 @@ class Event:
         Returns event type
         """
         return self._event_type
+
+    @property
+    def event_cause(self):
+        """
+        Returns event type
+        """
+        return self._event_cause
 
     @property
     def destination(self):

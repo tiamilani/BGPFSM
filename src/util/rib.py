@@ -19,6 +19,8 @@ import sys
 
 sys.path.insert(1, '..')
 from route import Route
+from events import Events
+from event import Event
 
 
 class RibIterator():
@@ -110,7 +112,7 @@ class Rib(collections.MutableSequence):
         self.check(v)
         self._table[i][j] = v
 
-    def update_rib_state(self, route, insertion=True):
+    def update_rib_state(self, route, event, insertion=True):
         # Concatenation of all route ids
         if insertion:
             if str(route) not in self._support_route_identifier.keys():
@@ -118,11 +120,24 @@ class Rib(collections.MutableSequence):
                 self.ROUTE_COUNTER += 1
             if self._support_route_identifier[str(route)] not in self.actual_state:
                 self.actual_state.add(self._support_route_identifier[str(route)])
-                self.logger.log_rib_change(self.id, self.actual_state)
+                if event is not None:
+                    rib_change_event = Event(0, event.id, Events.RIB_CHANGE, 
+                                             None, None, obj=self.actual_state)
+                else:
+                    rib_change_event = Event(0, None, Events.RIB_CHANGE, 
+                                             None, None, obj=self.actual_state)
+                    
+                self.logger.log_rib_change(self.id, rib_change_event)
         if not insertion:
             self.actual_state.remove(self._support_route_identifier[str(route)])
             # Log the state change
-            self.logger.log_rib_change(self.id, self.actual_state)
+            if event is not None:
+                rib_change_event = Event(0, event.id, Events.RIB_CHANGE,
+                                         None, None, obj=self.actual_state)
+            else:
+                rib_change_event = Event(0, None, Events.RIB_CHANGE, 
+                                         None, None, obj=self.actual_state)
+            self.logger.log_rib_change(self.id, rib_change_event)
 
     def contains(self, i, v):
         """contains.
@@ -136,7 +151,7 @@ class Rib(collections.MutableSequence):
                 return True
         return False
 
-    def remove(self, i, v):
+    def remove(self, i, v, event=None):
         """remove.
         remove object v from the vector of addr i if present
 
@@ -146,7 +161,7 @@ class Rib(collections.MutableSequence):
         if i in self._table:
             if v in self._table[i]:
                 self._table[i].remove(v)
-                self.update_rib_state(v, insertion=False)
+                self.update_rib_state(v, event, insertion=False)
                 return None
         return v
 
@@ -160,7 +175,7 @@ class Rib(collections.MutableSequence):
         """
         return True
 
-    def insert(self, i, v):
+    def insert(self, i, v, event=None):
         """insert.
         Function to insert an object in the rib at the addr i
 
@@ -179,9 +194,14 @@ class Rib(collections.MutableSequence):
                 # Sort the list for importance of the routes
                 self._table[i] = sorted(self._table[i])
             # Log the new path to the destination
-            self.logger.log_path(self.id, v)
+            if event is not None:
+                path_event = Event(0, event.id,  Events.RIB_CHANGE,
+                                   None, None, obj=v)
+            else:
+                path_event = Event(0, None, Events.RIB_CHANGE, None, None, obj=v)
+            self.logger.log_path(self.id, path_event)
             # Update the rib state
-            self.update_rib_state(v)
+            self.update_rib_state(v, event)
             # Return the best route
             return self._table[i][0]
         # If it was not possible to enter the path then return None
