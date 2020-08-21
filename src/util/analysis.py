@@ -19,6 +19,7 @@ from events import Events
 from packet import Packet
 from route import Route
 from transition import Transition
+import ast
 from graphviz import Digraph
 
 class SingleFileAnalysis():
@@ -33,6 +34,7 @@ class SingleFileAnalysis():
         self.transitions = set() 
         self.route_to_id = {}
         self.id_to_route = {}
+        self.states_routes = {}
 
     def selectNode(self, node_id):
         self.df = self.df[self.df.node == node_id]
@@ -58,11 +60,10 @@ class SingleFileAnalysis():
             first_pkt_received = tmp_df[tmp_df.event == Events.RX].iloc[0]
             first_pkt_index = first_pkt_received.name
             tmp_df = tmp_df.drop(first_pkt_index)
-            if Events.RX not in tmp_df.event.values:
-                break
             events_in_between = tmp_df[tmp_df["event_cause"]==str(first_pkt_received["event_id"])]
-            new_state = None
+            new_state = self.actualState 
             transmitted_routes = set()
+
             for idx, row in events_in_between.iterrows():
                 if row["event"] == Events.RIB_CHANGE:
                     if row["value"] == "set()":
@@ -99,12 +100,26 @@ class SingleFileAnalysis():
                 exit(2)
             if len(transmitted_routes) == 0:
                 transmitted_routes = None
+            if(self.actualState != new_state):
+                acst = ast.literal_eval(self.actualState) if self.actualState is not None \
+                        else set()
+                nwst = ast.literal_eval(new_state) if new_state is not None \
+                        else set()
+                if len(acst) > len(nwst):
+                    resulting_elem = acst.difference(nwst).pop()
+                else:
+                    resulting_elem = nwst.difference(acst).pop()
+                if resulting_elem not in self.states_routes.keys():
+                    self.states_routes[resulting_elem] = Route.fromString(str(route))
+
             transition = Transition(self.actualState, new_state,
                     inp,
                     transmitted_routes)
             self.actualState = new_state
             self.states.add(new_state)
             self.transitions.add(transition)
+        for trans in self.transitions:
+            print(trans)
 
     def get_fsm_graphviz(self, dot):
         for state in self.states:
@@ -141,7 +156,7 @@ class SingleFileAnalysis():
                 dot.edge(inp, out, label="{}:{}".format(trans.input, trans_output))
         with graph.subgraph(node_attr={'shape': 'record'}) as table:
             # table.node('struct1', r'{{id|addr|nh|path}')
-            res = r'{{id|addr|nh|path}'
+            res = r'{{Messages Table}|{id|addr|nh|path}'
             for _id in self.id_to_route:
                 res += '|{'
                 res += str(_id)
@@ -151,6 +166,19 @@ class SingleFileAnalysis():
                 res += '}'
             res += '}'
             table.node('route_table', res)
+
+        with graph.subgraph(node_attr={'shape': 'record'}) as table:
+            # table.node('struct1', r'{{id|addr|nh|path}')
+            res = r'{{States Table}|{id|addr|nh|path}'
+            for _id in self.states_routes:
+                res += '|{'
+                res += str(_id)
+                res += '|' + str(self.states_routes[_id].addr)
+                res += '|' + str(self.states_routes[_id].nh)
+                res += '|' + str(self.states_routes[_id].path)
+                res += '}'
+            res += '}'
+            table.node('states_table', res)
 
         return graph 
 
