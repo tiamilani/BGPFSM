@@ -239,7 +239,15 @@ class SingleFileAnalysis():
             if state == None:
                 dot.node("{}")
             else:
-                dot.node(str(state))
+                knowledge = ast.literal_eval(state) 
+                best_id = knowledge.pop()
+                while len(knowledge) > 0:
+                    new_elem = knowledge.pop()
+                    if self.states_routes[new_elem] < self.states_routes[best_id]:
+                        best_id = new_elem
+                res = "<" + str(state) + ">"
+                res = res.replace(str(best_id), "<B>" + str(best_id) + "</B>")
+                dot.node(str(state), label=res) 
         # Insert every transition like edge
         for trans in self.transitions:
             inp = str(trans.init_state) if trans.init_state is not None \
