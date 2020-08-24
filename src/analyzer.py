@@ -15,8 +15,8 @@
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
 from optparse import OptionParser
-from pathlib import Path
 from graphviz import Digraph
+import os.path
 import sys
 
 sys.path.insert(1, 'util')
@@ -33,6 +33,14 @@ parser.add_option("-n", "--node", dest="node", default="0", type="int",
                   action="store", help="Node that the user want to see the FSM")
 parser.add_option("-o", "--output", dest="outputFile", default="output_fsm",
                   action="store", help="Output file containing the FSM representation")
+parser.add_option("-r", "--render", dest="render", default=False, 
+                  action='store_true', help="Render the graph on a pdf file in \
+                  the same output directory of the gv file")
+parser.add_option("-d", "--display", dest="display", default=False,
+                  action='store_true', help="Display the rendering produced")
+parser.add_option("-s", "--security", dest="security", default=False,
+                  action='store_true', help="Enable the security checks: \
+                  disable output file overwrite")
 
 if __name__ == "__main__":
     # Parse the arguments
@@ -43,33 +51,28 @@ if __name__ == "__main__":
     node = options.node
     outputFile_path = options.outputFile
 
-    inputFile = Path(inputFile_path)
-    outputFile = Path(outputFile_path)
-
     # Check that the input file exists
-    """try:
-        my_abs_path = inputFile.resolve()
-    except FileNotFoundError:
+    if not os.path.isfile(inputFile_path):
         # doesn't exist
         print("Input file {} not found".format(inputFile_path))
         raise FileNotFoundError
         
     # Check that the output file does not exists
-    try:
-        my_abs_path = outputFile.resolve()
+    if os.path.isfile(outputFile_path) and options.security:
         print("output file {} already exists".format(outputFile_path))
         exit(1)
-    except FileNotFoundError:
-        pass
-    """
+
     # Get the dataframe rep of the input file
     sf = SingleFileAnalysis(inputFile_path)
     sf.selectNode(node)
-    sf.translation()
     sf.evaluate_fsm()
     dot = Digraph(comment='Node Graph')
     # graph = sf.get_fsm_graphviz(dot)
     graph = sf.get_detailed_fsm_graphviz(dot)
-    graph.render(outputFile_path, format="pdf", view=True)
+    graph.save(outputFile_path.split('/')[-1] + ".gv", 
+               '/'.join(outputFile_path.split('/')[:-1]))
+    if options.render:
+        graph.render(outputFile_path.split('/')[-1], format="pdf", cleanup=True, 
+                     view=options.display)
 
     # Check that the required node is inside the input file
