@@ -19,6 +19,8 @@ import simpy
 import time
 import random
 import networkx as nx
+from pathlib import Path
+import os
 
 sys.path.insert(1, 'util')
 from config import Config
@@ -122,6 +124,8 @@ class sim:
         # Set run number
         self._config.set_run_number(self.run_number)
         # Set the logger
+        Path('/'.join(self._config.get_output_file().split('/')[:-1])).mkdir(
+                parents=True, exist_ok=True)
         self._logger = Log(self._config.get_output_file(), log_packets=True,
                             log_paths=True)
         # Get simulation duration

@@ -7,7 +7,7 @@
 		// Graph file to simulate
 		"graph": "graphs/fig_4_fsm_model.graphml",
 		// log file name using configuration parameters
-		"output" : "output_{seed}.csv",
+		"output" : "results/test/experiment_{date-time}/output_{seed}.csv",
 		// Verbose value
 		"verbose": "False",
 		// Withdraw signaling 

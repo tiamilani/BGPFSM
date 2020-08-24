@@ -17,6 +17,7 @@
 import json
 import re
 import sys
+from datetime import datetime
 
 
 class Config:
@@ -219,6 +220,8 @@ class Config:
                         # its value we take its index
                         if isinstance(obj, list):
                             obj = index
+                    elif var == "date-time":
+                        obj = datetime.now().strftime("%d-%m-%Y-%H-%M-%S-%f") 
                     else:
                         # otherwise we simply take the only value it has
                         obj = config[var]
