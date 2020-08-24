@@ -74,5 +74,3 @@ if __name__ == "__main__":
     if options.render:
         graph.render(outputFile_path.split('/')[-1], format="pdf", cleanup=True, 
                      view=options.display)
-
-    # Check that the required node is inside the input file
