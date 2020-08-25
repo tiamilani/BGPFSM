@@ -21,6 +21,7 @@ from route import Route
 from transition import Transition
 import ast
 from graphviz import Digraph
+import timeit
 
 class SingleFileAnalysis():
     """SingleFileAnalysis.
@@ -38,7 +39,7 @@ class SingleFileAnalysis():
         """
         self.inputFile = open(inputFile)
         # Open it in pandas like data frame
-        self.df = pd.read_csv(self.inputFile, sep='|')
+        self.df = pd.read_csv(self.inputFile, sep='|', index_col="event_cause")
         # Set of states
         self.states = set()
         # Last state of the node during the evolution
@@ -83,7 +84,7 @@ class SingleFileAnalysis():
                 row["value"] = Route.fromString(row["value"])
         return df
 
-    def __evaluate_rib_change(self, row):
+    def __evaluate_rib_change(self, row_value):
         """__evaluate_rib_change.
         Evaluate a row that contains a row change, it returns
         the new state, if the set is empty it will return None
@@ -91,12 +92,12 @@ class SingleFileAnalysis():
         :param row: row to evaluate
         :returns: None if the set is empty, the str(set) otherwise
         """
-        if row["value"] == "set()":
+        if row_value == "set()":
             return None
         else:
-            return row["value"]
+            return row_value
 
-    def __evaluate_pkt(self, row):
+    def __evaluate_pkt(self, row_value):
         """__evaluate_pkt.
         Evaluate a single pkt row of the DF, it will return the compressed
         string corresponding to the row, A{ID} for an advertisement or
@@ -108,7 +109,7 @@ class SingleFileAnalysis():
         :returns: string with the compressed version of the update
         """
         # Get the packet and the route transmitted
-        packet = Packet.fromString(row["value"])
+        packet = Packet.fromString(row_value)
         route = Route.fromString(packet.content)
         # If the route is not in the dictionary of routes add it
         if str(route) not in self.route_to_id.keys():
@@ -133,6 +134,19 @@ class SingleFileAnalysis():
         :returns: compressed string of the packet
         """
         return self.__evaluate_pkt(row)
+
+    def __evaluate_tx_lt(self, values):
+        """__evaluate_tx.
+        This function is used to evaluate transmitted messages and get 
+        the comphressed version like a list
+
+        :param values: values to evaluate
+        :returns: compressed llist of string of the packets
+        """
+        res = []
+        for pkt in values:
+            res.append(self.__evaluate_pkt(pkt))
+        return res
 
     def __evaluate_rx(self, row):
         """__evaluate_rx.
@@ -159,7 +173,70 @@ class SingleFileAnalysis():
         # symmetric_difference between sets
         return acst ^ nwst
 
+    # @profile
+    def __evaluate_rx_row(self, rx_event_id, rx_value):
+        # Find events caused by the rx
+        #events_in_between = self.df[self.df["event_cause"]==str(rx_event_id)]
+        if int(rx_event_id) not in self.df.index:
+            return
+        events_in_between = self.df.loc[[int(rx_event_id)], : ]
+        # Keep a tmp variable with the state that can have been changed 
+        # thanks to this reception
+        new_state = self.actualState 
 
+        # Keep a set of transmitted routes, set because we are interested
+        # uniquelly in which route has been transmitted and not to who
+        transmitted_routes = set()
+
+        # Check each row of the events caused by the reception
+        for row_event, row_value in zip(events_in_between['event'], 
+                                        events_in_between['value']):
+            # If the event is a change in the state, I update the local
+            # variable that keeps the state
+            if row_event == Events.RIB_CHANGE:
+                new_state = self.__evaluate_rib_change(row_value)
+            # If the event is a TX i update the corresponding sets
+            if row_event == Events.TX:
+                transmitted_routes.add(self.__evaluate_tx(row_value))
+    
+        # combined = self.df.append(events_in_between)
+        # self.df = combined[~combined.index.duplicated(keep=False)]
+
+        # Evaluate the reception event
+        inp = self.__evaluate_rx(rx_value)
+
+        if len(transmitted_routes) == 0:
+            transmitted_routes = None
+
+        # The state has changed thanks to this reception message
+        if(self.actualState != new_state):
+            # Evaluate the difference in the new state vs the previus one
+            resulting_elem = self.__evalaute_state_difference(new_state)
+            if len(resulting_elem) != 1:
+                print("something really bad happened")
+                exit(3)
+            resulting_elem = resulting_elem.pop()
+            if resulting_elem not in self.states_routes.keys():
+                pkt = Packet.fromString(rx_value)
+                route = Route.fromString(pkt.content)
+                self.states_routes[resulting_elem] = route 
+
+        # Create the new transition
+        transition = Transition(self.actualState, new_state,
+                                inp,transmitted_routes)
+        # Change the state
+        self.actualState = new_state
+        # Add the new state to the set of states
+        self.states.add(new_state)
+        # Add the transition to the set of transitions
+        self.transitions.add(transition)
+
+    def keep_only_fsm_events(self):
+        self.df = self.df[(self.df.event == Events.RIB_CHANGE) | \
+                          (self.df.event == Events.RX) | \
+                          (self.df.event == Events.TX)]
+
+    # @profile
     def evaluate_fsm(self):
         """evaluate_fsm.
             Function that evaluate the current dataframe objects to obatin
@@ -167,66 +244,10 @@ class SingleFileAnalysis():
         """
         
         # Keep only the events that contribute to states or transitions
-        tmp_df = self.df[(self.df.event == Events.RIB_CHANGE) | \
-                         (self.df.event == Events.RX) | \
-                         (self.df.event == Events.TX)]
-        # TODO useful?
-        tmp_df = self.translation(df=tmp_df)
-        # Study transitions
-        # For each packet received evaluate the correlated events
-        while Events.RX in tmp_df.event.values:
-            # Get the packet received
-            first_pkt_received = tmp_df[tmp_df.event == Events.RX].iloc[0]
-            # drop the packet row
-            tmp_df = tmp_df.drop(first_pkt_received.name)
-            # Get the dataframe of events caused by this reception
-            events_in_between = tmp_df[tmp_df["event_cause"]==str(first_pkt_received["event_id"])]
+        tmp_rx = self.df[(self.df.event == Events.RX)]
+        self.df = self.df.sort_index()
 
-            # Keep a tmp variable with the state that can have been changed 
-            # thanks to this reception
-            new_state = self.actualState 
-            # Keep a set of transmitted routes, set because we are interested
-            # uniquelly in which route has been transmitted and not to who
-            transmitted_routes = set()
-
-            # Check each row of the events caused by the reception
-            for idx, row in events_in_between.iterrows():
-                # If the event is a change in the state, I update the local
-                # variable that keeps the state
-                if row["event"] == Events.RIB_CHANGE:
-                    new_state = self.__evaluate_rib_change(row)
-                # If the event is a TX i update the corresponding sets
-                if row["event"] == Events.TX:
-                    transmitted_routes.add(self.__evaluate_tx(row))
-    
-            # Evaluate the reception event
-            inp = self.__evaluate_rx(first_pkt_received)
-
-            if len(transmitted_routes) == 0:
-                transmitted_routes = None
-
-            # The state has changed thanks to this reception message
-            if(self.actualState != new_state):
-                # Evaluate the difference in the new state vs the previus one
-                resulting_elem = self.__evalaute_state_difference(new_state)
-                if len(resulting_elem) != 1:
-                    print("something really bad happened")
-                    exit(3)
-                resulting_elem = resulting_elem.pop()
-                if resulting_elem not in self.states_routes.keys():
-                    pkt = Packet.fromString(first_pkt_received["value"])
-                    route = Route.fromString(pkt.content)
-                    self.states_routes[resulting_elem] = route 
-
-            # Create the new transition
-            transition = Transition(self.actualState, new_state,
-                                    inp,transmitted_routes)
-            # Change the state
-            self.actualState = new_state
-            # Add the new state to the set of states
-            self.states.add(new_state)
-            # Add the transition to the set of transitions
-            self.transitions.add(transition)
+        tmp_rx.apply(lambda row: self.__evaluate_rx_row(row.event_id, row.value), axis=1)
 
     def get_fsm_graphviz(self, dot):
         """get_fsm_graphviz.

@@ -18,6 +18,7 @@ from optparse import OptionParser
 from graphviz import Digraph
 import os.path
 import sys
+import timeit
 
 sys.path.insert(1, 'util')
 from analysis import SingleFileAnalysis
@@ -63,11 +64,23 @@ if __name__ == "__main__":
         exit(1)
 
     # Get the dataframe rep of the input file
+    starttime = timeit.default_timer()
+    init_time= timeit.default_timer()
     sf = SingleFileAnalysis(inputFile_path)
+    print("The init time difference is :", timeit.default_timer() - init_time)
+    select_node_time = timeit.default_timer()
     sf.selectNode(node)
+    print("The select node time difference is :", timeit.default_timer() - select_node_time)
+    keep_events_time = timeit.default_timer()
+    sf.keep_only_fsm_events()
+    print("The keep fsm events time difference is :", timeit.default_timer() - keep_events_time)
+    evaluate_time= timeit.default_timer()
     sf.evaluate_fsm()
+    print("The evaluate time difference is :", timeit.default_timer() - evaluate_time)
+    print("The total time difference is :", timeit.default_timer() - starttime)
+    
+    #Generate the graph
     dot = Digraph(comment='Node Graph')
-    # graph = sf.get_fsm_graphviz(dot)
     graph = sf.get_detailed_fsm_graphviz(dot)
     graph.save(outputFile_path.split('/')[-1] + ".gv", 
                '/'.join(outputFile_path.split('/')[:-1]))
