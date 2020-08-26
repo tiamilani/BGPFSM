@@ -21,6 +21,7 @@ class Transition():
         self.output_state = output_state
         self.input = trigger_input
         self.output = output
+        self.counter = 1
 
     def __eq__(self, obj):
         if str(self) == str(obj):
@@ -31,8 +32,7 @@ class Transition():
         return not self == obj
 
     def __hash__(self):
-        return hash(self.init_state) + hash(self.output_state) + \
-               hash(self.input) + hash(str(self.output))
+        return hash(str(self))
 
     def __str__(self):
         res = "({}->{}, {}:{})".format(self.init_state, self.output_state,

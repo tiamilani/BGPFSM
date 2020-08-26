@@ -14,7 +14,7 @@
 #
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
-from optparse import OptionParser
+import argparse 
 from graphviz import Digraph
 import os.path
 import sys
@@ -24,28 +24,35 @@ sys.path.insert(1, 'util')
 from analysis import SingleFileAnalysis
 
 # Setup command line parameters
-parser = OptionParser(usage="usage: %prog [options]",
-                      description="Analize an output file from the fsm bgp "
+parser = argparse.ArgumentParser(usage="python2 analyzer.py [options]",
+                        description="Analize an output file from the fsm bgp "
                                   "simulator to produce the state graph of "
-                                  "a node.")
-parser.add_option("-f", "--file", dest="inputFile", default="output_0.csv",
-                  action="store", help="File to analize")
-parser.add_option("-n", "--node", dest="node", default="0", type="int",
-                  action="store", help="Node that the user want to see the FSM")
-parser.add_option("-o", "--output", dest="outputFile", default="output_fsm",
-                  action="store", help="Output file containing the FSM representation")
-parser.add_option("-r", "--render", dest="render", default=False, 
-                  action='store_true', help="Render the graph on a pdf file in \
-                  the same output directory of the gv file")
-parser.add_option("-d", "--display", dest="display", default=False,
-                  action='store_true', help="Display the rendering produced")
-parser.add_option("-s", "--security", dest="security", default=False,
-                  action='store_true', help="Enable the security checks: \
-                  disable output file overwrite")
+                                  "a node.",
+                        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument("-f", "--file", dest="inputFile", default="output_0.csv",
+                    action="store", help="File to analize")
+parser.add_argument("-n", "--node", dest="node", default=0, type=str,
+                    action="store", help="Node that the user want to see the FSM")
+parser.add_argument("-o", "--output", dest="outputFile", default="output_fsm",
+                    action="store", help="Output file containing the FSM representation")
+parser.add_argument("-r", "--render", dest="render", default=False, 
+                    action='store_true', help="Render the graph on a pdf file in \
+                    the same output directory of the gv file")
+parser.add_argument("-d", "--display", dest="display", default=False,
+                    action='store_true', help="Display the rendering produced")
+parser.add_argument("-s", "--security", dest="security", default=False,
+                    action='store_true', help="Enable the security checks: \
+                    disable output file overwrite")
+parser.add_argument("-t", "--time", dest="time", default=False,
+                    action='store_true', help="Shows the timing that the program \
+                          took to analyze the file")
+parser.add_argument("-v", "--verbose", dest="verbose", default=True,
+                    action='store_false', help="Makes the program more verbose \
+                          on standard output ")
 
 if __name__ == "__main__":
     # Parse the arguments
-    (options, args) = parser.parse_args()
+    options = parser.parse_args()
 
     # Obtain variables
     inputFile_path = options.inputFile
@@ -64,26 +71,66 @@ if __name__ == "__main__":
         exit(1)
 
     # Get the dataframe rep of the input file
-    starttime = timeit.default_timer()
-    init_time= timeit.default_timer()
+    if options.time:
+        starttime = timeit.default_timer()
+        init_time= timeit.default_timer()
+
     sf = SingleFileAnalysis(inputFile_path)
-    print("The init time difference is :", timeit.default_timer() - init_time)
-    select_node_time = timeit.default_timer()
-    sf.selectNode(node)
-    print("The select node time difference is :", timeit.default_timer() - select_node_time)
-    keep_events_time = timeit.default_timer()
-    sf.keep_only_fsm_events()
-    print("The keep fsm events time difference is :", timeit.default_timer() - keep_events_time)
-    evaluate_time= timeit.default_timer()
+
+    if options.time:
+        print("The init time has been:", timeit.default_timer() - init_time)
+    if options.verbose:
+        print("Initialization done, csv file loaded")
+
+    if options.time:
+        select_node_time = timeit.default_timer()
+
+    # Node selection
+    sf.df = sf.selectNode(node)
+
+    if options.time:
+        print("The select node time has been:", timeit.default_timer() - select_node_time)
+    if options.verbose:
+        print("Node selection done, dataframe updated")
+
+    if options.time:
+        keep_events_time = timeit.default_timer()
+
+    # Keep only fsm reliable events
+    sf.df = sf.keep_only_fsm_events()
+
+    if options.time:
+        print("The keep fsm events time has been :", timeit.default_timer() - keep_events_time)
+    if options.verbose:
+        print("Node fsm reliable events parsing done, dataframe updated")
+
+    if options.time:
+        evaluate_time= timeit.default_timer()
+
     sf.evaluate_fsm()
-    print("The evaluate time difference is :", timeit.default_timer() - evaluate_time)
-    print("The total time difference is :", timeit.default_timer() - starttime)
+    
+    if options.time:
+        print("The evaluate time has been:", timeit.default_timer() - evaluate_time)
+        print("The total time required by the evaluation has been:", timeit.default_timer() - starttime)
+    if options.verbose:
+        print("Evaluation of fsm components done")
     
     #Generate the graph
     dot = Digraph(comment='Node Graph')
     graph = sf.get_detailed_fsm_graphviz(dot)
+    if options.verbose:
+        print("Detailed FSM graph produced")
+
+    # Save results
+    sf.dump_states(outputFile_path + "_states.csv")
+    sf.dump_transitions(outputFile_path + "_transitions.csv")
+
     graph.save(outputFile_path.split('/')[-1] + ".gv", 
                '/'.join(outputFile_path.split('/')[:-1]))
+    if options.verbose:
+        print("Graph saved in the output file")
     if options.render:
         graph.render(outputFile_path.split('/')[-1], format="pdf", cleanup=True, 
                      view=options.display)
+        if options.verbose:
+            print("Graph rendering produced")
