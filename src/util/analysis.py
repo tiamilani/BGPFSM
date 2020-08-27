@@ -225,8 +225,6 @@ class SingleFileAnalysis():
         # Create the new transition
         transition = Transition(self.actualState, new_state,
                                 inp,transmitted_routes)
-        if self.actualState == set([4]) and new_state == set([1, 4]):
-            print(rx_value)
 
         # Change the state
         self.actualState = new_state

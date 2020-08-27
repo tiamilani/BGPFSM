@@ -1,13 +1,13 @@
 {
 	"simulation" : {
 		// seed(s) to initialize PRNGs
-		"seed" : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+		"seed" : [0, 1, 2, 3, 4],
 		// duration of each simulation in seconds
 		"duration" : 3600,
 		// Graph file to simulate
 		"graph": "graphs/fig_4_fsm_model.graphml",
 		// log file name using configuration parameters, use {seed} or {date-time}
-		"output" : "results/test/experiment_multi_test/output_{seed}.csv",
+		"output" : "results/test/experiment_fig_4/output_{seed}_{withdraw_dist.min}_{reannouncement_dist.min}.csv",
 		// Verbose value
 		"verbose": "False",
 		// Withdraw signaling 
@@ -15,9 +15,13 @@
 		// Reannouncement of a destination after a withdraw
 		"reannouncement": "True",
 		// Withdraw interval distribution from the announcement
-		"withdraw_dist": {"distribution": "unif", "min": 5, "max": 10, "int": 0.1},
+		"withdraw_dist": [{"distribution": "unif", "min": 5, "max": 10, "int": 0.1},
+						  {"distribution": "unif", "min": 8, "max": 10, "int": 0.1},
+						  {"distribution": "unif", "min": 2, "max": 3, "int": 0.1}],
 		// announcement interval distribution from the withdraw 
-		"reannouncement_dist": {"distribution": "unif", "min": 5, "max": 10, "int": 0.1},
+		"reannouncement_dist": [{"distribution": "unif", "min": 5, "max": 10, "int": 0.1},
+								{"distribution": "unif", "min": 10, "max": 15, "int": 0.1},
+							    {"distribution": "unif", "min": 1, "max": 3, "int": 0.1}],
 		// Transmission time required to start the actual message transmission 
 		"datarate": {"distribution": "const", "mean" : 0.00001},
 		// Processing time distribution

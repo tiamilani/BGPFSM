@@ -137,7 +137,7 @@ if __name__ == "__main__":
         if isinstance(states_df, NoneType):
             states_df = sr_df
         else:
-            states_df += sr_df
+            states_df= pd.concat([states_df, sr_df]).groupby(states_df.index.names).sum()
 
         tr_df = sf.get_transitions_as_df()
         if isinstance(transitions_df, NoneType):
@@ -152,6 +152,7 @@ if __name__ == "__main__":
 
     #Generate the graph
     plt = Plotter(states_df, transitions_df, route_to_id)
+    plt.states_stage_probability()
     dot = Digraph(comment='Node Graph')
     graph = plt.get_detailed_fsm_graphviz(dot)
     if options.verbose:
