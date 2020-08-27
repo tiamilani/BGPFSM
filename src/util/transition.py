@@ -16,12 +16,13 @@
 
 class Transition():
 
-    def __init__(self, init_state, output_state, trigger_input, output):
+    def __init__(self, init_state, output_state, trigger_input, output,
+                 counter=1):
         self.init_state = init_state
         self.output_state = output_state
         self.input = trigger_input
         self.output = output
-        self.counter = 1
+        self.counter = counter
 
     def __eq__(self, obj):
         if str(self) == str(obj):

@@ -30,6 +30,7 @@ class SingleFileAnalysis():
     """
 
 
+    NoneType = type(None)
     ROUTE_COUNTER = 0
     col_types = {'event_id': int,
                  'event_cause': int,
@@ -38,7 +39,7 @@ class SingleFileAnalysis():
                  'node': str,
                  'value': str}
 
-    def __init__(self, inputFile):
+    def __init__(self, inputFile: str, route_df=None, states_routes=None):
         """__init__.
 
         :param inputFile: file with the output to analyze
@@ -50,15 +51,26 @@ class SingleFileAnalysis():
         # Set of states
         self.states = {}
         # Last state of the node during the evolution
-        self.actualState = None
+        self.actualState = set() 
         # Set of transitions
         self.transitions = {}
-        # Routes associated with the id
-        self.route_to_id = {}
-        # Id associated with the route
-        self.id_to_route = {}
-        # Routes associated with the states
-        self.states_routes = {}
+        
+        if isinstance(route_df, self.NoneType): 
+            # Routes associated with the id
+            self.route_to_id = {}
+            # Id associated with the route
+            self.id_to_route = {}
+        else:
+            self.id_to_route = route_df.to_dict('index')
+            self.id_to_route = {int(k): Route.fromString(v['value']) for k, v in self.id_to_route.items()}
+            self.route_to_id = {str(v): k for k, v in self.id_to_route.items()}
+
+        if isinstance(states_routes, self.NoneType):
+            # Routes associated with the states
+            self.states_routes = {}
+        else:
+            self.states_routes = states_routes.to_dict('index')
+            self.states_routes = {k: int(v['value']) for k, v in self.states_routes.items()}
 
     def selectNode(self, node_id: str) -> pd.DataFrame:
         """selectNode.
@@ -80,9 +92,9 @@ class SingleFileAnalysis():
         :return: None if the set is empty, the str(set) otherwise
         """
         if row_value == "set()":
-            return None
+            return set()
         else:
-            return row_value
+            return ast.literal_eval(row_value)
 
     def __evaluate_pkt(self, row_value:str) -> str:
         """__evaluate_pkt.
@@ -139,13 +151,8 @@ class SingleFileAnalysis():
         :param new_state: new state to check
         :return: set() containing the different items
         """
-        # Take both states to a set
-        acst = ast.literal_eval(self.actualState) if self.actualState is not None \
-                else set()
-        nwst = ast.literal_eval(new_state) if new_state is not None \
-                else set()
         # symmetric_difference between sets
-        return acst ^ nwst
+        return self.actualState ^ new_state
 
     # @profile
     def __evaluate_event_rx(self, rx_event_id: int, rx_value: str):
@@ -187,28 +194,40 @@ class SingleFileAnalysis():
             transmitted_routes = None
 
         # The state has changed thanks to this reception message
-        if(self.actualState != new_state):
+        if len(self.actualState) != len(new_state):
             # Evaluate the difference in the new state vs the previus one
-            resulting_elem = self.__evalaute_state_difference(new_state)
-            if len(resulting_elem) != 1:
+            if abs(len(self.actualState)-len(new_state)) != 1:
                 print("something really bad happened")
                 exit(3)
-            resulting_elem = resulting_elem.pop()
-            if resulting_elem not in self.states_routes.keys():
-                pkt = Packet.fromString(rx_value)
-                route = Route.fromString(pkt.content)
-                self.states_routes[resulting_elem] = route 
+
+            # resulting_elem = self.__evalaute_state_difference(new_state).pop()
+            pkt = Packet.fromString(rx_value)
+            route = Route.fromString(pkt.content)
+            if pkt.packet_type == Packet.UPDATE:  
+                if str(route) not in self.states_routes.keys():
+                    self.states_routes[str(route)] = self.route_to_id[str(route)]
+                new_state = self.actualState.copy()
+                new_state.add(self.states_routes[str(route)])    
+            elif pkt.packet_type == Packet.WITHDRAW:
+                new_state = self.actualState.copy()
+                new_state.remove(self.states_routes[str(route)])   
+            # print(self.states_routes)
+            # print(self.actualState, new_state)
+
             # Check if the state has already been known
-            if new_state not in self.states.keys():
+            if str(new_state) not in self.states.keys():
                 # Add the state to the states dictionary
-                self.states[new_state] = 1
+                self.states[str(new_state)] = 1
             else:
                 # The state is already in the dictionary, increase the counter
-                self.states[new_state] += 1
+                self.states[str(new_state)] += 1
 
         # Create the new transition
         transition = Transition(self.actualState, new_state,
                                 inp,transmitted_routes)
+        if self.actualState == set([4]) and new_state == set([1, 4]):
+            print(rx_value)
+
         # Change the state
         self.actualState = new_state
         # Check if the transition has already been known
@@ -248,124 +267,40 @@ class SingleFileAnalysis():
                                                            row.value), axis=1)
         return (self.states, self.transitions)
 
-    def get_fsm_graphviz(self, dot: Digraph) -> Digraph:
-        """get_fsm_graphviz.
-
-        :param dot: dot object of graphviz used to create the graph
-        :returns: the dot object modified
-        """
-        # Insert all states like nodes
-        for state in self.states.keys():
-            if state == None:
-                dot.node("{}")
-            else:
-                # Find the best known route and put it in bold in the graph
-                knowledge = ast.literal_eval(state) 
-                best_id = knowledge.pop()
-                while len(knowledge) > 0:
-                    new_elem = knowledge.pop()
-                    if self.states_routes[new_elem] < self.states_routes[best_id]:
-                        best_id = new_elem
-                res = "<" + str(state) + ">"
-                res = res.replace(str(best_id), "<B>" + str(best_id) + "</B>")
-                dot.node(str(state), label=res) 
-        # Insert every transition like edge
-        for trans in self.transitions.values():
-            inp = str(trans.init_state) if trans.init_state is not None \
-                    else "{}"
-            out = str(trans.output_state) if trans.output_state is not None \
-                    else "{}"
-            # If the output of the transition is empty (No messages sent)
-            # use an empty string to represent it
-            trans_output = str(trans.output) if trans.output is not None \
-                    else ""
-            # Insert the edge
-            dot.edge(inp, out, label=" {}:{} ".format(trans.input, trans_output))
-        return dot
-
-    def __route_to_table_content(self, id_r: int, route: Route) -> str: 
-        """__route_to_table_content.
-        Given a route it returns the tabular expression of it in graphvizc
-
-        :param id_r: id of the route
-        :param route: route to print
-        :returns: string format in graphviz of the route
-        """
-        res = '|{' + str(id_r) + '|' + str(route.addr) + '|' + str(route.nh) +\
-               '|' + str(route.path) + '}' 
-        return res
-
-    def __message_table(self, table: Digraph) -> Digraph:
-        """__message_table.
-        Generates the message table
-
-        :param table: table object where to define the nodes
-        :returns: table graphviz object modified
-        """
-        res = r'{{Messages Table}|{id|addr|nh|path}'
-        for _id in self.id_to_route:
-            res += self.__route_to_table_content(_id, self.id_to_route[_id])
-        res += '}'
-        table.node('route_table', res)
-        return table
-
-    def __states_table(self, table: Digraph) -> Digraph:
-        """__states_table.
-        Generates the states table
-
-        :param table: table object where to define the nodes
-        :returns: table graphviz object modified
-        """
-        res = r'{{States Table}|{id|addr|nh|path}'
-        for _id in self.states_routes:
-            res += self.__route_to_table_content(_id, self.states_routes[_id])
-        res += '}'
-        table.node('states_table', res)
-        return table
-
-    def get_detailed_fsm_graphviz(self, graph: Digraph) -> Digraph:
-        """get_detailed_fsm_graphviz.
-        This function introduce a lot more details in the graph
-        it will introduce also a table for the messages to identify to which
-        message corresponds which id on the edges
-        It will introduce also a table for the states indicating for each
-        id in the state knowledge whcich route is really know
-
-        :param graph: dot object of graphviz to modify
-        :return: the dot file modified
-        """
-        # subgraph of the basic fsm graph
-        with graph.subgraph() as dot:
-            dot = self.get_fsm_graphviz(dot)
-
-        # Create the message table
-        with graph.subgraph(node_attr={'shape': 'record'}) as table:
-            table = self.__message_table(table)
-
-        # Create the states knowledge table
-        with graph.subgraph(node_attr={'shape': 'record'}) as table:
-            table = self.__states_table(table)
-
-        return graph 
-
     def get_states_as_df(self, states=None) -> pd.DataFrame:
         if states == None:
             states = self.states
         st_df_dict = {'id': map(hash, states.keys()),
                       'state': map(str, states.keys()),
                       'counter': list(states.values())}
-        return pd.DataFrame(data=st_df_dict).set_index('id')
+        return pd.DataFrame(data=st_df_dict).set_index(['id', 'state'])
 
     def get_transitions_as_df(self, transitions=None) -> pd.DataFrame:
         if transitions == None:
             transitions = self.transitions
         tr_df_dict = {'id': map(hash, transitions.values()),
-                      'start_node': [transitions[trans].init_state for trans in transitions],
-                      'end_node': [transitions[trans].output_state for trans in transitions],
+                      'start_node': [str(transitions[trans].init_state) for trans in transitions],
+                      'end_node': [str(transitions[trans].output_state) for trans in transitions],
                       'cause': [transitions[trans].input for trans in transitions],
                       'response': [str(transitions[trans].output) for trans in transitions],
                       'counter': [transitions[trans].counter for trans in transitions]}
-        return pd.DataFrame(data=tr_df_dict).set_index('id')
+        return pd.DataFrame(data=tr_df_dict).set_index(['id', 'start_node',
+                                                        'end_node', 'cause',
+                                                        'response'])
+
+    def get_route_df(self) -> pd.DataFrame:
+        d = {'id': [str(id) for id in self.id_to_route.keys()],
+             'value': [str(val) for val in self.id_to_route.values()]}
+        return pd.DataFrame(data=d).set_index('id')
+
+    def get_states_route_df(self) -> pd.DataFrame:
+        d = {'state': [str(s) for s in self.states_routes.keys()],
+             'value': [str(val) for val in self.states_routes.values()]}
+        return pd.DataFrame(data=d).set_index('state')
+
+    @classmethod
+    def dump_df(cls, output_file: str, df: pd.DataFrame):
+        df.to_csv(output_file, '|')
 
     def dump_states(self, output_file: str, states=None): 
         """dump_states.

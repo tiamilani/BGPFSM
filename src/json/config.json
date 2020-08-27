@@ -18,8 +18,8 @@
 		"withdraw_dist": {"distribution": "unif", "min": 5, "max": 10, "int": 0.1},
 		// announcement interval distribution from the withdraw 
 		"reannouncement_dist": {"distribution": "unif", "min": 5, "max": 10, "int": 0.1},
-		// Transmission datarate in 1/seconds
-		"datarate": {"distribution": "exp", "lambda" : 100},
+		// Transmission time required to start the actual message transmission 
+		"datarate": {"distribution": "const", "mean" : 0.00001},
 		// Processing time distribution
 		"processing": {"distribution": "const", "mean": 0.00001},
 		// Network delay distribution

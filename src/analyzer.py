@@ -19,9 +19,12 @@ from graphviz import Digraph
 import os.path
 import sys
 import timeit
+from glob import glob
+import pandas as pd
 
 sys.path.insert(1, 'util')
 from analysis import SingleFileAnalysis
+from plotter import Plotter
 
 # Setup command line parameters
 parser = argparse.ArgumentParser(usage="python2 analyzer.py [options]",
@@ -30,7 +33,7 @@ parser = argparse.ArgumentParser(usage="python2 analyzer.py [options]",
                                   "a node.",
                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-f", "--file", dest="inputFile", default="output_0.csv",
-                    action="store", help="File to analize")
+                    nargs='*', action="store", help="File to analize")
 parser.add_argument("-n", "--node", dest="node", default=0, type=str,
                     action="store", help="Node that the user want to see the FSM")
 parser.add_argument("-o", "--output", dest="outputFile", default="output_fsm",
@@ -55,75 +58,103 @@ if __name__ == "__main__":
     options = parser.parse_args()
 
     # Obtain variables
-    inputFile_path = options.inputFile
     node = options.node
     outputFile_path = options.outputFile
 
-    # Check that the input file exists
-    if not os.path.isfile(inputFile_path):
-        # doesn't exist
-        print("Input file {} not found".format(inputFile_path))
-        raise FileNotFoundError
-        
     # Check that the output file does not exists
     if os.path.isfile(outputFile_path) and options.security:
         print("output file {} already exists".format(outputFile_path))
         exit(1)
-
-    # Get the dataframe rep of the input file
-    if options.time:
-        starttime = timeit.default_timer()
-        init_time= timeit.default_timer()
-
-    sf = SingleFileAnalysis(inputFile_path)
-
-    if options.time:
-        print("The init time has been:", timeit.default_timer() - init_time)
-    if options.verbose:
-        print("Initialization done, csv file loaded")
-
-    if options.time:
-        select_node_time = timeit.default_timer()
-
-    # Node selection
-    sf.df = sf.selectNode(node)
-
-    if options.time:
-        print("The select node time has been:", timeit.default_timer() - select_node_time)
-    if options.verbose:
-        print("Node selection done, dataframe updated")
-
-    if options.time:
-        keep_events_time = timeit.default_timer()
-
-    # Keep only fsm reliable events
-    sf.df = sf.keep_only_fsm_events()
-
-    if options.time:
-        print("The keep fsm events time has been :", timeit.default_timer() - keep_events_time)
-    if options.verbose:
-        print("Node fsm reliable events parsing done, dataframe updated")
-
-    if options.time:
-        evaluate_time= timeit.default_timer()
-
-    sf.evaluate_fsm()
     
-    if options.time:
-        print("The evaluate time has been:", timeit.default_timer() - evaluate_time)
-        print("The total time required by the evaluation has been:", timeit.default_timer() - starttime)
-    if options.verbose:
-        print("Evaluation of fsm components done")
+    NoneType = type(None)
+    states_df = None
+    transitions_df = None
+    route_to_id = None
+    states_route = None
+
+    for inputFile_path in options.inputFile:
+        print(inputFile_path)
+        # Check that the input file exists
+        if not os.path.isfile(inputFile_path):
+            # doesn't exist
+            print("Input file {} not found".format(inputFile_path))
+            raise FileNotFoundError
     
+        # Get the dataframe rep of the input file
+        if options.time:
+            starttime = timeit.default_timer()
+            init_time= timeit.default_timer()
+
+        sf = SingleFileAnalysis(inputFile_path, route_df=route_to_id,
+                                states_routes=states_route)
+
+        if options.time:
+            print("The init time has been:", timeit.default_timer() - init_time)
+        if options.verbose:
+            print("Initialization done, csv file loaded")
+
+        if options.time:
+            select_node_time = timeit.default_timer()
+
+        # Node selection
+        sf.df = sf.selectNode(node)
+
+        if options.time:
+            print("The select node time has been:", timeit.default_timer() - select_node_time)
+        if options.verbose:
+            print("Node selection done, dataframe updated")
+
+        if options.time:
+            keep_events_time = timeit.default_timer()
+
+        # Keep only fsm reliable events
+        sf.df = sf.keep_only_fsm_events()
+
+        if options.time:
+            print("The keep fsm events time has been :", timeit.default_timer() - keep_events_time)
+        if options.verbose:
+            print("Node fsm reliable events parsing done, dataframe updated")
+
+        if options.time:
+            evaluate_time= timeit.default_timer()
+
+        sf.evaluate_fsm()
+        
+        if options.time:
+            print("The evaluate time has been:", timeit.default_timer() - evaluate_time)
+            print("The total time required by the evaluation has been:", timeit.default_timer() - starttime)
+        if options.verbose:
+            print("Evaluation of fsm components done")
+        
+        sr_df = sf.get_states_as_df()
+        if isinstance(states_df, NoneType):
+            states_df = sr_df
+        else:
+            states_df += sr_df
+
+        tr_df = sf.get_transitions_as_df()
+        if isinstance(transitions_df, NoneType):
+            transitions_df = tr_df
+        else:
+            transitions_df = pd.concat([transitions_df, tr_df]).groupby(transitions_df.index.names).sum()
+
+        route_to_id = sf.get_route_df()
+        states_route = sf.get_states_route_df()
+
+        del sf
+
     #Generate the graph
+    plt = Plotter(states_df, transitions_df, route_to_id)
     dot = Digraph(comment='Node Graph')
-    graph = sf.get_detailed_fsm_graphviz(dot)
+    graph = plt.get_detailed_fsm_graphviz(dot)
     if options.verbose:
         print("Detailed FSM graph produced")
 
     # Save results
-    sf.dump_states(outputFile_path + "_states.csv")
-    sf.dump_transitions(outputFile_path + "_transitions.csv")
+    SingleFileAnalysis.dump_df(outputFile_path + "_states.csv", states_df)
+    SingleFileAnalysis.dump_df(outputFile_path + "_transitions.csv", transitions_df)
+    SingleFileAnalysis.dump_df(outputFile_path + "_route_id", route_to_id)
+    SingleFileAnalysis.dump_df(outputFile_path + "_states_id", states_route)
 
     graph.save(outputFile_path.split('/')[-1] + ".gv", 
                '/'.join(outputFile_path.split('/')[:-1]))
