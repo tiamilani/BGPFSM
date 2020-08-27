@@ -25,6 +25,7 @@ import pandas as pd
 sys.path.insert(1, 'util')
 from analysis import SingleFileAnalysis
 from plotter import Plotter
+from tqdm import tqdm
 
 # Setup command line parameters
 parser = argparse.ArgumentParser(usage="python2 analyzer.py [options]",
@@ -49,9 +50,11 @@ parser.add_argument("-s", "--security", dest="security", default=False,
 parser.add_argument("-t", "--time", dest="time", default=False,
                     action='store_true', help="Shows the timing that the program \
                           took to analyze the file")
-parser.add_argument("-v", "--verbose", dest="verbose", default=True,
-                    action='store_false', help="Makes the program more verbose \
+parser.add_argument("-v", "--verbose", dest="verbose", default=False,
+                    action='store_true', help="Makes the program more verbose \
                           on standard output ")
+parser.add_argument("-p", "--progress", dest="progress", default=True,
+                    action='store_false', help="Display a progressbar on stdout")
 
 if __name__ == "__main__":
     # Parse the arguments
@@ -72,8 +75,12 @@ if __name__ == "__main__":
     route_to_id = None
     states_route = None
 
-    for inputFile_path in options.inputFile:
-        print(inputFile_path)
+    pbar = tqdm(options.inputFile) if options.progress else options.inputFile
+    for inputFile_path in pbar:
+        if options.progress:
+            pbar.set_description("Processing {}".format(inputFile_path))
+        else:
+            print("Processing {}".format(inputFile_path))
         # Check that the input file exists
         if not os.path.isfile(inputFile_path):
             # doesn't exist
@@ -153,8 +160,8 @@ if __name__ == "__main__":
     # Save results
     SingleFileAnalysis.dump_df(outputFile_path + "_states.csv", states_df)
     SingleFileAnalysis.dump_df(outputFile_path + "_transitions.csv", transitions_df)
-    SingleFileAnalysis.dump_df(outputFile_path + "_route_id", route_to_id)
-    SingleFileAnalysis.dump_df(outputFile_path + "_states_id", states_route)
+    SingleFileAnalysis.dump_df(outputFile_path + "_route_id.csv", route_to_id)
+    SingleFileAnalysis.dump_df(outputFile_path + "_states_id.csv", states_route)
 
     graph.save(outputFile_path.split('/')[-1] + ".gv", 
                '/'.join(outputFile_path.split('/')[:-1]))
