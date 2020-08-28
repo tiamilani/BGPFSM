@@ -24,13 +24,14 @@ class Plotter():
 
     def __init__(self, states: pd.DataFrame, transitions: pd.DataFrame, 
                    route_id: pd.DataFrame):
-        self.states_df = states.reset_index(level=['state'])
+        self.states_df = states
         self.states = states.to_dict('index')    
-        self.states = {k[1]: int(v['counter']) for k, v in self.states.items()}
+        self.states = {v['state']: int(v['counter']) for k, v in self.states.items()}
         self.transitions_df = transitions
         self.transitions = transitions.to_dict('index')
-        self.transitions = {k[0]: Transition(k[1], k[2], k[3], k[4],
-                            counter=v['counter']) for k, v in self.transitions.items()}
+        self.transitions = {k: Transition(v['start_node'], v['end_node'], 
+                            v['cause'], v['response'], counter=v['counter']) \
+                            for k, v in self.transitions.items()}
         self.route_identifier_df = route_id
         self.route_identifier = route_id.to_dict('index')
         self.route_identifier = {int(k): Route.fromString(v['value']) \

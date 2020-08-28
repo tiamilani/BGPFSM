@@ -271,7 +271,7 @@ class SingleFileAnalysis():
         st_df_dict = {'id': map(hash, states.keys()),
                       'state': map(str, states.keys()),
                       'counter': list(states.values())}
-        return pd.DataFrame(data=st_df_dict).set_index(['id', 'state'])
+        return pd.DataFrame(data=st_df_dict).set_index(['id'])
 
     def get_transitions_as_df(self, transitions=None) -> pd.DataFrame:
         if transitions == None:
@@ -282,9 +282,7 @@ class SingleFileAnalysis():
                       'cause': [transitions[trans].input for trans in transitions],
                       'response': [str(transitions[trans].output) for trans in transitions],
                       'counter': [transitions[trans].counter for trans in transitions]}
-        return pd.DataFrame(data=tr_df_dict).set_index(['id', 'start_node',
-                                                        'end_node', 'cause',
-                                                        'response'])
+        return pd.DataFrame(data=tr_df_dict).set_index(['id'])
 
     def get_route_df(self) -> pd.DataFrame:
         d = {'id': [str(id) for id in self.id_to_route.keys()],

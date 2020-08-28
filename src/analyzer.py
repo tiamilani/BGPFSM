@@ -74,6 +74,7 @@ if __name__ == "__main__":
     transitions_df = None
     route_to_id = None
     states_route = None
+    i = 0
 
     pbar = tqdm(options.inputFile) if options.progress else options.inputFile
     for inputFile_path in pbar:
@@ -136,19 +137,38 @@ if __name__ == "__main__":
         sr_df = sf.get_states_as_df()
         if isinstance(states_df, NoneType):
             states_df = sr_df
+            states_df[str(i)] = sr_df['counter']
         else:
-            states_df= pd.concat([states_df, sr_df]).groupby(states_df.index.names).sum()
+            sr_df[str(i)] = sr_df['counter']
+            sr_df = sr_df.drop(['counter'], axis=1)
+            sr_df_states = sr_df.drop([str(i)], axis=1)
+            states_df = pd.concat([states_df, sr_df_states])
+            states_df = states_df[~states_df.index.duplicated(keep='first')]
+            states_df = states_df.fillna(0)
+            sr_df = sr_df.drop(['state'], axis=1)
+            states_df = pd.concat([states_df, sr_df], axis=1)
+            states_df['counter'] = states_df['counter'] + states_df[str(i)]
 
         tr_df = sf.get_transitions_as_df()
         if isinstance(transitions_df, NoneType):
             transitions_df = tr_df
+            transitions_df[str(i)] = tr_df['counter']
         else:
-            transitions_df = pd.concat([transitions_df, tr_df]).groupby(transitions_df.index.names).sum()
+            tr_df[str(i)] = tr_df['counter']
+            tr_df = tr_df.drop(['counter'], axis=1)
+            tr_df_states = tr_df.drop([str(i)], axis=1)
+            transitions_df = pd.concat([transitions_df, tr_df_states])
+            transitions_df = transitions_df[~transitions_df.index.duplicated(keep='first')]
+            transitions_df = transitions_df.fillna(0)
+            tr_df = tr_df.drop(['start_node', 'end_node', 'cause', 'response'], axis=1)
+            transitions_df = pd.concat([transitions_df, tr_df], axis=1)
+            transitions_df['counter'] = transitions_df['counter'] + transitions_df[str(i)]
 
         route_to_id = sf.get_route_df()
         states_route = sf.get_states_route_df()
 
         del sf
+        i += 1
 
     #Generate the graph
     plt = Plotter(states_df, transitions_df, route_to_id)

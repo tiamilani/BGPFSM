@@ -1,36 +1,121 @@
 # BGP as Finite State Machine
 
-## BGP Discrete event simulations
-Is possible to perform some discrete event simulations using this software.
-The simulation goal is to spread the knowledge of some destinations to
-the entire network.
+The software is composed by two separate programs:
+* Discrete event simulator that emulates the behaviour of BGP
+* Analyzer that produces the plots and graphs
+
+## Installation
+
+Is possible to install all the required libraries using the script inside the
+`src` folder, use the following command:
+
+`./install.sh`
 
 ## Requirements
 
-All this libraries should be installable through pip, pip install [library name]
-If not pre installed
+A list of all the required libraries is available in the file: 
+`scr/requirements.txt`
 
-* sys
-* simpy
-* time
-* random
-* networkx 
-* optparse
-* ipaddress
-* copy
-* math
-* json
-* re
-* collections
+## BGP Discrete event simulations
+Is possible to perform some discrete event simulations using this software.
+The simulation goal is to spread the knowledge of some network to
+the entire network.
+The DES requires as input two files, a configuration file that describe
+all the environment and a graphml file that present the network that should be
+simulated.
+Through this two levels of abstraction is possible to simulate different
+BGP network behaviour.
+The output is csv like file that describe the event evolution for each experiment
 
-## Input of the software
-The input of the software is a configuration file wirtten in json
-An example of configuration file is in /src/json/
+### Input of the software
 
-This fille represent the environment of the simulation.
+#### JSON configuration file
+To define environment variables is possible to use a `json` file that must be
+passed to the DES.
+An example of configuration file is available in: `/src/json/`
+
+The parameters that can be defined inside the json file are:
+* `seed`: this variable represent the seed that will be passed to the RNG at the
+          environment initialization
+* `duration`: Duration of each simulation in seconds
+* `graph`: Graphml file that will be used for the simulation
+* `output`: Represent the output file of the simulation. is possible to use
+			other variables inside the string, for example `{date-time}` will
+			be substituted by the actual dateTime of the experiment (up to ms)
+			or is possible to use other variables like `{seed}` or `{withdraw_dist.min}`
+			to introduce more levels of details to recognize the output csv file
+			among many of a multi experiment script
+* `verbose`: [True/False] variable, if true the experiment will print the evolution
+			 on standard output
+* `withdraw`: [True/False] variable, if true a node that previusly shared a network
+			  it will produce a withdraw of the network after a delay time described
+			  by `withdraw_dist`
+* `reannouncement`: [True/False] variable, if true a node that previusly withdrawed
+					a route will schedule a reannouncement of the route using the
+					distribution described in `reannouncement_dist`
+* `withdraw_dist`: Variable that describe a withdraw distribution, for distributions
+				   handling explanation please see the next section
+* `reannouncement_dist`: Like the withdraw distribution but for reannouncements
+* `datarate`: {distribution} Time required to start the actual transmission of 
+			  a message after the scheduling
+* `processing`: {distribution} Processing time of any information, for example 
+				can be used after the reception of a packet to simulate the processing of it
+* `delay`: {distrbution} Network delay for the packets
 
 All parameters can be array of parameters, so is possible to run different
 combinations of simulations.
+
+An array of parameters could be the following:
+
+`seed: [0, 1, 2, 3]` -> this defines multiple seeds that can be used
+
+`"withdraw_dist": [{"distribution": "unif", "min": 5, "max": 10, "int": 0.1},
+				   {"distribution": "unif", "min": 8, "max": 10, "int": 0.1},
+				   {"distribution": "unif", "min": 2, "max": 3, "int": 0.1}]
+`
+
+Example of an array of possible withdraw distributions
+
+##### Distributions
+
+Up to now the possible distributions that can be itroduced in the environment
+are the following:
+* Uniform: a uniform distribution will have like name `unif` and 3 parameters
+		   `min` that represent the minimum value that can be choose `max`
+		   the maximum value `int` that represent the precision used for all
+		   the values between min and max, all parameters can be float values
+* Exponential: an exponential distribution have like name `exp` and it has
+			   a parameter `lambda`, like for the uniform distribution the
+			   parameter can be a float value
+* Constant: a constant distribution have like name: `const` and it has
+			one parameter named `mean`
+
+All the values of the distributions are intended in seconds.
+
+An example of distribution:
+`{"distribution": "const", "mean" : 0.00001}`
+
+#### Graphml configuration file
+
+The graphml file represent the graph that will be simulated.
+It respect the graphml standard.
+It is a directed graph.
+
+Parameters that can be introduced in the nodes:
+* `destinations`: this represent the networks that a node will share during
+				  the experiment, it is possible to intrudce multiple networs
+				  separated by a `,`
+
+Parameters available for edges:
+* `delay`: {distribution} is possible to introduce a delay distribution
+		   for a single edge, the distribution has to respect what said in the
+		   distribution section of the readme.
+		   This parameter will override the json delay parameter for the edge
+		   
+example of graphml files are present on the `src/graphs` folder. 
+
+### Software parameters
+
 For example is possible to have more delay distributions and more seeds.
 To show all the possible runs use the command '-l' or '-L'
 
