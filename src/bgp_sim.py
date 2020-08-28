@@ -116,9 +116,9 @@ class sim:
         # set and check run number
         self.run_number = run
         if self.run_number >= self._config.get_runs_count():
-            print("Simulation error. Run number %d does not exist. Please run "
+            print("Simulation error. Run number {} does not exist. Please run "
                   "the simulator with the --list option to list all possible "
-                  "runs" % run_number)
+                  "runs".format(self.run_number))
             sys.exit(1)
 
         # Set run number

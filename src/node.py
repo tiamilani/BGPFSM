@@ -194,12 +194,11 @@ class Node(Module):
             else:
                 del self.destination_queue[network]
 
-    def change_state(self, waiting_time, packet):
+    def change_state(self, waiting_time):
         """change_state.
             Change the state of a node, test function
         """
         yield self._env.timeout(waiting_time)
-        self._print("changing state thanks to packet: " + str(packet.id))
         self._state = Node.STATE_CHANGING
         self.logger.log_state(self)
 
@@ -428,7 +427,7 @@ class Node(Module):
             if event.event_type == Events.STATE_CHANGE:
                 # If the event is a state changer change the state
                 packet = event.obj
-                self._env.process(self.change_state(waiting_time, packet))
+                self._env.process(self.change_state(1))
             if event.event_type == Events.TX:
                 self._env.process(self.tx_pkt(event))
             if event.event_type == Events.RX:
