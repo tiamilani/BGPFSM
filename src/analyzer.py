@@ -172,7 +172,7 @@ if __name__ == "__main__":
 
     #Generate the graph
     plt = Plotter(states_df, transitions_df, route_to_id)
-    plt.states_stage_probability()
+    plt.states_stage_boxplot(outputFile_path + "_states_boxplot.pdf")
     dot = Digraph(comment='Node Graph')
     graph = plt.get_detailed_fsm_graphviz(dot)
     if options.verbose:

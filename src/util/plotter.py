@@ -19,6 +19,7 @@ from transition import Transition
 from graphviz import Digraph
 import ast
 from route import Route
+import matplotlib.pyplot as plt
 
 class Plotter():
 
@@ -142,11 +143,16 @@ class Plotter():
 
         return graph 
     
-    def states_stage_probability(self):
+    def states_stage_boxplot(self, output_file):
         self.states_df['level'] = self.states_df.apply(lambda x: len(x.state.split(',')) \
                 if x.state != "set()" else 0, axis=1)
         grouped_states = self.states_df.groupby(by=['level']).sum()
+        grouped_states = grouped_states.drop(['counter'], axis=1)
+        grouped_states = grouped_states.T
         # print(self.states_df.sort_values(by=['counter'], ascending=False))
+        print(grouped_states)
+        box_plot = grouped_states.boxplot()
+        plt.savefig(output_file, format="pdf")
         # print(grouped_states)
         # print(self.states_df)
 
