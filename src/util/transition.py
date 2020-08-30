@@ -22,10 +22,15 @@ class Transition():
         self.output_state = output_state
         self.input = trigger_input
         self.output = output
+        if not isinstance(counter, int):
+            raise ValueError("{} is not of type int".format(counter))
+        if counter <= 0:
+            raise ValueError("Counter must be strictly higher than 0 \
+                              {} has been passed".format(counter))
         self.counter = counter
 
     def __eq__(self, obj):
-        if str(self) == str(obj):
+        if hash(self) == hash(obj):
             return True
         return False
 
@@ -36,6 +41,6 @@ class Transition():
         return hash(str(self))
 
     def __str__(self):
-        res = "({}->{}, {}:{})".format(self.init_state, self.output_state,
-                                       self.input, self.output)
+        res = "({}->{}, {}:{}, {})".format(self.init_state, self.output_state,
+                                           self.input, self.output, self.counter)
         return res
