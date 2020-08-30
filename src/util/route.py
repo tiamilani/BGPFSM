@@ -33,7 +33,7 @@ class Route():
         # Check that the path is an instance of a list
         if not isinstance(path, list):
             raise TypeError(path)
-        self._path = path
+        self._path = path.copy()
         self._nh = nh
 
     @classmethod
@@ -54,6 +54,8 @@ class Route():
 
         :param value: remove a voice from the path
         """
+        if value not in self.path:
+            raise ValueError("object {} not in the path".format(value))
         self.path.remove(value)
 
     @property
