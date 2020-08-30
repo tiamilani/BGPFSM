@@ -4,5 +4,14 @@
 # and analyze them
 #
 
-pip3 install -r requirements.txt 
-sudo apt-get install pv
+sudo apt-get install python-virtualenv pv
+
+mkdir env_test
+virtualenv env_test
+source env_test/bin/activate
+env_test/bin/pip3 install -r requirements.txt 
+deactivate
+
+echo "Virtual environment with all the libraries required created"
+echo "Please use 'source env_test/bin/activate' before using the software"
+echo "use 'deactivate' to exit from the virtual environment"

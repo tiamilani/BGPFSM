@@ -160,6 +160,9 @@ if __name__ == "__main__":
             transitions_df = pd.concat([transitions_df, tr_df_states])
             transitions_df = transitions_df[~transitions_df.index.duplicated(keep='first')]
             transitions_df = transitions_df.fillna(0)
+            transitions_df['counter'] = transitions_df['counter'].astype(int)
+            for j in range(0,i):
+                transitions_df[str(j)] = transitions_df[str(j)].astype(int)
             tr_df = tr_df.drop(['start_node', 'end_node', 'cause', 'response'], axis=1)
             transitions_df = pd.concat([transitions_df, tr_df], axis=1)
             transitions_df['counter'] = transitions_df['counter'] + transitions_df[str(i)]
@@ -169,7 +172,7 @@ if __name__ == "__main__":
 
         del sf
         i += 1
-
+    
     #Generate the graph
     plt = Plotter(states_df, transitions_df, route_to_id)
     plt.states_stage_boxplot(outputFile_path + "_states_boxplot.pdf")

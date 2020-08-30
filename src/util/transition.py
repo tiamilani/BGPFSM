@@ -37,8 +37,10 @@ class Transition():
     def __ne__(self, obj):
         return not self == obj
 
-    def __hash__(self):
-        return hash(str(self))
+    def __hash__(self): 
+        res = "({}->{}, {}:{})".format(self.init_state, self.output_state,
+                                           self.input, self.output)
+        return hash(res)
 
     def __str__(self):
         res = "({}->{}, {}:{}, {})".format(self.init_state, self.output_state,

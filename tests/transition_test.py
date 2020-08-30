@@ -77,8 +77,7 @@ class TestRoute():
         ("5", "2", "A1", "A2", 1, "1", "2", "A1", "A2", 1),
         ("1", "22", "W1", "A2", 1, "1", "2", "W1", "A2", 1),
         ("1", "2", "ABRA", "W2", 1, "1", "2", "A1", "W2", 1),
-        ("1", "2", "A1", "CADABRA", 10, "1", "2", "A1", "A2", 10),
-        ("ABRACADABRA", "2", "A1", "A2", 27, "ABRACADABRA", "2", "A1", "A2", 1)
+        ("1", "2", "A1", "CADABRA", 10, "1", "2", "A1", "A2", 10)
     ])
     def test_ne(self, s1, s2, inp, out, cnt, s12, s22, inp2, out2, cnt2):
         t = Transition(s1, s2, inp, out, cnt)
@@ -95,8 +94,7 @@ class TestRoute():
         ("5", "2", "A1", "A2", 1, "1", "2", "A1", "A2", 1, False),
         ("1", "22", "W1", "A2", 1, "1", "2", "W1", "A2", 1, False),
         ("1", "2", "ABRA", "W2", 1, "1", "2", "A1", "W2", 1, False),
-        ("1", "2", "A1", "CADABRA", 10, "1", "2", "A1", "A2", 10, False),
-        ("ABRACADABRA", "2", "A1", "A2", 27, "ABRACADABRA", "2", "A1", "A2", 1, False)
+        ("1", "2", "A1", "CADABRA", 10, "1", "2", "A1", "A2", 10, False)
     ])
     def test_hash(self, s1, s2, inp, out, cnt, s12, s22, inp2, out2, cnt2, equal):
         t = Transition(s1, s2, inp, out, cnt)
