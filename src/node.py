@@ -159,7 +159,7 @@ class Node(Module):
         old_best = self.rib[network]
         new_best = self.rib.insert(network, r, event=event)
         # Evaluate if the new route is the new best route for the destiantion
-        if new_best != old_best:
+        if new_best != None and new_best != old_best:
             # If it is the new best route insert it in the routing table and 
             # Log the event
             self.routing_table[network] = r

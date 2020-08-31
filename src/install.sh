@@ -4,7 +4,7 @@
 # and analyze them
 #
 
-sudo apt-get install python-virtualenv pv
+sudo apt-get install python-virtualenv prallel
 
 mkdir env_test
 virtualenv env_test

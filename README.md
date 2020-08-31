@@ -129,6 +129,25 @@ The destinations option gives to a node the possibility to export some networks.
 A node can export more destinations.
 An example of graphml file is given under /src/graphs/
 
+### Multiple experiments
+
+Is possible to run multiple experiments thanks to the `multiple\_expriments.sh`
+bash script.
+Thanks to parallel [2] is possible to run multiple experiments in parallel.
+
+Params:
+* n: mandatory argument, it defines up to which run experiments shuld be run
+	 (use fsm.py -l option to see how much run you have in your configuration
+	 file)
+* s: (default = simulation) Not mandatory argument, it describe which section
+	 of the configuration file will be used during the experiments
+* j: (default = 1) parallelization level, by default no parallelization, 
+	 it defines the number of process that will be run simultaniously
+
+Will be created a log file that register the STD output of each program in current
+directory.
+**FUTURE** Argument option to disable the cretion of the output file
+
 ## Ouptut
 
 The software can give two different outputs.
@@ -211,3 +230,5 @@ known path.
 
 [1] A Finite State Model Update Propagation for Hard-State Path-Vector Protocols
 present in Biblio/FSM\_model.pdf
+
+[2] O. Tange (2011): GNU Parallel - The Command-Line Power Tool, ;login: The USENIX Magazine, February 2011:42-47
