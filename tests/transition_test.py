@@ -20,7 +20,7 @@ sys.path.insert(1, 'src/util')
 
 from transition import Transition
 
-class TestRoute():
+class TestTransition():
     
     @pytest.mark.parametrize("s1, s2, inp, out, cnt, cnt_present", [
         ("1", "2", "A1", "A2", 1, False),

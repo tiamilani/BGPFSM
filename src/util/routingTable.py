@@ -122,7 +122,7 @@ class RoutingTable(collections.MutableSequence):
         Function to return the routing table in a human readable format
         :returns: string with all the routing information
         """
-        res = "Routing table:\n"
+        res = "Routing Table:\n"
         rt = sorted(self._table)
         for route in rt:
             res += str(self._table[route]) + "\n"
