@@ -114,7 +114,7 @@ Parameters available for edges:
 		   
 example of graphml files are present on the `src/graphs` folder. 
 
-### Software parameters
+### parameters
 
 For example is possible to have more delay distributions and more seeds.
 To show all the possible runs use the command '-l' or '-L'
