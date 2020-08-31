@@ -62,32 +62,17 @@ class TestPacket():
         assert p.content == p2.content
         assert p.id == p2.id
 
-    @pytest.mark.parametrize("type_p, content, id_p, str_version", [
-        (Packet.UPDATE, "hello", None, "{'id': 8, 'type': 0, 'content': 'hello'}"),
-        (Packet.WITHDRAW, "hello", None, "{'id': 9, 'type': 1, 'content': 'hello'}"),
-        (Packet.UPDATE, 27, None, "{'id': 10, 'type': 0, 'content': '27'}"),
-        (Packet.WITHDRAW, 27, None, "{'id': 11, 'type': 1, 'content': '27'}"),
-        (Packet.UPDATE, "hello", 5, "{'id': 5, 'type': 0, 'content': 'hello'}"),
-        (Packet.WITHDRAW, "hello", 25, "{'id': 25, 'type': 1, 'content': 'hello'}"),
-        (Packet.UPDATE, 27, 5, "{'id': 5, 'type': 0, 'content': '27'}"),
-        (Packet.WITHDRAW, 27, 25, "{'id': 25, 'type': 1, 'content': '27'}")
+    @pytest.mark.parametrize("type_p, content, id_p", [
+        (Packet.UPDATE, "hello", None),
+        (Packet.WITHDRAW, "hello", None),
+        (Packet.UPDATE, 27, None),
+        (Packet.WITHDRAW, 27, None),
+        (Packet.UPDATE, "hello", 5),
+        (Packet.WITHDRAW, "hello", 25),
+        (Packet.UPDATE, 27, 5),
+        (Packet.WITHDRAW, 27, 25)
     ])
-    def test_packet_getStr(self, type_p, content, id_p, str_version):
-        p = Packet(type_p, content, id=id_p)
-        
-        assert str(p) == str_version
-
-    @pytest.mark.parametrize("type_p, content, id_p, str_version", [
-        (Packet.UPDATE, "hello", None, "{'id': 8, 'type': 0, 'content': 'hello'}"),
-        (Packet.WITHDRAW, "hello", None, "{'id': 9, 'type': 1, 'content': 'hello'}"),
-        (Packet.UPDATE, 27, None, "{'id': 10, 'type': 0, 'content': '27'}"),
-        (Packet.WITHDRAW, 27, None, "{'id': 11, 'type': 1, 'content': '27'}"),
-        (Packet.UPDATE, "hello", 5, "{'id': 5, 'type': 0, 'content': 'hello'}"),
-        (Packet.WITHDRAW, "hello", 25, "{'id': 25, 'type': 1, 'content': 'hello'}"),
-        (Packet.UPDATE, 27, 5, "{'id': 5, 'type': 0, 'content': '27'}"),
-        (Packet.WITHDRAW, 27, 25, "{'id': 25, 'type': 1, 'content': '27'}")
-    ])
-    def test_packet_setContent(self, type_p, content, id_p, str_version):
+    def test_packet_setContent(self, type_p, content, id_p):
         p = Packet(type_p, content, id=id_p)
         ip_addr = ipaddress.ip_network("10.0.0.0/24")
         r = Route(ip_addr, [], "5")

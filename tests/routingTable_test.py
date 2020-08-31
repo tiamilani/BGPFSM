@@ -82,20 +82,6 @@ class TestRoutingTable():
         else:
             assert len(rt_3) == 3
 
-    @pytest.mark.parametrize("route, present, position", [
-        ("10.0.0.0/24", True, 0),
-        ("20.0.0.0/24", True, 1),
-        ("30.0.0.0/24", True, 2),
-        ("40.0.0.0/24", False, 3)
-    ])
-    def test_routing_table_getKey(self, rt_3, require_route, route, present, position):
-        r = require_route(route)
-        key = rt_3.getKey(position)
-        if present:
-            assert key == str(r)
-        else:
-            assert key == None
-
     @pytest.mark.parametrize("route, present", [
         ("10.0.0.0/24", True),
         ("20.0.0.0/24", True),

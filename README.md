@@ -146,6 +146,7 @@ Params:
 
 Will be created a log file that register the STD output of each program in current
 directory.
+
 **FUTURE** Argument option to disable the cretion of the output file
 
 ## Ouptut
