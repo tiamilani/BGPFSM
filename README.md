@@ -116,18 +116,35 @@ example of graphml files are present on the `src/graphs` folder.
 
 ### parameters
 
-For example is possible to have more delay distributions and more seeds.
-To show all the possible runs use the command '-l' or '-L'
+The fsm software present different options for your experiments.
 
-Is also possible to define more sections inside the same config file.
+First of all you have to decide witch configuration file you want to use for
+the experiments.
 
-The second input file, that will be pointed by the config file, is the graphml
-file that describes the network to take in consideration.
+* `-c` use this option to specify a configuration json file
+* `-s` inside a single configuration file there could be multiple experiments
+	   use the option `-s` to speciy which section of the configuration you
+	   want to use, the default is `"simulation"`
 
-For now the graphml file represent a direct graph with just the option of destinations.
-The destinations option gives to a node the possibility to export some networks.
-A node can export more destinations.
-An example of graphml file is given under /src/graphs/
+The fsm software could also present all the possible run that you can have
+using your selected configuration file and section.
+
+* `-l` This option will give a brief list of runs that you can have
+	   combining all the possible values in vectors elements, if you have
+	   a vector of 10 elements and a vector of 2 the total number of possible
+	   experimetns will be 20
+* `-L` This option like the previus one will show all the possible runs with
+	   also the associated parameters
+
+Once you have choose a run that you want to execute you can specify it with
+the `-r` argument.
+
+An example of command could be:
+
+`python3 fsm.py -c conf.json -s subSection2 -r 12`
+
+this command will use the file `conf.json` looking for the subsection `subSection2`
+and lunching the run number `12`
 
 ### Multiple experiments
 
