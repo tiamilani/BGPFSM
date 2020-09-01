@@ -145,6 +145,9 @@ if __name__ == "__main__":
             states_df = pd.concat([states_df, sr_df_states])
             states_df = states_df[~states_df.index.duplicated(keep='first')]
             states_df = states_df.fillna(0)
+            states_df['counter'] = states_df['counter'].astype(int)
+            for j in range(0,i):
+                states_df[str(j)] = states_df[str(j)].astype(int)
             sr_df = sr_df.drop(['state'], axis=1)
             states_df = pd.concat([states_df, sr_df], axis=1)
             states_df['counter'] = states_df['counter'] + states_df[str(i)]

@@ -56,6 +56,6 @@ fi
 # 	echo ""
 # done | pv -pt -i0.1 -s$((${1} + 1)) -w 80 > /dev/null
 
-seq 0 ${N} | parallel -j ${J} --bar python3 fsm.py -c json/config.json -s ${SECTION} -r ${i} > out_${i}.log
+seq 0 ${N} | parallel -i% -j ${J} --bar python3 fsm.py -c json/config.json -s ${SECTION} -r % ">" out_%.log
 
 echo "Experiments done"

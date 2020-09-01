@@ -98,6 +98,8 @@ class Node(Module):
         self.delay = Distribution(config.get_param(Node.PAR_DELAY))
         self.withdraw_dist = Distribution(config.get_param(Node.PAR_WITHDRAW_DIST))
         self.reannouncement_dist= Distribution(config.get_param(Node.PAR_REANNOUNCE_DIST))
+        # Resource for the acquisition of the tx channel resource
+        self.tx_res = simpy.Resource(self._env, capacity=1)
 
     def _print(self, msg):
         """_print.
@@ -222,32 +224,14 @@ class Node(Module):
             self.add_destination(route.addr, route.path, route.nh, event=event)
         # If the packet contains a withdrow the evaluation depends on the number
         # Of neighbors
-        # TODO better handling this part, remove the handling here and do it one
-        # time for every occasion
         if packet.packet_type == Packet.WITHDRAW:
-            if len(self._neighbors) == 0:
-                # Delete the route from the routing table and the rib
-                old_best = self.rib[route.addr]
-                if self.rib.contains(route.addr, route):
-                    self.rib.remove(route.addr, route, event=event)
-                new_best = self.rib[route.addr]
-                if new_best == None:
-                    del self.routing_table[route.addr]
-                    rt_change_event = Event(0, Events.RT_CHANGE, event.id,
-                                            self, self, obj=Route(route.addr, [], None))
-                    self.logger.log_rt_change(self, rt_change_event)
-                elif new_best != old_best:
-                    self.routing_table[route.addr] = new_best
-                    rt_change_event = Event(0, Events.RT_CHANGE, event.id,
-                                            self, self, obj=new_best)
-                    self.logger.log_rt_change(self, rt_change_event)
-            else:
-                route = deepcopy(packet.content)
-                withdraw_packet = Packet(Packet.WITHDRAW, route)
-                withdraw_time = self.proc_time.get_value()
-                withdraw_event = Event(withdraw_time, event.id, Events.WITHDRAW, 
-                                       self, self, obj=withdraw_packet)
-                self.event_store.put(withdraw_event)
+            # self.withdraw_handler(event, packet)
+            route = deepcopy(packet.content)
+            withdraw_packet = Packet(Packet.WITHDRAW, route)
+            withdraw_time = self.proc_time.get_value()
+            withdraw_event = Event(withdraw_time, event.id, Events.WITHDRAW, 
+                                   self, self, obj=withdraw_packet)
+            self.event_store.put(withdraw_event)
 
     def tx_pkt(self, event):
         """
@@ -259,7 +243,8 @@ class Node(Module):
         # to avoid the transmission of messages in reverse order
         # Evaluation of the time necessary for the transmission
         waiting_time = event.event_duration
-        yield self._env.timeout(waiting_time)
+        request = self.tx_res.request()
+        yield self._env.timeout(waiting_time) & request
         dst = event.destination
         packet = event.obj
         # Get the link that will handle the transmission
@@ -277,6 +262,10 @@ class Node(Module):
         link.tx(reception_event, delay)
         # Log the transmission
         self.logger.log_packet_tx(self, event)
+        wait = self.proc_time.get_value()
+        yield self._env.timeout(wait)
+        self.tx_res.release(request)
+
 
     def share_dst(self, event):
         """share_dst.
@@ -287,11 +276,11 @@ class Node(Module):
         waiting_time = event.event_duration
         yield self._env.timeout(waiting_time)
 
-        # TODO use the pop system instead of this pass and remove
-        del_dst = []
-        for dst in self.destination_queue:
-            del_neigh = []
-            for neigh in self.destination_queue[dst]:
+        while len(self.destination_queue) > 0:
+            dst = next(iter(self.destination_queue))
+            neigh_l = self.destination_queue.pop(dst)
+            while len(neigh_l) >0:
+                neigh = neigh_l.pop()
                 # self._print("I should send {} to {}".format(dst,neigh))
                 route = deepcopy(self.routing_table[dst])
                 route.add_to_path(self._id)
@@ -305,7 +294,6 @@ class Node(Module):
                                            Events.TX, self, dst_node, obj=packet)
                 # Send the event to the handler
                 self.event_store.put(transmission_event)
-                del_neigh.append(neigh)
 
             # Check if a withdraw is needed
             if self.withdraw:
@@ -319,14 +307,6 @@ class Node(Module):
                                            Events.WITHDRAW, self, self, 
                                            obj=withdraw_packet)
                     self.event_store.put(withdraw_event)
-
-            # Remove the neighbors that received the element from the queue
-            for del_elem in del_neigh:
-                self.destination_queue[dst].remove(del_elem)
-            if len(self.destination_queue[dst]) == 0:
-                del_dst.append(dst)
-        for del_elem in del_dst:
-            del self.destination_queue[del_elem]
 
     def program_withdraw(self, event):
         """program_withdraw.
@@ -377,11 +357,6 @@ class Node(Module):
             route_update.nh = self._id
             # Create the event
             packet_update = Packet(Packet.UPDATE, route_update)
-            # dst_node = event.destination 
-            # transmission_event = Event(update_time, Events.TX, 
-            #                     self, dst_node, obj=packet_update)
-            # Send the event to the handler
-            # self.event_store.put(transmission_event)
 
         # Send the packet to the neighborhod
         for neigh in self._neighbors:

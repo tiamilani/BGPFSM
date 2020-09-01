@@ -168,8 +168,8 @@ class sim:
         # Register the end time and do the subtraction
         end_time = time.time()
         total_time = round(end_time - start_time)
-        """for node in self.nodes:
-            print(self.nodes[node])"""
+        for node in self.nodes:
+            print(self.nodes[node])
         print("\nMaximum simulation time reached. Terminating")
         print("Total simulation time: %d hours, %d minutes, %d seconds" %
               (total_time // 3600, total_time % 3600 // 60,
