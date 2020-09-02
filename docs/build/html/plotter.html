@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>plotter module &#8212; BGPFSM 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-plotter">
+<span id="plotter-module"></span><h1>plotter module<a class="headerlink" href="#module-plotter" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="plotter.Plotter">
+<em class="property">class </em><code class="sig-prename descclassname">plotter.</code><code class="sig-name descname">Plotter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">states</span><span class="p">:</span> <span class="n">pandas.core.frame.DataFrame</span></em>, <em class="sig-param"><span class="n">transitions</span><span class="p">:</span> <span class="n">pandas.core.frame.DataFrame</span></em>, <em class="sig-param"><span class="n">route_id</span><span class="p">:</span> <span class="n">pandas.core.frame.DataFrame</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotter.html#Plotter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotter.Plotter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="plotter.Plotter.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">states</span><span class="p">:</span> <span class="n">pandas.core.frame.DataFrame</span></em>, <em class="sig-param"><span class="n">transitions</span><span class="p">:</span> <span class="n">pandas.core.frame.DataFrame</span></em>, <em class="sig-param"><span class="n">route_id</span><span class="p">:</span> <span class="n">pandas.core.frame.DataFrame</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotter.html#Plotter.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotter.Plotter.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="plotter.Plotter.get_detailed_fsm_graphviz">
+<code class="sig-name descname">get_detailed_fsm_graphviz</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">graph</span><span class="p">:</span> <span class="n">graphviz.dot.Digraph</span></em><span class="sig-paren">)</span> &#x2192; graphviz.dot.Digraph<a class="reference internal" href="_modules/plotter.html#Plotter.get_detailed_fsm_graphviz"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotter.Plotter.get_detailed_fsm_graphviz" title="Permalink to this definition">¶</a></dt>
+<dd><p>get_detailed_fsm_graphviz.
+This function introduce a lot more details in the graph
+it will introduce also a table for the messages to identify to which
+message corresponds which id on the edges
+It will introduce also a table for the states indicating for each
+id in the state knowledge whcich route is really know</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>graph</strong> – dot object of graphviz to modify</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the dot file modified</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="plotter.Plotter.get_fsm_graphviz">
+<code class="sig-name descname">get_fsm_graphviz</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dot</span><span class="p">:</span> <span class="n">graphviz.dot.Digraph</span></em><span class="sig-paren">)</span> &#x2192; graphviz.dot.Digraph<a class="reference internal" href="_modules/plotter.html#Plotter.get_fsm_graphviz"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotter.Plotter.get_fsm_graphviz" title="Permalink to this definition">¶</a></dt>
+<dd><p>get_fsm_graphviz.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dot</strong> – dot object of graphviz used to create the graph</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the dot object modified</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="plotter.Plotter.states_stage_boxplot">
+<code class="sig-name descname">states_stage_boxplot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">output_file</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotter.html#Plotter.states_stage_boxplot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotter.Plotter.states_stage_boxplot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">BGPFSM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mattia Milani.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/plotter.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

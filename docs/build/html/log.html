@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>log module &#8212; BGPFSM 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-log">
+<span id="log-module"></span><h1>log module<a class="headerlink" href="#module-log" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="log.Log">
+<em class="property">class </em><code class="sig-prename descclassname">log.</code><code class="sig-name descname">Log</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">output_file</span></em>, <em class="sig-param"><span class="n">log_routing_change</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">log_rib_change</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">log_packets</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">log_paths</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">log_states</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/log.html#Log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#log.Log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Defines data logging utilities</p>
+<dl class="py method">
+<dt id="log.Log.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">output_file</span></em>, <em class="sig-param"><span class="n">log_routing_change</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">log_rib_change</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">log_packets</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">log_paths</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">log_states</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/log.html#Log.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#log.Log.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor.
+:param output_file: output file name. will be overwritten if already
+existing
+:param log_routing_change: enable/disable logging of routing changes
+:param log_packets: enable/disable logging of packets
+:param log_paths: enable/disable logging of new paths
+:param log_states: enable/disable logging of the state of nodes</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="log.Log.log_packet_rx">
+<code class="sig-name descname">log_packet_rx</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node</span></em>, <em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/log.html#Log.log_packet_rx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#log.Log.log_packet_rx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Logs a packet rx.
+:param node: source node
+:param packet: the packet to log</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="log.Log.log_packet_tx">
+<code class="sig-name descname">log_packet_tx</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node</span></em>, <em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/log.html#Log.log_packet_tx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#log.Log.log_packet_tx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Logs a packet tx.
+:param node: source node
+:param packet: the packet to log</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="log.Log.log_path">
+<code class="sig-name descname">log_path</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node_id</span></em>, <em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/log.html#Log.log_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#log.Log.log_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Logs a new path to a dst.
+:param node_id: source node
+:param path: the path to log</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="log.Log.log_rib_change">
+<code class="sig-name descname">log_rib_change</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node_id</span></em>, <em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/log.html#Log.log_rib_change"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#log.Log.log_rib_change" title="Permalink to this definition">¶</a></dt>
+<dd><p>Logs the rib state change
+It means that the knowledge of routes is changed in some way
+:param node_id: id of the node that changed
+:param state: the new state of the rib</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="log.Log.log_rt_change">
+<code class="sig-name descname">log_rt_change</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node</span></em>, <em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/log.html#Log.log_rt_change"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#log.Log.log_rt_change" title="Permalink to this definition">¶</a></dt>
+<dd><p>Logs the result of a routing table change
+:param node: The node that triggered the event
+:param route: the new route in the routing table</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="log.Log.log_state">
+<code class="sig-name descname">log_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/log.html#Log.log_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#log.Log.log_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Logs the state of a particular node
+:param node: node
+:param state: state of the node</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">BGPFSM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mattia Milani.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/log.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

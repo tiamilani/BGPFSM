@@ -1,0 +1,375 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>config &#8212; BGPFSM 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for config</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This program is free software: you can redistribute it and/or modify</span>
+<span class="c1"># it under the terms of the GNU General Public License as published by</span>
+<span class="c1"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c1"># (at your option) any later version.</span>
+<span class="c1">#</span>
+<span class="c1"># This program is distributed in the hope that it will be useful,</span>
+<span class="c1"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c1"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c1"># GNU General Public License for more details.</span>
+<span class="c1">#</span>
+<span class="c1"># You should have received a copy of the GNU General Public License</span>
+<span class="c1"># along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright (C) 2016 Michele Segata &lt;segata@ccs-labs.org&gt;</span>
+
+<span class="c1"># because in python2 / is integer division, while in python3 / is float division</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+
+
+<div class="viewcode-block" id="Config"><a class="viewcode-back" href="../config.html#config.Config">[docs]</a><span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reads simulation config from configuration file. The configuration file is</span>
+<span class="sd">    in JSON format with the addition of text comments (non-standard JSON).</span>
+<span class="sd">    Comments are automatically removed before processing the JSON content</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># output file name parameter</span>
+    <span class="n">OUTPUT</span> <span class="o">=</span> <span class="s2">&quot;output&quot;</span>
+
+<div class="viewcode-block" id="Config.__init__"><a class="viewcode-back" href="../config.html#config.Config.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_file</span><span class="p">,</span> <span class="n">section</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructor.</span>
+<span class="sd">        :param config_file: file name of the config file</span>
+<span class="sd">        :param section: the section of the configuration file to load</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># save basic configuration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config_file</span> <span class="o">=</span> <span class="n">config_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">section</span> <span class="o">=</span> <span class="n">section</span>
+        <span class="c1"># load configuration from json</span>
+        <span class="n">json_content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">remove_comments</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json_content</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Unable to parse &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">config_file</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">section</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: the file </span><span class="si">%s</span><span class="s2"> does not contain section </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                  <span class="p">(</span><span class="n">config_file</span><span class="p">,</span> <span class="n">section</span><span class="p">))</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># create the mapping between run numbers and parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">map_parameters</span><span class="p">()</span>
+        <span class="c1"># set the run number to 0 by default</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_number</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># compute the output file name for run number 0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_output_file_name</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Config.map_parameters"><a class="viewcode-back" href="../config.html#config.Config.map_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">map_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a map from run number to the index of each parameter for that</span>
+<span class="sd">        specific run number. For example, if we have parameters a and b, defined</span>
+<span class="sd">        as a = [1, 2, 3] and b = [5, 6], we will need to run the following</span>
+<span class="sd">        simulations</span>
+<span class="sd">        a = 1, b = 5</span>
+<span class="sd">        a = 1, b = 6</span>
+<span class="sd">        a = 2, b = 5</span>
+<span class="sd">        a = 2, b = 6</span>
+<span class="sd">        a = 3, b = 5</span>
+<span class="sd">        a = 3, b = 6</span>
+<span class="sd">        so we will need to run 6 simulations. The run id goes from 0 to 5, and</span>
+<span class="sd">        for each run id we map a particular tuple of parameters. What we do here</span>
+<span class="sd">        is, given the run id, computing the index of a particular parameter</span>
+<span class="sd">        inside its array of values. For example, for the aforementioned case</span>
+<span class="sd">        this function computes</span>
+<span class="sd">        run = 0, a = 0, b = 0</span>
+<span class="sd">        run = 1, a = 1, b = 1</span>
+<span class="sd">        run = 2, a = 2, b = 0</span>
+<span class="sd">        run = 3, a = 0, b = 1</span>
+<span class="sd">        run = 4, a = 1, b = 0</span>
+<span class="sd">        run = 5, a = 2, b = 1</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># compute the total number of runs. given that we are performing a</span>
+        <span class="c1"># cartesian product, we simply multiply the sizes of all parameters</span>
+        <span class="c1"># given as a list of values</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">][</span><span class="n">p</span><span class="p">])</span> <span class="o">==</span> <span class="nb">list</span><span class="p">:</span>
+                <span class="n">count</span> <span class="o">=</span> <span class="n">count</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">][</span><span class="n">p</span><span class="p">])</span>
+
+        <span class="c1"># list of run ids, going from 0 to count - 1</span>
+        <span class="n">runs</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+        <span class="c1"># map from run number to index of a parameter inside its array</span>
+        <span class="n">par_map</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">prev_size</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">][</span><span class="n">p</span><span class="p">])</span> <span class="o">==</span> <span class="nb">list</span><span class="p">:</span>
+                <span class="n">own_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">][</span><span class="n">p</span><span class="p">])</span>
+                <span class="n">par_map</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">((</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">//</span> <span class="n">prev_size</span> <span class="o">%</span> <span class="n">own_size</span><span class="p">),</span>
+                                      <span class="n">runs</span><span class="p">))</span>
+                <span class="n">prev_size</span> <span class="o">=</span> <span class="n">prev_size</span> <span class="o">*</span> <span class="n">own_size</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">runs_count</span> <span class="o">=</span> <span class="n">count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">par_map</span> <span class="o">=</span> <span class="n">par_map</span></div>
+
+<div class="viewcode-block" id="Config.get_runs_count"><a class="viewcode-back" href="../config.html#config.Config.get_runs_count">[docs]</a>    <span class="k">def</span> <span class="nf">get_runs_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the number of runs in the simulation</span>
+<span class="sd">        :returns: count of runs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runs_count</span></div>
+
+<div class="viewcode-block" id="Config.set_run_number"><a class="viewcode-back" href="../config.html#config.Config.set_run_number">[docs]</a>    <span class="k">def</span> <span class="nf">set_run_number</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_number</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the simulation we want to run</span>
+<span class="sd">        :param run_number: the simulation run</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_number</span> <span class="o">=</span> <span class="n">run_number</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_output_file_name</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Config.remove_comments"><a class="viewcode-back" href="../config.html#config.Config.remove_comments">[docs]</a>    <span class="k">def</span> <span class="nf">remove_comments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">json_file</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Removes the comments from a json file (non standard)</span>
+<span class="sd">        :param json_file: json file name</span>
+<span class="sd">        :returns: the content of the file without comments</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># regular expression to remove comments from json file</span>
+        <span class="n">cr</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;(^)?[^\S</span><span class="se">\n</span><span class="s1">]*/(?:\*(.*?)\*/[^\S</span><span class="se">\n</span><span class="s1">]*|/[^</span><span class="se">\n</span><span class="s1">]*)($)?&#39;</span><span class="p">,</span>
+                        <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">)</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">json_file</span><span class="p">)</span><span class="o">.</span><span class="n">readlines</span><span class="p">())</span>
+        <span class="c1"># looking for comments</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">match</span><span class="p">:</span>
+            <span class="c1"># single line comment</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">content</span><span class="p">[:</span><span class="n">match</span><span class="o">.</span><span class="n">start</span><span class="p">()]</span> <span class="o">+</span> <span class="n">content</span><span class="p">[</span><span class="n">match</span><span class="o">.</span><span class="n">end</span><span class="p">():]</span>
+            <span class="n">match</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">content</span></div>
+
+<div class="viewcode-block" id="Config.get_param"><a class="viewcode-back" href="../config.html#config.Config.get_param">[docs]</a>    <span class="k">def</span> <span class="nf">get_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the value of a parameter from the configuration file.</span>
+<span class="sd">        return None if the parameter is not found</span>
+<span class="sd">        :param param: the parameter&#39;s name or None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># first check that param exists</span>
+        <span class="k">if</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">]:</span>
+            <span class="c1"># if the parameter is in par_map, then it is a vector of values. In</span>
+            <span class="c1"># such a case, we take a value depending on the run number</span>
+            <span class="k">if</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">par_map</span><span class="p">:</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">par_map</span><span class="p">[</span><span class="n">param</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">run_number</span><span class="p">]</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">][</span><span class="n">param</span><span class="p">][</span><span class="n">index</span><span class="p">]</span>
+            <span class="c1"># if instead the parameter is not in par_map, then it&#39;s a single</span>
+            <span class="c1"># value. Just return it</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">][</span><span class="n">param</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="Config.compute_output_file_name"><a class="viewcode-back" href="../config.html#config.Config.compute_output_file_name">[docs]</a>    <span class="k">def</span> <span class="nf">compute_output_file_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes output file name. The user can specify an output file name with</span>
+<span class="sd">        variables that point to parameters in the configuration file. For</span>
+<span class="sd">        example, by specifying output = &quot;file_{seed}.csv&quot; and having the seed</span>
+<span class="sd">        parameter configured as seed = [0, 1], will result in two output files</span>
+<span class="sd">        (one per simulation run) names &quot;file_0.csv&quot; and &quot;file_1.csv&quot;. In the</span>
+<span class="sd">        case of random variables (e.g.,</span>
+<span class="sd">        size = {&quot;distribution&quot; : &quot;exp&quot;, &quot;lambda&quot; : 10}), one can use a</span>
+<span class="sd">        distribution parameter by using, in this specific case, {size.lambda}.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># if the user doesn&#39;t specify an output file name, then the output file</span>
+        <span class="c1"># name is simply given by section name and run number, which are unique</span>
+        <span class="c1"># identifiers for each simulation run</span>
+        <span class="k">if</span> <span class="n">Config</span><span class="o">.</span><span class="n">OUTPUT</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_file</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">_</span><span class="si">%d</span><span class="s2">.csv&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_number</span><span class="p">)</span>
+
+        <span class="c1"># shorthand to the simulation configuration</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">]</span>
+        <span class="c1"># get output parameter template as configured by the user</span>
+        <span class="n">template</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="n">Config</span><span class="o">.</span><span class="n">OUTPUT</span><span class="p">]</span>
+        <span class="c1"># final output file name</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="c1"># states saying whether we are currently parsing normal text or the name</span>
+        <span class="c1"># of a variable</span>
+        <span class="n">OUTVAR</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">INVAR</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="c1"># at the beginning we are outsize of a variable</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">OUTVAR</span>
+        <span class="c1"># name of the variable we are currently parsing</span>
+        <span class="n">var_name</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="c1"># loop through all characters</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">template</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">template</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;{&#39;</span><span class="p">:</span>
+                <span class="c1"># if the character is { then a variable is starting</span>
+                <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="n">OUTVAR</span><span class="p">:</span>
+                    <span class="c1"># if that is the case, we must be in the OUTVAR state</span>
+                    <span class="n">state</span> <span class="o">=</span> <span class="n">INVAR</span>
+                    <span class="n">var_name</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># if not, there is a syntax error like {{</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Invalid syntax for </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">template</span><span class="p">)</span>
+                    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">template</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;}&#39;</span><span class="p">:</span>
+                <span class="c1"># if the character is }, then this is the end of a variable name</span>
+                <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="n">INVAR</span><span class="p">:</span>
+                    <span class="c1"># if syntax is correct, we search for the value of the</span>
+                    <span class="c1"># specified parameter</span>
+
+                    <span class="c1"># first, split variables (a.b -&gt; &#39;a&#39;, &#39;b&#39;)</span>
+                    <span class="n">variables</span> <span class="o">=</span> <span class="n">var_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+                    <span class="c1"># start with the first one</span>
+                    <span class="n">var</span> <span class="o">=</span> <span class="n">variables</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">par_map</span><span class="p">:</span>
+                        <span class="c1"># if the variable is in the par_map, we need to get the</span>
+                        <span class="c1"># correct instance depending on the run number</span>
+                        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">par_map</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">run_number</span><span class="p">]</span>
+                        <span class="n">obj</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="n">var</span><span class="p">][</span><span class="n">index</span><span class="p">]</span>
+                        <span class="c1"># if the parameter value is an array, instead of taking</span>
+                        <span class="c1"># its value we take its index</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                            <span class="n">obj</span> <span class="o">=</span> <span class="n">index</span>
+                    <span class="k">elif</span> <span class="n">var</span> <span class="o">==</span> <span class="s2">&quot;date-time&quot;</span><span class="p">:</span>
+                        <span class="n">obj</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">-%m-%Y-%H-%M-%S-</span><span class="si">%f</span><span class="s2">&quot;</span><span class="p">)</span> 
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># otherwise we simply take the only value it has</span>
+                        <span class="n">obj</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+                        <span class="c1"># if the parameter value is an array, instead of taking</span>
+                        <span class="c1"># its value we take its index</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                            <span class="n">obj</span> <span class="o">=</span> <span class="mi">0</span>
+
+                    <span class="c1"># now simply perform &quot;introspection&quot;</span>
+                    <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">variables</span><span class="p">)]:</span>
+                        <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+
+                    <span class="c1"># finally get the value</span>
+                    <span class="n">output</span> <span class="o">=</span> <span class="n">output</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+                    <span class="c1"># and change state</span>
+                    <span class="n">state</span> <span class="o">=</span> <span class="n">OUTVAR</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># if we are not in the INVAR state, then we have a syntax</span>
+                    <span class="c1"># error like }}</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Invalid syntax for </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">template</span><span class="p">)</span>
+                    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># this is neither a { nor a }. so it&#39;s a standard character</span>
+                <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="n">INVAR</span><span class="p">:</span>
+                    <span class="c1"># if inside a variable, add character to variable name</span>
+                    <span class="n">var_name</span> <span class="o">=</span> <span class="n">var_name</span> <span class="o">+</span> <span class="n">template</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># otherwise add character to output file name</span>
+                    <span class="n">output</span> <span class="o">=</span> <span class="n">output</span> <span class="o">+</span> <span class="n">template</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="n">INVAR</span><span class="p">:</span>
+            <span class="c1"># if we are not in the OUTVAR state at the end of the template,</span>
+            <span class="c1"># then there is a syntax error</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Invalid syntax for </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">template</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_file</span> <span class="o">=</span> <span class="n">output</span></div>
+
+<div class="viewcode-block" id="Config.get_output_file"><a class="viewcode-back" href="../config.html#config.Config.get_output_file">[docs]</a>    <span class="k">def</span> <span class="nf">get_output_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_file</span></div>
+
+<div class="viewcode-block" id="Config.get_params"><a class="viewcode-back" href="../config.html#config.Config.get_params">[docs]</a>    <span class="k">def</span> <span class="nf">get_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_number</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a textual representation of simulation parameters for a given</span>
+<span class="sd">        run number</span>
+<span class="sd">        :param run_number: the run number</span>
+<span class="sd">        :returns: textual representation of parameters for run_number</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">section</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">par</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">par_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">params</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2"> &quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="n">par</span><span class="p">][</span><span class="n">val</span><span class="p">[</span><span class="n">run_number</span><span class="p">]]))</span>
+        <span class="k">return</span> <span class="n">params</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">BGPFSM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mattia Milani.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

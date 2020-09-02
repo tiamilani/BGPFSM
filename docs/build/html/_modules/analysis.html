@@ -1,0 +1,443 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>analysis &#8212; BGPFSM 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for analysis</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># This program is free software: you can redistribute it and/or modify</span>
+<span class="c1"># it under the terms of the GNU General Public License as published by</span>
+<span class="c1"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c1"># (at your option) any later version.</span>
+<span class="c1">#</span>
+<span class="c1"># This program is distributed in the hope that it will be useful,</span>
+<span class="c1"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c1"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c1"># GNU General Public License for more details.</span>
+<span class="c1">#</span>
+<span class="c1"># You should have received a copy of the GNU General Public License</span>
+<span class="c1"># along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright (C) 2020 Mattia Milani &lt;mattia.milani@studenti.unitn.it&gt;</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">events</span> <span class="kn">import</span> <span class="n">Events</span>
+<span class="kn">from</span> <span class="nn">packet</span> <span class="kn">import</span> <span class="n">Packet</span>
+<span class="kn">from</span> <span class="nn">route</span> <span class="kn">import</span> <span class="n">Route</span>
+<span class="kn">from</span> <span class="nn">transition</span> <span class="kn">import</span> <span class="n">Transition</span>
+<span class="kn">import</span> <span class="nn">ast</span>
+<span class="kn">from</span> <span class="nn">graphviz</span> <span class="kn">import</span> <span class="n">Digraph</span>
+<span class="kn">import</span> <span class="nn">timeit</span>
+
+<div class="viewcode-block" id="SingleFileAnalysis"><a class="viewcode-back" href="../analysis.html#analysis.SingleFileAnalysis">[docs]</a><span class="k">class</span> <span class="nc">SingleFileAnalysis</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;SingleFileAnalysis.</span>
+<span class="sd">    Class to manage a single file analysis, it is possible to study the</span>
+<span class="sd">    output of the fsm discrete event simulator</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="n">NoneType</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">ROUTE_COUNTER</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">col_types</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;event_id&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="s1">&#39;event_cause&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="s1">&#39;event&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                 <span class="s1">&#39;node&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">}</span>
+
+<div class="viewcode-block" id="SingleFileAnalysis.__init__"><a class="viewcode-back" href="../analysis.html#analysis.SingleFileAnalysis.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputFile</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">route_df</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">states_routes</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__init__.</span>
+
+<span class="sd">        :param inputFile: file with the output to analyze</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputFile</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">inputFile</span><span class="p">)</span>
+        <span class="c1"># Open it in pandas like data frame</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputFile</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;|&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="s2">&quot;event_cause&quot;</span><span class="p">,</span>
+                              <span class="n">dtype</span><span class="o">=</span><span class="n">SingleFileAnalysis</span><span class="o">.</span><span class="n">col_types</span><span class="p">)</span>
+        <span class="c1"># Set of states</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">states</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># Last state of the node during the evolution</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actualState</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span> 
+        <span class="c1"># Set of transitions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">route_df</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">NoneType</span><span class="p">):</span> 
+            <span class="c1"># Routes associated with the id</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="c1"># Id associated with the route</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">id_to_route</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">id_to_route</span> <span class="o">=</span> <span class="n">route_df</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;index&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">id_to_route</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">Route</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_to_route</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">):</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_to_route</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">states_routes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">NoneType</span><span class="p">):</span>
+            <span class="c1"># Routes associated with the states</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span> <span class="o">=</span> <span class="n">states_routes</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;index&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
+
+<div class="viewcode-block" id="SingleFileAnalysis.selectNode"><a class="viewcode-back" href="../analysis.html#analysis.SingleFileAnalysis.selectNode">[docs]</a>    <span class="k">def</span> <span class="nf">selectNode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;selectNode.</span>
+
+<span class="sd">        :param node_id: id of the node that needs to be isolated</span>
+<span class="sd">        :type node_id: int</span>
+<span class="sd">        :rtype: pd.DataFram</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Mantain in the dataframe only the rows where the node id is equal</span>
+        <span class="c1"># to the required one</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">node</span> <span class="o">==</span> <span class="n">node_id</span><span class="p">]</span></div>
+
+    <span class="k">def</span> <span class="nf">__evaluate_rib_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row_value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;__evaluate_rib_change.</span>
+<span class="sd">        Evaluate a row that contains a row change, it returns</span>
+<span class="sd">        the new state, if the set is empty it will return None</span>
+
+<span class="sd">        :param row: row to evaluate</span>
+<span class="sd">        :return: None if the set is empty, the str(set) otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">row_value</span> <span class="o">==</span> <span class="s2">&quot;set()&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ast</span><span class="o">.</span><span class="n">literal_eval</span><span class="p">(</span><span class="n">row_value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__evaluate_pkt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row_value</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;__evaluate_pkt.</span>
+<span class="sd">        Evaluate a single pkt row of the DF, it will return the compressed</span>
+<span class="sd">        string corresponding to the row, A{ID} for an advertisement or</span>
+<span class="sd">        W{ID} for a withdraw, the id corresponds to the route in the</span>
+<span class="sd">        route_to_id dictionary</span>
+
+<span class="sd">        :param row: row of the dataframe that contains a packet that needs to</span>
+<span class="sd">        be analyzed</span>
+<span class="sd">        :return: string with the compressed version of the update</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get the packet and the route transmitted</span>
+        <span class="n">packet</span> <span class="o">=</span> <span class="n">Packet</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="n">row_value</span><span class="p">)</span>
+        <span class="n">route</span> <span class="o">=</span> <span class="n">Route</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+        <span class="c1"># If the route is not in the dictionary of routes add it</span>
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ROUTE_COUNTER</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">id_to_route</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ROUTE_COUNTER</span><span class="p">)]</span> <span class="o">=</span> <span class="n">route</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ROUTE_COUNTER</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1"># Check the packet type and return the corresponding compressed version</span>
+        <span class="k">if</span> <span class="n">packet</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">==</span> <span class="n">Packet</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;A&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)])</span>
+        <span class="k">elif</span> <span class="n">packet</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">==</span> <span class="n">Packet</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;W&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Something very bad happened&quot;</span><span class="p">)</span>
+            <span class="n">exit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__evaluate_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row_value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;__evaluate_tx.</span>
+<span class="sd">        This function is used to evaluate a transmitted message and get </span>
+<span class="sd">        the comphressed version, for now is equal to __evaluate_rx</span>
+
+<span class="sd">        :param row_value: row value to evaluate</span>
+<span class="sd">        :return: compressed string of the packet</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__evaluate_pkt</span><span class="p">(</span><span class="n">row_value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__evaluate_rx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row_value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;__evaluate_rx.</span>
+<span class="sd">        This function is used to evaluate a received message and get </span>
+<span class="sd">        the comphressed version, for now is equal to __evaluate_tx</span>
+
+<span class="sd">        :param row_value: row_value to evaluate</span>
+<span class="sd">        :return: compressed string of the packet</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__evaluate_pkt</span><span class="p">(</span><span class="n">row_value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__evalaute_state_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_state</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;__evalaute_state_difference.</span>
+<span class="sd">        evaluate the difference between the actual state and a new state</span>
+
+<span class="sd">        :param new_state: new state to check</span>
+<span class="sd">        :return: set() containing the different items</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># symmetric_difference between sets</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">actualState</span> <span class="o">^</span> <span class="n">new_state</span>
+
+    <span class="c1"># @profile</span>
+    <span class="k">def</span> <span class="nf">__evaluate_event_rx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rx_event_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">rx_value</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__evaluate_event_rx.</span>
+
+<span class="sd">        :param rx_event_id:</span>
+<span class="sd">        :type rx_event_id: int</span>
+<span class="sd">        :param rx_value:</span>
+<span class="sd">        :type rx_value: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Find events caused by the rx</span>
+        <span class="k">if</span> <span class="n">rx_event_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">events_in_between</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[[</span><span class="n">rx_event_id</span><span class="p">],</span> <span class="p">:</span> <span class="p">]</span>
+
+        <span class="c1"># Keep a tmp variable with the state that can have been changed </span>
+        <span class="c1"># thanks to this reception</span>
+        <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">actualState</span> 
+
+        <span class="c1"># Keep a set of transmitted routes, set because we are interested</span>
+        <span class="c1"># uniquelly in which route has been transmitted and not to who</span>
+        <span class="n">transmitted_routes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="c1"># Check each row of the events caused by the reception</span>
+        <span class="k">for</span> <span class="n">row_event</span><span class="p">,</span> <span class="n">row_value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">events_in_between</span><span class="p">[</span><span class="s1">&#39;event&#39;</span><span class="p">],</span> 
+                                        <span class="n">events_in_between</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]):</span>
+            <span class="c1"># If the event is a change in the state, I update the local</span>
+            <span class="c1"># variable that keeps the state</span>
+            <span class="k">if</span> <span class="n">row_event</span> <span class="o">==</span> <span class="n">Events</span><span class="o">.</span><span class="n">RIB_CHANGE</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__evaluate_rib_change</span><span class="p">(</span><span class="n">row_value</span><span class="p">)</span>
+            <span class="c1"># If the event is a TX i update the corresponding sets</span>
+            <span class="k">if</span> <span class="n">row_event</span> <span class="o">==</span> <span class="n">Events</span><span class="o">.</span><span class="n">TX</span><span class="p">:</span>
+                <span class="n">transmitted_routes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__evaluate_tx</span><span class="p">(</span><span class="n">row_value</span><span class="p">))</span>
+    
+        <span class="c1"># Evaluate the reception event</span>
+        <span class="n">inp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__evaluate_rx</span><span class="p">(</span><span class="n">rx_value</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">transmitted_routes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">transmitted_routes</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># The state has changed thanks to this reception message</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actualState</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_state</span><span class="p">):</span>
+            <span class="c1"># Evaluate the difference in the new state vs the previus one</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actualState</span><span class="p">)</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">new_state</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;something really bad happened&quot;</span><span class="p">)</span>
+                <span class="n">exit</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+            <span class="c1"># resulting_elem = self.__evalaute_state_difference(new_state).pop()</span>
+            <span class="n">pkt</span> <span class="o">=</span> <span class="n">Packet</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="n">rx_value</span><span class="p">)</span>
+            <span class="n">route</span> <span class="o">=</span> <span class="n">Route</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="n">pkt</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pkt</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">==</span> <span class="n">Packet</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">:</span>  
+                <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)]</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">actualState</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">new_state</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)])</span>    
+            <span class="k">elif</span> <span class="n">pkt</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">==</span> <span class="n">Packet</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">actualState</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">new_state</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)])</span>   
+            <span class="c1"># print(self.states_routes)</span>
+            <span class="c1"># print(self.actualState, new_state)</span>
+
+            <span class="c1"># Check if the state has already been known</span>
+            <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">new_state</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="c1"># Add the state to the states dictionary</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">new_state</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># The state is already in the dictionary, increase the counter</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">new_state</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># Create the new transition</span>
+        <span class="n">transition</span> <span class="o">=</span> <span class="n">Transition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actualState</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span>
+                                <span class="n">inp</span><span class="p">,</span><span class="n">transmitted_routes</span><span class="p">)</span>
+
+        <span class="c1"># Change the state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actualState</span> <span class="o">=</span> <span class="n">new_state</span>
+        <span class="c1"># Check if the transition has already been known</span>
+        <span class="k">if</span> <span class="nb">hash</span><span class="p">(</span><span class="n">transition</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="nb">hash</span><span class="p">(</span><span class="n">transition</span><span class="p">)]</span> <span class="o">=</span> <span class="n">transition</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># The transition is already in the dictionary, increase the </span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="nb">hash</span><span class="p">(</span><span class="n">transition</span><span class="p">)]</span><span class="o">.</span><span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="SingleFileAnalysis.keep_only_fsm_events"><a class="viewcode-back" href="../analysis.html#analysis.SingleFileAnalysis.keep_only_fsm_events">[docs]</a>    <span class="k">def</span> <span class="nf">keep_only_fsm_events</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;keep_only_fsm_events.</span>
+<span class="sd">        Function that returns a dataframe with only events that are meaningful</span>
+<span class="sd">        for a FSM study, RIB_CHANGE, TX and RX</span>
+
+<span class="sd">        :return: Datafram with only those events</span>
+<span class="sd">        :rtype: pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">event</span> <span class="o">==</span> <span class="n">Events</span><span class="o">.</span><span class="n">RIB_CHANGE</span><span class="p">)</span> <span class="o">|</span> \
+                          <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">event</span> <span class="o">==</span> <span class="n">Events</span><span class="o">.</span><span class="n">RX</span><span class="p">)</span> <span class="o">|</span> \
+                          <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">event</span> <span class="o">==</span> <span class="n">Events</span><span class="o">.</span><span class="n">TX</span><span class="p">)]</span></div>
+
+    <span class="c1"># @profile</span>
+<div class="viewcode-block" id="SingleFileAnalysis.evaluate_fsm"><a class="viewcode-back" href="../analysis.html#analysis.SingleFileAnalysis.evaluate_fsm">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_fsm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;evaluate_fsm.</span>
+<span class="sd">            Function that evaluate the current dataframe objects to obatin</span>
+<span class="sd">            states and transitions</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">tmp_rx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">event</span> <span class="o">==</span> <span class="n">Events</span><span class="o">.</span><span class="n">RX</span><span class="p">)]</span>
+
+        <span class="c1"># To activate a useful O(LogN) index search the datafram must be sorted</span>
+        <span class="c1"># This will break the event time order, but we already estrapolated</span>
+        <span class="c1"># RX events in time order</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">tmp_rx</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__evaluate_event_rx</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">event_id</span><span class="p">,</span> 
+                                                           <span class="n">row</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SingleFileAnalysis.get_states_as_df"><a class="viewcode-back" href="../analysis.html#analysis.SingleFileAnalysis.get_states_as_df">[docs]</a>    <span class="k">def</span> <span class="nf">get_states_as_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">states</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">states</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span>
+        <span class="n">st_df_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="nb">map</span><span class="p">(</span><span class="nb">hash</span><span class="p">,</span> <span class="n">states</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+                      <span class="s1">&#39;state&#39;</span><span class="p">:</span> <span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">states</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+                      <span class="s1">&#39;counter&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">states</span><span class="o">.</span><span class="n">values</span><span class="p">())}</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">st_df_dict</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">([</span><span class="s1">&#39;id&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="SingleFileAnalysis.get_transitions_as_df"><a class="viewcode-back" href="../analysis.html#analysis.SingleFileAnalysis.get_transitions_as_df">[docs]</a>    <span class="k">def</span> <span class="nf">get_transitions_as_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transitions</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">transitions</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">transitions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span>
+        <span class="n">tr_df_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="nb">map</span><span class="p">(</span><span class="nb">hash</span><span class="p">,</span> <span class="n">transitions</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+                      <span class="s1">&#39;start_node&#39;</span><span class="p">:</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">transitions</span><span class="p">[</span><span class="n">trans</span><span class="p">]</span><span class="o">.</span><span class="n">init_state</span><span class="p">)</span> <span class="k">for</span> <span class="n">trans</span> <span class="ow">in</span> <span class="n">transitions</span><span class="p">],</span>
+                      <span class="s1">&#39;end_node&#39;</span><span class="p">:</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">transitions</span><span class="p">[</span><span class="n">trans</span><span class="p">]</span><span class="o">.</span><span class="n">output_state</span><span class="p">)</span> <span class="k">for</span> <span class="n">trans</span> <span class="ow">in</span> <span class="n">transitions</span><span class="p">],</span>
+                      <span class="s1">&#39;cause&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">transitions</span><span class="p">[</span><span class="n">trans</span><span class="p">]</span><span class="o">.</span><span class="n">input</span> <span class="k">for</span> <span class="n">trans</span> <span class="ow">in</span> <span class="n">transitions</span><span class="p">],</span>
+                      <span class="s1">&#39;response&#39;</span><span class="p">:</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">transitions</span><span class="p">[</span><span class="n">trans</span><span class="p">]</span><span class="o">.</span><span class="n">output</span><span class="p">)</span> <span class="k">for</span> <span class="n">trans</span> <span class="ow">in</span> <span class="n">transitions</span><span class="p">],</span>
+                      <span class="s1">&#39;counter&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">transitions</span><span class="p">[</span><span class="n">trans</span><span class="p">]</span><span class="o">.</span><span class="n">counter</span> <span class="k">for</span> <span class="n">trans</span> <span class="ow">in</span> <span class="n">transitions</span><span class="p">]}</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">tr_df_dict</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">([</span><span class="s1">&#39;id&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="SingleFileAnalysis.get_route_df"><a class="viewcode-back" href="../analysis.html#analysis.SingleFileAnalysis.get_route_df">[docs]</a>    <span class="k">def</span> <span class="nf">get_route_df</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_to_route</span><span class="o">.</span><span class="n">keys</span><span class="p">()],</span>
+             <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_to_route</span><span class="o">.</span><span class="n">values</span><span class="p">()]}</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">d</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SingleFileAnalysis.get_states_route_df"><a class="viewcode-back" href="../analysis.html#analysis.SingleFileAnalysis.get_states_route_df">[docs]</a>    <span class="k">def</span> <span class="nf">get_states_route_df</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;state&#39;</span><span class="p">:</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span><span class="o">.</span><span class="n">keys</span><span class="p">()],</span>
+             <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span><span class="o">.</span><span class="n">values</span><span class="p">()]}</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">d</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;state&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SingleFileAnalysis.dump_df"><a class="viewcode-back" href="../analysis.html#analysis.SingleFileAnalysis.dump_df">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">dump_df</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">output_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="s1">&#39;|&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SingleFileAnalysis.dump_states"><a class="viewcode-back" href="../analysis.html#analysis.SingleFileAnalysis.dump_states">[docs]</a>    <span class="k">def</span> <span class="nf">dump_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">states</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span> 
+        <span class="sd">&quot;&quot;&quot;dump_states.</span>
+<span class="sd">        Write on a file all the states information in csv format</span>
+<span class="sd">    </span>
+<span class="sd">        :param output_file: output file</span>
+<span class="sd">        :type output_file: str</span>
+<span class="sd">        :param states: optional param, dataframe of states</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">states</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_states_as_df</span><span class="p">()</span>
+        <span class="n">states</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;|&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SingleFileAnalysis.dump_transitions"><a class="viewcode-back" href="../analysis.html#analysis.SingleFileAnalysis.dump_transitions">[docs]</a>    <span class="k">def</span> <span class="nf">dump_transitions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">transitions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span> 
+        <span class="sd">&quot;&quot;&quot;dump_states.</span>
+<span class="sd">        Write on a file all the transitions information in csv format</span>
+<span class="sd">    </span>
+<span class="sd">        :param output_file: output file</span>
+<span class="sd">        :type output_file: str</span>
+<span class="sd">        :param  transitions: optional param, DataFrame of transitions </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">transitions</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">transitions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_transitions_as_df</span><span class="p">()</span>
+        <span class="n">transitions</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;|&#39;</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">df</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;df.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_df</span>
+
+    <span class="nd">@df</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;df.</span>
+
+<span class="sd">        :param v:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_df</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__delitem__.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputFile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__str__.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">BGPFSM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mattia Milani.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

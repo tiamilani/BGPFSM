@@ -1,0 +1,143 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>module module &#8212; BGPFSM 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-0">
+<span id="module-module"></span><h1>module module<a class="headerlink" href="#module-0" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="module.Module">
+<em class="property">class </em><code class="sig-prename descclassname">module.</code><code class="sig-name descname">Module</code><a class="reference internal" href="_modules/module.html#Module"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#module.Module" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Defines a generic simulation module, implementing some basic functionalities
+that all modules should inherit from</p>
+<dl class="py method">
+<dt id="module.Module.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/module.html#Module.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#module.Module.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor. Gets simulation instance for scheduling events and
+automatically assigns an ID to the module</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="module.Module.get_id">
+<code class="sig-name descname">get_id</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/module.html#Module.get_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#module.Module.get_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns module id</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="module.Module.get_type">
+<code class="sig-name descname">get_type</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/module.html#Module.get_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#module.Module.get_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns module type</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="module.Module.handle_event">
+<code class="sig-name descname">handle_event</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/module.html#Module.handle_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#module.Module.handle_event" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function should be overridden by inheriting modules to handle
+events for this module. If not overridden, this method will throw an
+error and stop the simulation</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="module.Module.initialize">
+<code class="sig-name descname">initialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/module.html#Module.initialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#module.Module.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialization method called by the simulation for each newly
+instantiated module</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">BGPFSM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mattia Milani.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/module.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

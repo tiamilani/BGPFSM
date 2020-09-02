@@ -1,0 +1,206 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>config module &#8212; BGPFSM 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-config">
+<span id="config-module"></span><h1>config module<a class="headerlink" href="#module-config" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="config.Config">
+<em class="property">class </em><code class="sig-prename descclassname">config.</code><code class="sig-name descname">Config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config_file</span></em>, <em class="sig-param"><span class="n">section</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/config.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#config.Config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Reads simulation config from configuration file. The configuration file is
+in JSON format with the addition of text comments (non-standard JSON).
+Comments are automatically removed before processing the JSON content</p>
+<dl class="py attribute">
+<dt id="config.Config.OUTPUT">
+<code class="sig-name descname">OUTPUT</code><em class="property"> = 'output'</em><a class="headerlink" href="#config.Config.OUTPUT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="config.Config.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config_file</span></em>, <em class="sig-param"><span class="n">section</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/config.html#Config.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#config.Config.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor.
+:param config_file: file name of the config file
+:param section: the section of the configuration file to load</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="config.Config.compute_output_file_name">
+<code class="sig-name descname">compute_output_file_name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/config.html#Config.compute_output_file_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#config.Config.compute_output_file_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes output file name. The user can specify an output file name with
+variables that point to parameters in the configuration file. For
+example, by specifying output = “file_{seed}.csv” and having the seed
+parameter configured as seed = [0, 1], will result in two output files
+(one per simulation run) names “file_0.csv” and “file_1.csv”. In the
+case of random variables (e.g.,
+size = {“distribution” : “exp”, “lambda” : 10}), one can use a
+distribution parameter by using, in this specific case, {size.lambda}.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="config.Config.get_output_file">
+<code class="sig-name descname">get_output_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/config.html#Config.get_output_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#config.Config.get_output_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="config.Config.get_param">
+<code class="sig-name descname">get_param</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">param</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/config.html#Config.get_param"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#config.Config.get_param" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value of a parameter from the configuration file.
+return None if the parameter is not found
+:param param: the parameter’s name or None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="config.Config.get_params">
+<code class="sig-name descname">get_params</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">run_number</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/config.html#Config.get_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#config.Config.get_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a textual representation of simulation parameters for a given
+run number
+:param run_number: the run number
+:returns: textual representation of parameters for run_number</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="config.Config.get_runs_count">
+<code class="sig-name descname">get_runs_count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/config.html#Config.get_runs_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#config.Config.get_runs_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of runs in the simulation
+:returns: count of runs</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="config.Config.map_parameters">
+<code class="sig-name descname">map_parameters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/config.html#Config.map_parameters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#config.Config.map_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a map from run number to the index of each parameter for that
+specific run number. For example, if we have parameters a and b, defined
+as a = [1, 2, 3] and b = [5, 6], we will need to run the following
+simulations
+a = 1, b = 5
+a = 1, b = 6
+a = 2, b = 5
+a = 2, b = 6
+a = 3, b = 5
+a = 3, b = 6
+so we will need to run 6 simulations. The run id goes from 0 to 5, and
+for each run id we map a particular tuple of parameters. What we do here
+is, given the run id, computing the index of a particular parameter
+inside its array of values. For example, for the aforementioned case
+this function computes
+run = 0, a = 0, b = 0
+run = 1, a = 1, b = 1
+run = 2, a = 2, b = 0
+run = 3, a = 0, b = 1
+run = 4, a = 1, b = 0
+run = 5, a = 2, b = 1</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="config.Config.remove_comments">
+<code class="sig-name descname">remove_comments</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">json_file</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/config.html#Config.remove_comments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#config.Config.remove_comments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the comments from a json file (non standard)
+:param json_file: json file name
+:returns: the content of the file without comments</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="config.Config.set_run_number">
+<code class="sig-name descname">set_run_number</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">run_number</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/config.html#Config.set_run_number"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#config.Config.set_run_number" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the simulation we want to run
+:param run_number: the simulation run</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">BGPFSM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mattia Milani.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/config.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

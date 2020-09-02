@@ -64,23 +64,23 @@ class Config:
         specific run number. For example, if we have parameters a and b, defined
         as a = [1, 2, 3] and b = [5, 6], we will need to run the following
         simulations
-            a = 1, b = 5
-            a = 1, b = 6
-            a = 2, b = 5
-            a = 2, b = 6
-            a = 3, b = 5
-            a = 3, b = 6
+        a = 1, b = 5
+        a = 1, b = 6
+        a = 2, b = 5
+        a = 2, b = 6
+        a = 3, b = 5
+        a = 3, b = 6
         so we will need to run 6 simulations. The run id goes from 0 to 5, and
         for each run id we map a particular tuple of parameters. What we do here
         is, given the run id, computing the index of a particular parameter
         inside its array of values. For example, for the aforementioned case
         this function computes
-            run = 0, a = 0, b = 0
-            run = 1, a = 1, b = 1
-            run = 2, a = 2, b = 0
-            run = 3, a = 0, b = 1
-            run = 4, a = 1, b = 0
-            run = 5, a = 2, b = 1
+        run = 0, a = 0, b = 0
+        run = 1, a = 1, b = 1
+        run = 2, a = 2, b = 0
+        run = 3, a = 0, b = 1
+        run = 4, a = 1, b = 0
+        run = 5, a = 2, b = 1
         """
         # compute the total number of runs. given that we are performing a
         # cartesian product, we simply multiply the sizes of all parameters

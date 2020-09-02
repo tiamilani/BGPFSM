@@ -1,0 +1,235 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>rib module &#8212; BGPFSM 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-rib">
+<span id="rib-module"></span><h1>rib module<a class="headerlink" href="#module-rib" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="rib.Rib">
+<em class="property">class </em><code class="sig-prename descclassname">rib.</code><code class="sig-name descname">Rib</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node_id</span></em>, <em class="sig-param"><span class="n">logger</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">collections.abc.MutableSequence</span></code></p>
+<p>Rib.
+Class used to handle the routing information base of a node</p>
+<dl class="py attribute">
+<dt id="rib.Rib.ROUTE_COUNTER">
+<code class="sig-name descname">ROUTE_COUNTER</code><em class="property"> = 0</em><a class="headerlink" href="#rib.Rib.ROUTE_COUNTER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="rib.Rib.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node_id</span></em>, <em class="sig-param"><span class="n">logger</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>__init__.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node_id</strong> – id of the node that controls the rib object</p></li>
+<li><p><strong>logger</strong> – logger object</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rib.Rib.check">
+<code class="sig-name descname">check</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.check" title="Permalink to this definition">¶</a></dt>
+<dd><p>check.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>v</strong> – check the type of v</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rib.Rib.contains">
+<code class="sig-name descname">contains</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i</span></em>, <em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.contains"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.contains" title="Permalink to this definition">¶</a></dt>
+<dd><p>contains.
+check if the table contains the object v in the vector for the addr i</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i</strong> – addr key</p></li>
+<li><p><strong>v</strong> – route to check</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rib.Rib.filter">
+<code class="sig-name descname">filter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">route</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter.
+filter function for routes before the introduction in the rib
+returns always true for now</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>route</strong> – route that needs to be evaluated</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rib.Rib.getKey">
+<code class="sig-name descname">getKey</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.getKey"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.getKey" title="Permalink to this definition">¶</a></dt>
+<dd><p>getKey.
+Return the ith key</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>i</strong> – index</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rib.Rib.insert">
+<code class="sig-name descname">insert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i</span></em>, <em class="sig-param"><span class="n">v</span></em>, <em class="sig-param"><span class="n">event</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.insert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.insert" title="Permalink to this definition">¶</a></dt>
+<dd><p>insert.
+Function to insert an object in the rib at the addr i</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i</strong> – key addr</p></li>
+<li><p><strong>v</strong> – route to append</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rib.Rib.remove">
+<code class="sig-name descname">remove</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i</span></em>, <em class="sig-param"><span class="n">v</span></em>, <em class="sig-param"><span class="n">event</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>remove.
+remove object v from the vector of addr i if present</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i</strong> – addr key</p></li>
+<li><p><strong>v</strong> – route that needs to be removed</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rib.Rib.update_rib_state">
+<code class="sig-name descname">update_rib_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">route</span></em>, <em class="sig-param"><span class="n">event</span></em>, <em class="sig-param"><span class="n">insertion</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.update_rib_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.update_rib_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="rib.RibIterator">
+<em class="property">class </em><code class="sig-prename descclassname">rib.</code><code class="sig-name descname">RibIterator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#RibIterator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.RibIterator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Iterator class for the RIB table object</p>
+<dl class="py method">
+<dt id="rib.RibIterator.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rt</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#RibIterator.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.RibIterator.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>__init__.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>rt</strong> – table that need to be iterated on</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">BGPFSM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mattia Milani.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/rib.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

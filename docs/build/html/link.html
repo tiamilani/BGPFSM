@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>link module &#8212; BGPFSM 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-link">
+<span id="link-module"></span><h1>link module<a class="headerlink" href="#module-link" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="link.Link">
+<em class="property">class </em><code class="sig-prename descclassname">link.</code><code class="sig-name descname">Link</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">env</span></em>, <em class="sig-param"><span class="n">node</span></em>, <em class="sig-param"><span class="n">resource</span></em>, <em class="sig-param"><span class="n">properties</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/link.html#Link"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#link.Link" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class defining a link between nodes
+this class contains properties for the link
+like delay or preference</p>
+<dl class="py attribute">
+<dt id="link.Link.DELAY">
+<code class="sig-name descname">DELAY</code><em class="property"> = 'delay'</em><a class="headerlink" href="#link.Link.DELAY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="link.Link.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">env</span></em>, <em class="sig-param"><span class="n">node</span></em>, <em class="sig-param"><span class="n">resource</span></em>, <em class="sig-param"><span class="n">properties</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/link.html#Link.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#link.Link.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a link automatically assign a uniqueid to the link
+:param env: Simpy environment
+:param node: Node which the link is refered to
+:param resource: unitary resource used to lock the link
+:param properties: properties of the link in the graphml that
+needs to be evaluated</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="link.Link.delay">
+<em class="property">property </em><code class="sig-name descname">delay</code><a class="headerlink" href="#link.Link.delay" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the delay distribution that needs to be used
+for the link
+:returns: link delay distribution</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="link.Link.id">
+<em class="property">property </em><code class="sig-name descname">id</code><a class="headerlink" href="#link.Link.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the link id
+:returns: id of the link</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="link.Link.node">
+<em class="property">property </em><code class="sig-name descname">node</code><a class="headerlink" href="#link.Link.node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the referenced node
+:returns: node reference</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="link.Link.transmit">
+<code class="sig-name descname">transmit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em>, <em class="sig-param"><span class="n">delay</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/link.html#Link.transmit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#link.Link.transmit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Actual transmitting function
+:param msg: message that needs to be trasfered
+:param delay: time that needs to be waited before the message arrives
+to the destination</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="link.Link.tx">
+<code class="sig-name descname">tx</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em>, <em class="sig-param"><span class="n">delay</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/link.html#Link.tx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#link.Link.tx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transmission function fot the node
+use this function to trigger a simpy process
+:param msg: message that needs to be transfered
+:param delay: delay that needs to be waited</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">BGPFSM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mattia Milani.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/link.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

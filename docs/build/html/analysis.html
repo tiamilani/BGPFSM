@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>analysis module &#8212; BGPFSM 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-analysis">
+<span id="analysis-module"></span><h1>analysis module<a class="headerlink" href="#module-analysis" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="analysis.SingleFileAnalysis">
+<em class="property">class </em><code class="sig-prename descclassname">analysis.</code><code class="sig-name descname">SingleFileAnalysis</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputFile</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">route_df</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">states_routes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/analysis.html#SingleFileAnalysis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.SingleFileAnalysis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>SingleFileAnalysis.
+Class to manage a single file analysis, it is possible to study the
+output of the fsm discrete event simulator</p>
+<dl class="py class">
+<dt id="analysis.SingleFileAnalysis.NoneType">
+<em class="property">class </em><code class="sig-name descname">NoneType</code><a class="headerlink" href="#analysis.SingleFileAnalysis.NoneType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="analysis.SingleFileAnalysis.ROUTE_COUNTER">
+<code class="sig-name descname">ROUTE_COUNTER</code><em class="property"> = 0</em><a class="headerlink" href="#analysis.SingleFileAnalysis.ROUTE_COUNTER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="analysis.SingleFileAnalysis.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputFile</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">route_df</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">states_routes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/analysis.html#SingleFileAnalysis.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.SingleFileAnalysis.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>__init__.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>inputFile</strong> – file with the output to analyze</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="analysis.SingleFileAnalysis.col_types">
+<code class="sig-name descname">col_types</code><em class="property"> = {'event': &lt;class 'int'&gt;, 'event_cause': &lt;class 'int'&gt;, 'event_id': &lt;class 'int'&gt;, 'node': &lt;class 'str'&gt;, 'time': &lt;class 'float'&gt;, 'value': &lt;class 'str'&gt;}</em><a class="headerlink" href="#analysis.SingleFileAnalysis.col_types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="analysis.SingleFileAnalysis.df">
+<em class="property">property </em><code class="sig-name descname">df</code><a class="headerlink" href="#analysis.SingleFileAnalysis.df" title="Permalink to this definition">¶</a></dt>
+<dd><p>df.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="analysis.SingleFileAnalysis.dump_df">
+<em class="property">classmethod </em><code class="sig-name descname">dump_df</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">output_file</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">df</span><span class="p">:</span> <span class="n">pandas.core.frame.DataFrame</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/analysis.html#SingleFileAnalysis.dump_df"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.SingleFileAnalysis.dump_df" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="analysis.SingleFileAnalysis.dump_states">
+<code class="sig-name descname">dump_states</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">output_file</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">states</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/analysis.html#SingleFileAnalysis.dump_states"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.SingleFileAnalysis.dump_states" title="Permalink to this definition">¶</a></dt>
+<dd><p>dump_states.
+Write on a file all the states information in csv format</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_file</strong> (<em>str</em>) – output file</p></li>
+<li><p><strong>states</strong> – optional param, dataframe of states</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="analysis.SingleFileAnalysis.dump_transitions">
+<code class="sig-name descname">dump_transitions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">output_file</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">transitions</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/analysis.html#SingleFileAnalysis.dump_transitions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.SingleFileAnalysis.dump_transitions" title="Permalink to this definition">¶</a></dt>
+<dd><p>dump_states.
+Write on a file all the transitions information in csv format</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_file</strong> (<em>str</em>) – output file</p></li>
+<li><p><strong>transitions</strong> – optional param, DataFrame of transitions</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="analysis.SingleFileAnalysis.evaluate_fsm">
+<code class="sig-name descname">evaluate_fsm</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/analysis.html#SingleFileAnalysis.evaluate_fsm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.SingleFileAnalysis.evaluate_fsm" title="Permalink to this definition">¶</a></dt>
+<dd><p>evaluate_fsm.
+Function that evaluate the current dataframe objects to obatin
+states and transitions</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="analysis.SingleFileAnalysis.get_route_df">
+<code class="sig-name descname">get_route_df</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="_modules/analysis.html#SingleFileAnalysis.get_route_df"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.SingleFileAnalysis.get_route_df" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="analysis.SingleFileAnalysis.get_states_as_df">
+<code class="sig-name descname">get_states_as_df</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">states</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="_modules/analysis.html#SingleFileAnalysis.get_states_as_df"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.SingleFileAnalysis.get_states_as_df" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="analysis.SingleFileAnalysis.get_states_route_df">
+<code class="sig-name descname">get_states_route_df</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="_modules/analysis.html#SingleFileAnalysis.get_states_route_df"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.SingleFileAnalysis.get_states_route_df" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="analysis.SingleFileAnalysis.get_transitions_as_df">
+<code class="sig-name descname">get_transitions_as_df</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">transitions</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="_modules/analysis.html#SingleFileAnalysis.get_transitions_as_df"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.SingleFileAnalysis.get_transitions_as_df" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="analysis.SingleFileAnalysis.keep_only_fsm_events">
+<code class="sig-name descname">keep_only_fsm_events</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="_modules/analysis.html#SingleFileAnalysis.keep_only_fsm_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.SingleFileAnalysis.keep_only_fsm_events" title="Permalink to this definition">¶</a></dt>
+<dd><p>keep_only_fsm_events.
+Function that returns a dataframe with only events that are meaningful
+for a FSM study, RIB_CHANGE, TX and RX</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Datafram with only those events</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="analysis.SingleFileAnalysis.selectNode">
+<code class="sig-name descname">selectNode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node_id</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="reference internal" href="_modules/analysis.html#SingleFileAnalysis.selectNode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.SingleFileAnalysis.selectNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>selectNode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>node_id</strong> (<em>int</em>) – id of the node that needs to be isolated</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>pd.DataFram</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">BGPFSM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mattia Milani.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/analysis.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

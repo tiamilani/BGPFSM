@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>log &#8212; BGPFSM 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for log</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This program is free software: you can redistribute it and/or modify</span>
+<span class="c1"># it under the terms of the GNU General Public License as published by</span>
+<span class="c1"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c1"># (at your option) any later version.</span>
+<span class="c1">#</span>
+<span class="c1"># This program is distributed in the hope that it will be useful,</span>
+<span class="c1"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c1"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c1"># GNU General Public License for more details.</span>
+<span class="c1">#</span>
+<span class="c1"># You should have received a copy of the GNU General Public License</span>
+<span class="c1"># along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright (C) 2016 Michele Segata &lt;segata@ccs-labs.org&gt;</span>
+
+<span class="c1"># Modified by Mattia Milani</span>
+<span class="c1"># Copyright (C) 2020 Mattia Milani &lt;mattia.milani@studenti.unitn.it&gt;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;..&#39;</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">bgp_sim</span>
+<span class="kn">from</span> <span class="nn">events</span> <span class="kn">import</span> <span class="n">Events</span>
+
+
+<div class="viewcode-block" id="Log"><a class="viewcode-back" href="../log.html#log.Log">[docs]</a><span class="k">class</span> <span class="nc">Log</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Defines data logging utilities</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Log.__init__"><a class="viewcode-back" href="../log.html#log.Log.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">log_routing_change</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">log_rib_change</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">log_packets</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">log_paths</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">log_states</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructor.</span>
+<span class="sd">        :param output_file: output file name. will be overwritten if already</span>
+<span class="sd">        existing</span>
+<span class="sd">        :param log_routing_change: enable/disable logging of routing changes</span>
+<span class="sd">        :param log_packets: enable/disable logging of packets</span>
+<span class="sd">        :param log_paths: enable/disable logging of new paths</span>
+<span class="sd">        :param log_states: enable/disable logging of the state of nodes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sim</span> <span class="o">=</span> <span class="n">bgp_sim</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">Instance</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;event_id|event_cause|event|time|node|value</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_packets</span> <span class="o">=</span> <span class="n">log_packets</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_states</span> <span class="o">=</span> <span class="n">log_states</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_routing_change</span> <span class="o">=</span> <span class="n">log_routing_change</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_paths</span> <span class="o">=</span> <span class="n">log_paths</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_rib</span> <span class="o">=</span> <span class="n">log_rib_change</span></div>
+
+    <span class="k">def</span> <span class="fm">__delete__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Log.log_rt_change"><a class="viewcode-back" href="../log.html#log.Log.log_rt_change">[docs]</a>    <span class="k">def</span> <span class="nf">log_rt_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Logs the result of a routing table change</span>
+<span class="sd">        :param node: The node that triggered the event</span>
+<span class="sd">        :param route: the new route in the routing table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_routing_change</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> 
+                                            <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                            <span class="n">Events</span><span class="o">.</span><span class="n">RT_CHANGE</span><span class="p">,</span>
+                                            <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                                            <span class="n">event</span><span class="o">.</span><span class="n">obj</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Log.log_rib_change"><a class="viewcode-back" href="../log.html#log.Log.log_rib_change">[docs]</a>    <span class="k">def</span> <span class="nf">log_rib_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Logs the rib state change</span>
+<span class="sd">        It means that the knowledge of routes is changed in some way</span>
+<span class="sd">        :param node_id: id of the node that changed</span>
+<span class="sd">        :param state: the new state of the rib</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_rib</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                                            <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">RIB_CHANGE</span><span class="p">,</span>
+                                            <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">obj</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Log.log_packet_tx"><a class="viewcode-back" href="../log.html#log.Log.log_packet_tx">[docs]</a>    <span class="k">def</span> <span class="nf">log_packet_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Logs a packet tx.</span>
+<span class="sd">        :param node: source node</span>
+<span class="sd">        :param packet: the packet to log</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_packets</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                                                <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                                <span class="n">Events</span><span class="o">.</span><span class="n">TX</span><span class="p">,</span>
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> 
+                                                <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> 
+                                                <span class="n">event</span><span class="o">.</span><span class="n">obj</span><span class="p">))</span></div>
+    
+<div class="viewcode-block" id="Log.log_packet_rx"><a class="viewcode-back" href="../log.html#log.Log.log_packet_rx">[docs]</a>    <span class="k">def</span> <span class="nf">log_packet_rx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Logs a packet rx.</span>
+<span class="sd">        :param node: source node</span>
+<span class="sd">        :param packet: the packet to log</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_packets</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                                                <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                                <span class="n">Events</span><span class="o">.</span><span class="n">RX</span><span class="p">,</span>
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> 
+                                                <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> 
+                                                <span class="n">event</span><span class="o">.</span><span class="n">obj</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Log.log_path"><a class="viewcode-back" href="../log.html#log.Log.log_path">[docs]</a>    <span class="k">def</span> <span class="nf">log_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Logs a new path to a dst.</span>
+<span class="sd">        :param node_id: source node</span>
+<span class="sd">        :param path: the path to log</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_paths</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                                                <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                                <span class="n">Events</span><span class="o">.</span><span class="n">NEW_PATH</span><span class="p">,</span>
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> 
+                                                <span class="n">node_id</span><span class="p">,</span> 
+                                                <span class="n">event</span><span class="o">.</span><span class="n">obj</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Log.log_state"><a class="viewcode-back" href="../log.html#log.Log.log_state">[docs]</a>    <span class="k">def</span> <span class="nf">log_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Logs the state of a particular node</span>
+<span class="sd">        :param node: node</span>
+<span class="sd">        :param state: state of the node</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_states</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">Events</span><span class="o">.</span><span class="n">STATE_CHANGE</span><span class="p">,</span>
+                                                    <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> 
+                                                    <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">state</span><span class="p">))</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">BGPFSM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mattia Milani.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

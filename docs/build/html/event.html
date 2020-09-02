@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>event module &#8212; BGPFSM 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-event">
+<span id="event-module"></span><h1>event module<a class="headerlink" href="#module-event" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="event.Event">
+<em class="property">class </em><code class="sig-prename descclassname">event.</code><code class="sig-name descname">Event</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event_duration</span></em>, <em class="sig-param"><span class="n">event_cause</span></em>, <em class="sig-param"><span class="n">event_type</span></em>, <em class="sig-param"><span class="n">source</span></em>, <em class="sig-param"><span class="n">destination</span></em>, <em class="sig-param"><span class="n">obj</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sent_time</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/event.html#Event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#event.Event" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Defines the basic structure of an event</p>
+<dl class="py method">
+<dt id="event.Event.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event_duration</span></em>, <em class="sig-param"><span class="n">event_cause</span></em>, <em class="sig-param"><span class="n">event_type</span></em>, <em class="sig-param"><span class="n">source</span></em>, <em class="sig-param"><span class="n">destination</span></em>, <em class="sig-param"><span class="n">obj</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sent_time</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/event.html#Event.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#event.Event.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an event.
+:param event_duration: time at which the event should be scheduled
+:param event_type: type of event
+:param event_cause: id of the event that caused this event
+:param destination: destination module that should be notified
+:param source: module generating the event
+:param obj: optional object to be attached to the event</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="event.Event.destination">
+<em class="property">property </em><code class="sig-name descname">destination</code><a class="headerlink" href="#event.Event.destination" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns event destination</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="event.Event.event_cause">
+<em class="property">property </em><code class="sig-name descname">event_cause</code><a class="headerlink" href="#event.Event.event_cause" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns event type</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="event.Event.event_counter">
+<code class="sig-name descname">event_counter</code><em class="property"> = 0</em><a class="headerlink" href="#event.Event.event_counter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="event.Event.event_duration">
+<em class="property">property </em><code class="sig-name descname">event_duration</code><a class="headerlink" href="#event.Event.event_duration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns event time</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="event.Event.event_type">
+<em class="property">property </em><code class="sig-name descname">event_type</code><a class="headerlink" href="#event.Event.event_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns event type</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="event.Event.id">
+<em class="property">property </em><code class="sig-name descname">id</code><a class="headerlink" href="#event.Event.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the event id</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="event.Event.obj">
+<em class="property">property </em><code class="sig-name descname">obj</code><a class="headerlink" href="#event.Event.obj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the object attached to the event</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="event.Event.sent_time">
+<em class="property">property </em><code class="sig-name descname">sent_time</code><a class="headerlink" href="#event.Event.sent_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the sent time of the event if present</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="event.Event.source">
+<em class="property">property </em><code class="sig-name descname">source</code><a class="headerlink" href="#event.Event.source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns event generator</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">BGPFSM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mattia Milani.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/event.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

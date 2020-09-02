@@ -1,0 +1,233 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>distribution module &#8212; BGPFSM 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-distribution">
+<span id="distribution-module"></span><h1>distribution module<a class="headerlink" href="#module-distribution" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="distribution.Const">
+<em class="property">class </em><code class="sig-prename descclassname">distribution.</code><code class="sig-name descname">Const</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/distribution.html#Const"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#distribution.Const" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Constant random variable</p>
+<dl class="py method">
+<dt id="distribution.Const.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/distribution.html#Const.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#distribution.Const.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor
+:param value: returned constant value</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="distribution.Const.get_value">
+<code class="sig-name descname">get_value</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/distribution.html#Const.get_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#distribution.Const.get_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="distribution.Distribution">
+<em class="property">class </em><code class="sig-prename descclassname">distribution.</code><code class="sig-name descname">Distribution</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/distribution.html#Distribution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#distribution.Distribution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Generic distribution class that implements different distributions depending
+on the parameters specified in a configuration</p>
+<dl class="py attribute">
+<dt id="distribution.Distribution.CONSTANT">
+<code class="sig-name descname">CONSTANT</code><em class="property"> = 'const'</em><a class="headerlink" href="#distribution.Distribution.CONSTANT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="distribution.Distribution.DISTRIBUTION">
+<code class="sig-name descname">DISTRIBUTION</code><em class="property"> = 'distribution'</em><a class="headerlink" href="#distribution.Distribution.DISTRIBUTION" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="distribution.Distribution.EXPONENTIAL">
+<code class="sig-name descname">EXPONENTIAL</code><em class="property"> = 'exp'</em><a class="headerlink" href="#distribution.Distribution.EXPONENTIAL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="distribution.Distribution.INT">
+<code class="sig-name descname">INT</code><em class="property"> = 'int'</em><a class="headerlink" href="#distribution.Distribution.INT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="distribution.Distribution.LAMBDA">
+<code class="sig-name descname">LAMBDA</code><em class="property"> = 'lambda'</em><a class="headerlink" href="#distribution.Distribution.LAMBDA" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="distribution.Distribution.MAX">
+<code class="sig-name descname">MAX</code><em class="property"> = 'max'</em><a class="headerlink" href="#distribution.Distribution.MAX" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="distribution.Distribution.MEAN">
+<code class="sig-name descname">MEAN</code><em class="property"> = 'mean'</em><a class="headerlink" href="#distribution.Distribution.MEAN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="distribution.Distribution.MIN">
+<code class="sig-name descname">MIN</code><em class="property"> = 'min'</em><a class="headerlink" href="#distribution.Distribution.MIN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="distribution.Distribution.UNIFORM">
+<code class="sig-name descname">UNIFORM</code><em class="property"> = 'unif'</em><a class="headerlink" href="#distribution.Distribution.UNIFORM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="distribution.Distribution.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/distribution.html#Distribution.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#distribution.Distribution.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instantiates the distribution
+:param config: an object used for configuring the distribution in the
+format {“distribution”:NAME,”par1”:value[,”par2”:value,…]}.
+Accepted values so far are:
+{“distribution” : “const”, “mean” : value}, constant variable
+{“distribution” : “exp”, “mean” : value}, exponential random variable
+with mean being 1/lambda. “lambda” : value can also be used
+{“distribution” : “unif”, “min” : value, “max” : value}, uniform -f Random
+variable between min and max</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="distribution.Distribution.get_value">
+<code class="sig-name descname">get_value</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/distribution.html#Distribution.get_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#distribution.Distribution.get_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="distribution.Exp">
+<em class="property">class </em><code class="sig-prename descclassname">distribution.</code><code class="sig-name descname">Exp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mean</span></em>, <em class="sig-param"><span class="n">integer</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/distribution.html#Exp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#distribution.Exp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Exponential random variable</p>
+<dl class="py method">
+<dt id="distribution.Exp.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mean</span></em>, <em class="sig-param"><span class="n">integer</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/distribution.html#Exp.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#distribution.Exp.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor
+:param mean: mean value (1/lambda)
+:param integer: if set to true, random values are discretized with ceil</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="distribution.Exp.get_value">
+<code class="sig-name descname">get_value</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/distribution.html#Exp.get_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#distribution.Exp.get_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="distribution.Uniform">
+<em class="property">class </em><code class="sig-prename descclassname">distribution.</code><code class="sig-name descname">Uniform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">min</span></em>, <em class="sig-param"><span class="n">max</span></em>, <em class="sig-param"><span class="n">integer</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/distribution.html#Uniform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#distribution.Uniform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Uniform -f Random variable</p>
+<dl class="py method">
+<dt id="distribution.Uniform.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">min</span></em>, <em class="sig-param"><span class="n">max</span></em>, <em class="sig-param"><span class="n">integer</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/distribution.html#Uniform.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#distribution.Uniform.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor
+:param min: minimum value
+:param max: maximum value
+:param integer: whether to use integer or floating point numbers</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="distribution.Uniform.get_value">
+<code class="sig-name descname">get_value</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/distribution.html#Uniform.get_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#distribution.Uniform.get_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">BGPFSM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mattia Milani.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/distribution.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
