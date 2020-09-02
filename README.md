@@ -111,8 +111,35 @@ Parameters available for edges:
 		   for a single edge, the distribution has to respect what said in the
 		   distribution section of the readme.
 		   This parameter will override the json delay parameter for the edge
+* `policy`: <policy function> is possible to define a policy function for 
+			every single edge, policy functions are applyied like explanied
+			in [3] see the section policy function for more deep explanations
 		   
 example of graphml files are present on the `src/graphs` folder. 
+
+##### Policy functions
+
+A policy function is applied like exporter filter.
+If the value returned by the function is not infinite the route will
+be sent with the value returned by f
+
+policy functions are formally explained in [3] Sec IV-c
+
+An example of policy function could be this:
+
+`<1, inf, inf>`
+
+This policy can simulate the peer behaviour of a node.
+It can send only routes that have a policy level of 0 and will substitute to
+the route the policy level with 1 before the actual transmission.
+
+In the graphml file is mandatory to not use `<` and `>` simbols, so a function
+can be easily defined with:
+
+`2, 2, 2` 
+
+Rotues that are originated by nodes will receive a policy level o `0` 
+automatically
 
 ### parameters
 
@@ -249,4 +276,8 @@ known path.
 [1] A Finite State Model Update Propagation for Hard-State Path-Vector Protocols
 present in Biblio/FSM\_model.pdf
 
-[2] O. Tange (2011): GNU Parallel - The Command-Line Power Tool, ;login: The USENIX Magazine, February 2011:42-47
+[2] O. Tange (2011): GNU Parallel - The Command-Line Power Tool, ;login: 
+The USENIX Magazine, February 2011:42-47
+
+[3] Daggitt, Matthew L., and Timothy G. Griffin. "Rate of convergence of increasing path-vector routing protocols." 2018 IEEE 26th International Conference on Network Protocols (ICNP). IEEE, 2018.
+present in Biblio/icnp\_2018.pdf 

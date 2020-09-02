@@ -145,12 +145,14 @@ if __name__ == "__main__":
             states_df = pd.concat([states_df, sr_df_states])
             states_df = states_df[~states_df.index.duplicated(keep='first')]
             states_df = states_df.fillna(0)
-            states_df['counter'] = states_df['counter'].astype(int)
-            for j in range(0,i):
-                states_df[str(j)] = states_df[str(j)].astype(int)
             sr_df = sr_df.drop(['state'], axis=1)
             states_df = pd.concat([states_df, sr_df], axis=1)
+            states_df = states_df.fillna(0)
             states_df['counter'] = states_df['counter'] + states_df[str(i)]
+
+        states_df['counter'] = states_df['counter'].astype(int)
+        for j in range(0,i):
+            states_df[str(j)] = states_df[str(j)].astype(int)
 
         tr_df = sf.get_transitions_as_df()
         if isinstance(transitions_df, NoneType):
@@ -163,18 +165,26 @@ if __name__ == "__main__":
             transitions_df = pd.concat([transitions_df, tr_df_states])
             transitions_df = transitions_df[~transitions_df.index.duplicated(keep='first')]
             transitions_df = transitions_df.fillna(0)
-            transitions_df['counter'] = transitions_df['counter'].astype(int)
-            for j in range(0,i):
-                transitions_df[str(j)] = transitions_df[str(j)].astype(int)
             tr_df = tr_df.drop(['start_node', 'end_node', 'cause', 'response'], axis=1)
             transitions_df = pd.concat([transitions_df, tr_df], axis=1)
+            transitions_df = transitions_df.fillna(0)
             transitions_df['counter'] = transitions_df['counter'] + transitions_df[str(i)]
+        print(transitions_df)
+        for j in range(0,i):
+            transitions_df[str(j)] = transitions_df[str(j)].astype(int)
+        transitions_df['counter'] = transitions_df['counter'].astype(int)
 
         route_to_id = sf.get_route_df()
         states_route = sf.get_states_route_df()
 
         del sf
         i += 1
+
+    # Save results
+    SingleFileAnalysis.dump_df(outputFile_path + "_states.csv", states_df)
+    SingleFileAnalysis.dump_df(outputFile_path + "_transitions.csv", transitions_df)
+    SingleFileAnalysis.dump_df(outputFile_path + "_route_id.csv", route_to_id)
+    SingleFileAnalysis.dump_df(outputFile_path + "_states_id.csv", states_route)
     
     #Generate the graph
     plt = Plotter(states_df, transitions_df, route_to_id)
@@ -183,12 +193,6 @@ if __name__ == "__main__":
     graph = plt.get_detailed_fsm_graphviz(dot)
     if options.verbose:
         print("Detailed FSM graph produced")
-
-    # Save results
-    SingleFileAnalysis.dump_df(outputFile_path + "_states.csv", states_df)
-    SingleFileAnalysis.dump_df(outputFile_path + "_transitions.csv", transitions_df)
-    SingleFileAnalysis.dump_df(outputFile_path + "_route_id.csv", route_to_id)
-    SingleFileAnalysis.dump_df(outputFile_path + "_states_id.csv", states_route)
 
     graph.save(outputFile_path.split('/')[-1] + ".gv", 
                '/'.join(outputFile_path.split('/')[:-1]))

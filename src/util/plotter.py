@@ -150,7 +150,7 @@ class Plotter():
         grouped_states = grouped_states.drop(['counter'], axis=1)
         grouped_states = grouped_states.T
         # print(self.states_df.sort_values(by=['counter'], ascending=False))
-        print(grouped_states)
+        # print(grouped_states)
         box_plot = grouped_states.boxplot()
         plt.savefig(output_file, format="pdf")
         # print(grouped_states)

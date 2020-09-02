@@ -22,6 +22,7 @@ from transition import Transition
 import ast
 from graphviz import Digraph
 import timeit
+from policies import PolicyValue
 
 class SingleFileAnalysis():
     """SingleFileAnalysis.
@@ -110,6 +111,8 @@ class SingleFileAnalysis():
         # Get the packet and the route transmitted
         packet = Packet.fromString(row_value)
         route = Route.fromString(packet.content)
+        tmp_pv = PolicyValue(0)
+        route.policy_value = tmp_pv
         # If the route is not in the dictionary of routes add it
         if str(route) not in self.route_to_id.keys():
             self.route_to_id[str(route)] = self.ROUTE_COUNTER
@@ -203,6 +206,8 @@ class SingleFileAnalysis():
             # resulting_elem = self.__evalaute_state_difference(new_state).pop()
             pkt = Packet.fromString(rx_value)
             route = Route.fromString(pkt.content)
+            pv_t = PolicyValue(0)
+            route.policy_value = pv_t
             if pkt.packet_type == Packet.UPDATE:  
                 if str(route) not in self.states_routes.keys():
                     self.states_routes[str(route)] = self.route_to_id[str(route)]

@@ -191,7 +191,7 @@ class Rib(collections.MutableSequence):
         """
         # Check v type
         self.check(v)
-        # If the filter approves the route the add it
+        # If the filter approves the route then add it
         if self.filter(v):
             # Check if it was already in the list
             if i not in self._table:

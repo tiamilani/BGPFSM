@@ -21,23 +21,36 @@ import pytest
 sys.path.insert(1, 'src/util')
 
 from route import Route
+from policies import PolicyValue
 
 class TestRoute():
     
-    @pytest.mark.parametrize("addr, path, nh, exception", [
-        ("100.0.0.0/24", [], None, False),
-        ("100.0.1.0/24", [], None, False),
-        ("10.0.0.0/24", [], None, False),
-        ("10.0.0.0/8", "No path", None, True)
+    @pytest.mark.parametrize("addr, path, nh, policy_value", [
+        ("100.0.0.0/24", [], None, 0),
+        ("100.0.1.0/24", [1, 2], None, 0),
+        ("10.0.0.0/24", [1, 2], None, 1),
+        ("10.0.0.0/24", [], None, 26),
+        ("10.0.0.0/24", [], 10, 14),
     ])
-    def test_route_init(self, addr, path, nh, exception):
+    def test_route_init(self, addr, path, nh, policy_value):
         ipaddr = ipaddress.ip_network(addr)
-        if not exception:
-            route = Route(ipaddr, path, nh)
-            assert route.addr is ipaddr
-        else:
-            with pytest.raises(TypeError):
-                route = Route(ipaddr, path, nh)
+        pl = PolicyValue(policy_value)
+        route = Route(ipaddr, path, nh, policy_value=pl)
+        assert route.addr is ipaddr
+
+    def test_route_init_nopl(self):
+        ipaddr = ipaddress.ip_network("10.0.0.0/24")
+        route = Route(ipaddr, [], None)
+        assert route.policy_value.value == 0
+
+    @pytest.mark.parametrize("addr", ["100.0.0.0/24", "10.0.0.0/24", "192.168.0.0/24"])
+    @pytest.mark.parametrize("path", ["NoPath", None, 1, -1])
+    @pytest.mark.parametrize("nh", [None, 10])
+    @pytest.mark.parametrize("pv", ["NoPolicy", None, 5, 128])
+    def test_route_init_typeerror(self, addr, path, nh, pv):
+        ipaddr = ipaddress.ip_network(addr)
+        with pytest.raises(TypeError):
+            route = Route(ipaddr, path, nh, pv)
 
     @pytest.mark.parametrize("addr, path, nh", [
         ("100.0.0.0/24", [], None),
@@ -111,15 +124,20 @@ class TestRoute():
                 route.remove_from_path(del_as)
         else:
             path.remove(del_as)
-            print(route)
             route.remove_from_path(del_as)
             assert route.path == path
  
     @pytest.mark.parametrize("addr, path, nh, str_version", [
-        ("100.0.0.0/24", [] , None, "{'addr': '100.0.0.0/24', 'nh': None, 'path': []}"),
-        ("100.0.1.0/24", [1, 2, 3], 1, "{'addr': '100.0.1.0/24', 'nh': 1, 'path': [1, 2, 3]}"),
-        ("10.0.0.0/24", [3, 2, 1], "1", "{'addr': '10.0.0.0/24', 'nh': '1', 'path': [3, 2, 1]}"),
-        ("10.0.0.0/8", ["1", "3", "4"], "12556", "{'addr': '10.0.0.0/8', 'nh': '12556', 'path': ['1', '3', '4']}")
+        ("100.0.0.0/24", [] , None, "{'addr': '100.0.0.0/24', 'nh': None, \
+                                      'path': [], 'policy_value': 0}"),
+        ("100.0.1.0/24", [1, 2, 3], 1, "{'addr': '100.0.1.0/24', 'nh': 1, \
+                                         'path': [1, 2, 3], 'policy_value': 0}"),
+        ("10.0.0.0/24", [3, 2, 1], "1", "{'addr': '10.0.0.0/24', 'nh': '1', \
+                                          'path': [3, 2, 1], 'policy_value': 0}"),
+        ("10.0.0.0/8", ["1", "3", "4"], "12556", "{'addr': '10.0.0.0/8', \
+                                                   'nh': '12556', \
+                                                   'path': ['1', '3', '4'], \
+                                                   'policy_value': 0}")
     ])
     def test_fromString(self, addr, path, nh, str_version):
         ipaddr = ipaddress.ip_network(addr)
@@ -129,16 +147,22 @@ class TestRoute():
         assert route == route_str
 
     @pytest.mark.parametrize("route1, route2, lt_1", [
-        ("{'addr': '100.0.0.0/24', 'nh': 2, 'path': [2]}",
-         "{'addr': '100.0.0.0/24', 'nh': 1, 'path': [1, 2]}", True),
-        ("{'addr': '100.0.1.0/24', 'nh': 1, 'path': [1, 2, 3]}", 
-         "{'addr': '100.0.1.0/24', 'nh': 1, 'path': [1, 2, 3, 4]}", True),
-        ("{'addr': '100.0.1.0/24', 'nh': 1, 'path': [1, 3]}", 
-         "{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 3]}", True),
-        ("{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 4, 3]}", 
-         "{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 5, 3]}", True),
-        ("{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 6, 3]}", 
-         "{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 5, 3]}", False),
+        ("{'addr': '100.0.0.0/24', 'nh': 2, 'path': [2], 'policy_value': 0}",
+         "{'addr': '100.0.0.0/24', 'nh': 1, 'path': [1, 2], 'policy_value': 1}", 
+         True),
+        ("{'addr': '100.0.0.0/24', 'nh': 2, 'path': [2], 'policy_value': 1}",
+         "{'addr': '100.0.0.0/24', 'nh': 1, 'path': [1, 2], 'policy_value': 0}", 
+         False),
+        ("{'addr': '100.0.0.0/24', 'nh': 2, 'path': [2], 'policy_value': 0}",
+         "{'addr': '100.0.0.0/24', 'nh': 1, 'path': [1, 2], 'policy_value': 0}", True),
+        ("{'addr': '100.0.1.0/24', 'nh': 1, 'path': [1, 2, 3], 'policy_value': 0}", 
+         "{'addr': '100.0.1.0/24', 'nh': 1, 'path': [1, 2, 3, 4], 'policy_value': 0}", True),
+        ("{'addr': '100.0.1.0/24', 'nh': 1, 'path': [1, 3], 'policy_value': 0}", 
+         "{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 3], 'policy_value': 0}", True),
+        ("{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 4, 3], 'policy_value': 0}", 
+         "{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 5, 3], 'policy_value': 0}", True),
+        ("{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 6, 3], 'policy_value': 0}", 
+         "{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 5, 3], 'policy_value': 0}", False),
     ])
     def test_lt(self, route1, route2, lt_1):
         route1 = Route.fromString(route1)
@@ -149,12 +173,21 @@ class TestRoute():
             assert not (route1 < route2)
 
     @pytest.mark.parametrize("route1, route2, result", [
-        ("{'addr': '100.0.0.0/24', 'nh': 1, 'path': [1, 2]}",
-         "{'addr': '100.0.0.0/24', 'nh': 1, 'path': [1, 2]}", True),
-        ("{'addr': '100.0.1.0/24', 'nh': 1, 'path': [1, 2, 3, 4]}", 
-         "{'addr': '100.0.1.0/24', 'nh': 1, 'path': [1, 2, 3, 4]}", True),
-        ("{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 6, 3]}", 
-         "{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 5, 3]}", False),
+        ("{'addr': '100.0.0.0/24', 'nh': 1, 'path': [1, 2], 'policy_value': 0}",
+         "{'addr': '100.0.0.0/24', 'nh': 1, 'path': [1, 2], 'policy_value': 1}",
+         False),
+        ("{'addr': '100.0.0.0/24', 'nh': 1, 'path': [1, 2], 'policy_value': 1}",
+         "{'addr': '100.0.0.0/24', 'nh': 1, 'path': [1, 2], 'policy_value': 1}",
+         True),
+        ("{'addr': '100.0.0.0/24', 'nh': 1, 'path': [1, 2], 'policy_value': 0}",
+         "{'addr': '100.0.0.0/24', 'nh': 1, 'path': [1, 2], 'policy_value': 0}",
+         True),
+        ("{'addr': '100.0.1.0/24', 'nh': 1, 'path': [1, 2, 3, 4], 'policy_value': 0}", 
+         "{'addr': '100.0.1.0/24', 'nh': 1, 'path': [1, 2, 3, 4], 'policy_value': 0}",
+         True),
+        ("{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 6, 3], 'policy_value': 0}", 
+         "{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 5, 3], 'policy_value': 0}",
+         False),
     ])
     def test_eq(self, route1, route2, result):
         route1 = Route.fromString(route1)
@@ -165,9 +198,9 @@ class TestRoute():
             assert not (route1 == route2)
 
     @pytest.mark.parametrize("route1", [
-        ("{'addr': '100.0.0.0/24', 'nh': 1, 'path': [1, 2]}"),
-        ("{'addr': '100.0.1.0/24', 'nh': 1, 'path': [1, 2, 3, 4]}"),
-        ("{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 6, 3]}")
+        ("{'addr': '100.0.0.0/24', 'nh': 1, 'path': [1, 2], 'policy_value': 0}"),
+        ("{'addr': '100.0.1.0/24', 'nh': 1, 'path': [1, 2, 3, 4], 'policy_value': 1}"),
+        ("{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 6, 3], 'policy_value': 2}")
     ])
     def test_copy(self, route1):
         route = Route.fromString(route1)
@@ -175,11 +208,12 @@ class TestRoute():
         assert not id(route) == id(route_copy)
         assert id(route.addr) == id(route_copy.addr)
         assert id(route.nh) == id(route_copy.nh)
+        assert id(route.policy_value) == id(route_copy.policy_value)
 
     @pytest.mark.parametrize("route1", [
-        ("{'addr': '100.0.0.0/24', 'nh': 1, 'path': [1, 2]}"),
-        ("{'addr': '100.0.1.0/24', 'nh': 1, 'path': [1, 2, 3, 4]}"),
-        ("{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 6, 3]}")
+        ("{'addr': '100.0.0.0/24', 'nh': 1, 'path': [1, 2], 'policy_value': 0}"),
+        ("{'addr': '100.0.1.0/24', 'nh': 1, 'path': [1, 2, 3, 4], 'policy_value': 1}"),
+        ("{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 6, 3], 'policy_value': 2}")
     ])
     def test_deepcopy(self, route1):
         route = Route.fromString(route1)
@@ -187,6 +221,7 @@ class TestRoute():
         assert not id(route) == id(route_copy)
         assert not id(route.addr) == id(route_copy.addr)
         assert not id(route.path) == id(route_copy.path)
+        assert not id(route.policy_value) == id(route_copy.policy_value)
         route_copy.nh=150
         assert route.nh != route_copy.nh
 

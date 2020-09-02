@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key attr.name="destinations" attr.type="string" for="node" id="d0" />
+  <key attr.name="delay" attr.type="string" for="edge" id="d1" />
+  <graph edgedefault="directed">
+    <node id="1">
+		<data key="d0">10.0.0.0/24</data>
+    </node>
+    <node id="2" />
+    <node id="3" />
+    <edge source="1" target="2" />
+    <edge source="2" target="3" />
+    <edge source="1" target="3">
+		<data key="d1">{"distribution": "unif", "min": 10, "max": 15, "int": 0.001}</data>
+	</edge>
+  </graph>
+</graphml>
+
+
+

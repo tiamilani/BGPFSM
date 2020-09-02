@@ -17,6 +17,8 @@ from distribution import Distribution
 import json
 import simpy
 
+from policies import PolicyFunction
+
 class Link:
     """
     Class defining a link between nodes
@@ -28,6 +30,7 @@ class Link:
     __waiter = 0.00001
 
     DELAY = "delay"
+    POLICY_FUNCTION = "policy"
 
     def __init__(self, env, node, resource, properties):
         """
@@ -46,6 +49,8 @@ class Link:
         self._delay = None
         if Link.DELAY in properties:
             self._delay = Distribution(json.loads(properties[Link.DELAY]))
+        if Link.POLICY_FUNCTION in properties:
+            self._policy_function = PolicyFunction(properties[Link.POLICY_FUNCTION])
 
     def transmit(self, msg, delay):
         """
@@ -76,6 +81,9 @@ class Link:
         :param delay: delay that needs to be waited
         """
         self._env.process(self.transmit(msg, delay))
+
+    def test(self, pl):
+        return self._policy_function[pl]
 
     @property
     def id(self):

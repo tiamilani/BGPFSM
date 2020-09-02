@@ -17,17 +17,20 @@ import ipaddress
 from copy import copy, deepcopy
 import ast
 
+from policies import PolicyValue
+
 class Route():
     """Route
     Class to manage a single route
     """
 
-    def __init__(self, addr, path, nh):
+    def __init__(self, addr, path, nh, policy_value=PolicyValue(0)):
         """__init__.
 
         :param addr: addr of the route
         :param path: Path to reach the destination
         :param nh: Nh for the address
+        :param policy_value: Policy value to associate with the route
         """
         self._addr = addr
         # Check that the path is an instance of a list
@@ -35,12 +38,19 @@ class Route():
             raise TypeError(path)
         self._path = path.copy()
         self._nh = nh
+        
+        # Check that the policy value is an object of class PolicyValue
+        if not isinstance(policy_value, PolicyValue):
+            raise TypeError(policy_value)
+
+        self._policy_value = policy_value
 
     @classmethod
     def fromString(cls, string):
         res = ast.literal_eval(string)
         return cls(ipaddress.ip_network(res["addr"]), 
-                   res["path"], res["nh"])
+                   res["path"], res["nh"],
+                   policy_value = PolicyValue.fromString(res["policy_value"]))
 
     def add_to_path(self, value):
         """add_to_path.
@@ -81,11 +91,30 @@ class Route():
         """
         self._nh = value
 
+    @property
+    def policy_value(self) -> PolicyValue:
+        """policy_value.
+        :return: the policy value associated with the route
+        """
+        return self._policy_value
+
+    @policy_value.setter
+    def policy_value(self, value: PolicyValue):
+        """policy_value.
+
+        :param value: Policy value to apply to the route
+        :type value: PolicyValue
+        """
+        self._policy_value = value
+
     def __lt__(self, route):
         """__lt__.
 
         :param route: route to compare with the self one
         """
+        # Check policy
+        if self.policy_value != route.policy_value:
+            return self.policy_value < route.policy_value
         # Check the path len
         if len(self.path) < len(route.path):
             return True
@@ -110,13 +139,15 @@ class Route():
             not isinstance(route, NoneType) and \
             self.addr == route.addr and \
             self.path == route.path and \
-            self.nh == route.nh:
+            self.nh == route.nh and \
+            self.policy_value == route.policy_value:
                 return True
         return False
 
     def __copy__(self):
         """__copy__."""
-        return type(self)(self.addr, self.path, self.nh)
+        return type(self)(self.addr, self.path, self.nh, 
+                          policy_value=self.policy_value)
 
     def __deepcopy__(self, memo):
         """__deepcopy__.
@@ -129,7 +160,8 @@ class Route():
             _copy = type(self)(
                 deepcopy(self.addr, memo),
                 deepcopy(self.path, memo),
-                deepcopy(self.nh, memo))
+                deepcopy(self.nh, memo),
+                deepcopy(self.policy_value, memo))
             memo[id_self] = _copy
         return _copy
 
@@ -139,4 +171,5 @@ class Route():
         d["addr"] = str(self.addr)
         d["nh"] = self.nh
         d["path"] = self.path
+        d["policy_value"] = str(self.policy_value)
         return str(d)

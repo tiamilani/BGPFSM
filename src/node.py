@@ -18,6 +18,7 @@ import time
 import simpy
 import bgp_sim
 import ipaddress
+import math
 from copy import copy, deepcopy
 
 sys.path.insert(1, 'util')
@@ -30,6 +31,7 @@ from routingTable import RoutingTable
 from route import Route
 from distribution import Distribution
 from rib import Rib
+from policies import PolicyValue
 
 
 class Node(Module):
@@ -145,7 +147,9 @@ class Node(Module):
             print("{} - Neighbor {} already in the set".format(self._id, link.node.id))
             exit(1)
 
-    def add_destination(self, destination, path, nh, event=None):
+    # TODO Split this function and create a function for new_route_evaluation
+    # TODO Accept as ingress a route and not all the route parameters
+    def add_destination(self, destination, path, nh, event=None, policy_value=0):
         """
         Function that adds a destination to the data structure
         that manage destinations that needs to be shared inside the node
@@ -155,7 +159,8 @@ class Node(Module):
         :param nh: nh for the route
         """
         network = ipaddress.ip_network(destination)
-        r = Route(network, path, nh)
+        policy = PolicyValue(policy_value)
+        r = Route(network, path, nh, policy_value=policy)
 
         # Insert the route in the rib
         old_best = self.rib[network]
@@ -221,7 +226,8 @@ class Node(Module):
         route = packet.content
         # If the packet contains an update it will be evaluated
         if packet.packet_type == Packet.UPDATE:
-            self.add_destination(route.addr, route.path, route.nh, event=event)
+            self.add_destination(route.addr, route.path, route.nh, event=event,
+                                 policy_value=route.policy_value.value)
         # If the packet contains a withdrow the evaluation depends on the number
         # Of neighbors
         if packet.packet_type == Packet.WITHDRAW:
@@ -239,7 +245,7 @@ class Node(Module):
         Function that transmit the packet to a destination
         :param event: Transmission event
         """
-        # TODO Reserve the transmission through a resource
+        # Reserve the transmission through a resource
         # to avoid the transmission of messages in reverse order
         # Evaluation of the time necessary for the transmission
         waiting_time = event.event_duration
@@ -262,6 +268,7 @@ class Node(Module):
         link.tx(reception_event, delay)
         # Log the transmission
         self.logger.log_packet_tx(self, event)
+        # Release the resource
         wait = self.proc_time.get_value()
         yield self._env.timeout(wait)
         self.tx_res.release(request)
@@ -282,13 +289,22 @@ class Node(Module):
             while len(neigh_l) >0:
                 neigh = neigh_l.pop()
                 # self._print("I should send {} to {}".format(dst,neigh))
+                dst_node = self._neighbors[neigh].node
                 route = deepcopy(self.routing_table[dst])
+
+                # Get the policy value that is in the routing table
+                link = self._neighbors[dst_node.id]
+                # Check the link export_policy if it is valid 
+                route.policy_value = link.test(route.policy_value) 
+                # If it is not valid jump to the next iteration
+                if route.policy_value.value == math.inf:
+                    continue
+
                 route.add_to_path(self._id)
                 route.nh = self._id
 
                 # Create the event
                 packet = Packet(Packet.UPDATE, route)
-                dst_node = self._neighbors[neigh].node
                 interrarival = self.rate.get_value()
                 transmission_event = Event(interrarival, event.event_cause,
                                            Events.TX, self, dst_node, obj=packet)
@@ -335,6 +351,8 @@ class Node(Module):
         # Generate the withdraw packet
         route.add_to_path(self._id)
         route.nh = self._id
+        if len(packet.content.path) != 0:
+            route.policy_value.value = 1
         withdraw_packet = Packet(Packet.WITHDRAW, route)
         withdraw_time = self.rate.get_value()
         # The update must be after the withdraw
