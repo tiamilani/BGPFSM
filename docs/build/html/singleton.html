@@ -33,6 +33,35 @@
             
   <div class="section" id="module-singleton">
 <span id="singleton-module"></span><h1>singleton module<a class="headerlink" href="#module-singleton" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="singleton.Singleton">
+<em class="property">class </em><code class="sig-prename descclassname">singleton.</code><code class="sig-name descname">Singleton</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">decorated</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/singleton.html#Singleton"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#singleton.Singleton" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A non-thread-safe helper class to ease implementing singletons.
+This should be used as a decorator – not a metaclass – to the
+class that should be a singleton.</p>
+<p>The decorated class can define one <cite>__init__</cite> function that
+takes only the <cite>self</cite> argument. Other than that, there are
+no restrictions that apply to the decorated class.</p>
+<p>To get the singleton instance, use the <cite>Instance</cite> method. Trying
+to use <cite>__call__</cite> will result in a <cite>TypeError</cite> being raised.</p>
+<p>Limitations: The decorated class cannot be inherited from.</p>
+<dl class="py method">
+<dt id="singleton.Singleton.Instance">
+<code class="sig-name descname">Instance</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/singleton.html#Singleton.Instance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#singleton.Singleton.Instance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the singleton instance. Upon its first call, it creates a
+new instance of the decorated class and calls its <cite>__init__</cite> method.
+On all subsequent calls, the already created instance is returned.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="singleton.Singleton.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">decorated</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/singleton.html#Singleton.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#singleton.Singleton.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 
 

@@ -51,6 +51,8 @@
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">simpy</span>
 
+<span class="kn">from</span> <span class="nn">policies</span> <span class="kn">import</span> <span class="n">PolicyFunction</span>
+
 <div class="viewcode-block" id="Link"><a class="viewcode-back" href="../link.html#link.Link">[docs]</a><span class="k">class</span> <span class="nc">Link</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Class defining a link between nodes</span>
@@ -62,6 +64,7 @@
     <span class="n">__waiter</span> <span class="o">=</span> <span class="mf">0.00001</span>
 
     <span class="n">DELAY</span> <span class="o">=</span> <span class="s2">&quot;delay&quot;</span>
+    <span class="n">POLICY_FUNCTION</span> <span class="o">=</span> <span class="s2">&quot;policy&quot;</span>
 
 <div class="viewcode-block" id="Link.__init__"><a class="viewcode-back" href="../link.html#link.Link.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">resource</span><span class="p">,</span> <span class="n">properties</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -79,7 +82,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_res</span> <span class="o">=</span> <span class="n">resource</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_delay</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">Link</span><span class="o">.</span><span class="n">DELAY</span> <span class="ow">in</span> <span class="n">properties</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_delay</span> <span class="o">=</span> <span class="n">Distribution</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">properties</span><span class="p">[</span><span class="n">Link</span><span class="o">.</span><span class="n">DELAY</span><span class="p">]))</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_delay</span> <span class="o">=</span> <span class="n">Distribution</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">properties</span><span class="p">[</span><span class="n">Link</span><span class="o">.</span><span class="n">DELAY</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="n">Link</span><span class="o">.</span><span class="n">POLICY_FUNCTION</span> <span class="ow">in</span> <span class="n">properties</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_policy_function</span> <span class="o">=</span> <span class="n">PolicyFunction</span><span class="p">(</span><span class="n">properties</span><span class="p">[</span><span class="n">Link</span><span class="o">.</span><span class="n">POLICY_FUNCTION</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="Link.transmit"><a class="viewcode-back" href="../link.html#link.Link.transmit">[docs]</a>    <span class="k">def</span> <span class="nf">transmit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">delay</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -110,6 +115,9 @@
 <span class="sd">        :param delay: delay that needs to be waited</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transmit</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">delay</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Link.test"><a class="viewcode-back" href="../link.html#link.Link.test">[docs]</a>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pl</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_policy_function</span><span class="p">[</span><span class="n">pl</span><span class="p">]</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

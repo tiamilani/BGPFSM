@@ -330,8 +330,9 @@ class Node(Module):
         shared destination
 
         :param event: event that generates the withdraw, used to 
-        get the delay time and the route that needs to be withdrawed
+                      get the delay time and the route that needs to be withdrawed
         """
+
         # Wait the time defined by the withdraw distribution
         yield self._env.timeout(event.event_duration)
         # Get the route

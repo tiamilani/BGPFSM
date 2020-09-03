@@ -199,6 +199,11 @@
                 <span class="k">return</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="n">v</span></div>
 
+    <span class="k">def</span> <span class="nf">__loop_detection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">route</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="ow">in</span> <span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
 <div class="viewcode-block" id="Rib.filter"><a class="viewcode-back" href="../rib.html#rib.Rib.filter">[docs]</a>    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">route</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;filter.</span>
 <span class="sd">        filter function for routes before the introduction in the rib</span>
@@ -207,6 +212,8 @@
 <span class="sd">        :param route: route that needs to be evaluated</span>
 <span class="sd">        :return: True</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__loop_detection</span><span class="p">(</span><span class="n">route</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="kc">True</span></div>
 
 <div class="viewcode-block" id="Rib.insert"><a class="viewcode-back" href="../rib.html#rib.Rib.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -218,7 +225,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Check v type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-        <span class="c1"># If the filter approves the route the add it</span>
+        <span class="c1"># If the filter approves the route then add it</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
             <span class="c1"># Check if it was already in the list</span>
             <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">:</span>

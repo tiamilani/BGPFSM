@@ -52,6 +52,7 @@
 <span class="kn">import</span> <span class="nn">simpy</span>
 <span class="kn">import</span> <span class="nn">bgp_sim</span>
 <span class="kn">import</span> <span class="nn">ipaddress</span>
+<span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span><span class="p">,</span> <span class="n">deepcopy</span>
 
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;util&#39;</span><span class="p">)</span>
@@ -64,6 +65,7 @@
 <span class="kn">from</span> <span class="nn">route</span> <span class="kn">import</span> <span class="n">Route</span>
 <span class="kn">from</span> <span class="nn">distribution</span> <span class="kn">import</span> <span class="n">Distribution</span>
 <span class="kn">from</span> <span class="nn">rib</span> <span class="kn">import</span> <span class="n">Rib</span>
+<span class="kn">from</span> <span class="nn">policies</span> <span class="kn">import</span> <span class="n">PolicyValue</span>
 
 
 <div class="viewcode-block" id="Node"><a class="viewcode-back" href="../node.html#node.Node">[docs]</a><span class="k">class</span> <span class="nc">Node</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
@@ -131,7 +133,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">proc_time</span> <span class="o">=</span> <span class="n">Distribution</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="n">Node</span><span class="o">.</span><span class="n">PAR_PROC_TIME</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">delay</span> <span class="o">=</span> <span class="n">Distribution</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="n">Node</span><span class="o">.</span><span class="n">PAR_DELAY</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">withdraw_dist</span> <span class="o">=</span> <span class="n">Distribution</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="n">Node</span><span class="o">.</span><span class="n">PAR_WITHDRAW_DIST</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">reannouncement_dist</span><span class="o">=</span> <span class="n">Distribution</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="n">Node</span><span class="o">.</span><span class="n">PAR_REANNOUNCE_DIST</span><span class="p">))</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reannouncement_dist</span><span class="o">=</span> <span class="n">Distribution</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="n">Node</span><span class="o">.</span><span class="n">PAR_REANNOUNCE_DIST</span><span class="p">))</span>
+        <span class="c1"># Resource for the acquisition of the tx channel resource</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tx_res</span> <span class="o">=</span> <span class="n">simpy</span><span class="o">.</span><span class="n">Resource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="p">,</span> <span class="n">capacity</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;_print.</span>
@@ -177,7 +181,9 @@
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> - Neighbor </span><span class="si">{}</span><span class="s2"> already in the set&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span> <span class="n">link</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
             <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Node.add_destination"><a class="viewcode-back" href="../node.html#node.Node.add_destination">[docs]</a>    <span class="k">def</span> <span class="nf">add_destination</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destination</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">nh</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="c1"># TODO Split this function and create a function for new_route_evaluation</span>
+    <span class="c1"># TODO Accept as ingress a route and not all the route parameters</span>
+<div class="viewcode-block" id="Node.add_destination"><a class="viewcode-back" href="../node.html#node.Node.add_destination">[docs]</a>    <span class="k">def</span> <span class="nf">add_destination</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destination</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">nh</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">policy_value</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Function that adds a destination to the data structure</span>
 <span class="sd">        that manage destinations that needs to be shared inside the node</span>
@@ -187,13 +193,14 @@
 <span class="sd">        :param nh: nh for the route</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">network</span> <span class="o">=</span> <span class="n">ipaddress</span><span class="o">.</span><span class="n">ip_network</span><span class="p">(</span><span class="n">destination</span><span class="p">)</span>
-        <span class="n">r</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">nh</span><span class="p">)</span>
+        <span class="n">policy</span> <span class="o">=</span> <span class="n">PolicyValue</span><span class="p">(</span><span class="n">policy_value</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">nh</span><span class="p">,</span> <span class="n">policy_value</span><span class="o">=</span><span class="n">policy</span><span class="p">)</span>
 
         <span class="c1"># Insert the route in the rib</span>
         <span class="n">old_best</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rib</span><span class="p">[</span><span class="n">network</span><span class="p">]</span>
         <span class="n">new_best</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rib</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="n">event</span><span class="p">)</span>
         <span class="c1"># Evaluate if the new route is the new best route for the destiantion</span>
-        <span class="k">if</span> <span class="n">new_best</span> <span class="o">!=</span> <span class="n">old_best</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">new_best</span> <span class="o">!=</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">new_best</span> <span class="o">!=</span> <span class="n">old_best</span><span class="p">:</span>
             <span class="c1"># If it is the new best route insert it in the routing table and </span>
             <span class="c1"># Log the event</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">routing_table</span><span class="p">[</span><span class="n">network</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span>
@@ -253,35 +260,18 @@
         <span class="n">route</span> <span class="o">=</span> <span class="n">packet</span><span class="o">.</span><span class="n">content</span>
         <span class="c1"># If the packet contains an update it will be evaluated</span>
         <span class="k">if</span> <span class="n">packet</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">==</span> <span class="n">Packet</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">add_destination</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">,</span> <span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">route</span><span class="o">.</span><span class="n">nh</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="n">event</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_destination</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">,</span> <span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">route</span><span class="o">.</span><span class="n">nh</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="n">event</span><span class="p">,</span>
+                                 <span class="n">policy_value</span><span class="o">=</span><span class="n">route</span><span class="o">.</span><span class="n">policy_value</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
         <span class="c1"># If the packet contains a withdrow the evaluation depends on the number</span>
         <span class="c1"># Of neighbors</span>
-        <span class="c1"># TODO better handling this part, remove the handling here and do it one</span>
-        <span class="c1"># time for every occasion</span>
         <span class="k">if</span> <span class="n">packet</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">==</span> <span class="n">Packet</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_neighbors</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="c1"># Delete the route from the routing table and the rib</span>
-                <span class="n">old_best</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rib</span><span class="p">[</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">]</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rib</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">,</span> <span class="n">route</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">rib</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">,</span> <span class="n">route</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="n">event</span><span class="p">)</span>
-                <span class="n">new_best</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rib</span><span class="p">[</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">]</span>
-                <span class="k">if</span> <span class="n">new_best</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">routing_table</span><span class="p">[</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">]</span>
-                    <span class="n">rt_change_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">RT_CHANGE</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-                                            <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="n">Route</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">,</span> <span class="p">[],</span> <span class="kc">None</span><span class="p">))</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">log_rt_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rt_change_event</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="n">new_best</span> <span class="o">!=</span> <span class="n">old_best</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">routing_table</span><span class="p">[</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_best</span>
-                    <span class="n">rt_change_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">RT_CHANGE</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-                                            <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="n">new_best</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">log_rt_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rt_change_event</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">route</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
-                <span class="n">withdraw_packet</span> <span class="o">=</span> <span class="n">Packet</span><span class="p">(</span><span class="n">Packet</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">,</span> <span class="n">route</span><span class="p">)</span>
-                <span class="n">withdraw_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc_time</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
-                <span class="n">withdraw_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="n">withdraw_time</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">,</span> 
-                                       <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="n">withdraw_packet</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">event_store</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">withdraw_event</span><span class="p">)</span></div>
+            <span class="c1"># self.withdraw_handler(event, packet)</span>
+            <span class="n">route</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+            <span class="n">withdraw_packet</span> <span class="o">=</span> <span class="n">Packet</span><span class="p">(</span><span class="n">Packet</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">,</span> <span class="n">route</span><span class="p">)</span>
+            <span class="n">withdraw_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc_time</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
+            <span class="n">withdraw_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="n">withdraw_time</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">,</span> 
+                                   <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="n">withdraw_packet</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">event_store</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">withdraw_event</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Node.tx_pkt"><a class="viewcode-back" href="../node.html#node.Node.tx_pkt">[docs]</a>    <span class="k">def</span> <span class="nf">tx_pkt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -289,11 +279,12 @@
 <span class="sd">        Function that transmit the packet to a destination</span>
 <span class="sd">        :param event: Transmission event</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># TODO Reserve the transmission through a resource</span>
+        <span class="c1"># Reserve the transmission through a resource</span>
         <span class="c1"># to avoid the transmission of messages in reverse order</span>
         <span class="c1"># Evaluation of the time necessary for the transmission</span>
         <span class="n">waiting_time</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">event_duration</span>
-        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">waiting_time</span><span class="p">)</span>
+        <span class="n">request</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tx_res</span><span class="o">.</span><span class="n">request</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">waiting_time</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">request</span>
         <span class="n">dst</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">destination</span>
         <span class="n">packet</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">obj</span>
         <span class="c1"># Get the link that will handle the transmission</span>
@@ -310,7 +301,12 @@
                                 <span class="n">obj</span><span class="o">=</span><span class="n">packet</span><span class="p">,</span> <span class="n">sent_time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
         <span class="n">link</span><span class="o">.</span><span class="n">tx</span><span class="p">(</span><span class="n">reception_event</span><span class="p">,</span> <span class="n">delay</span><span class="p">)</span>
         <span class="c1"># Log the transmission</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">log_packet_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">log_packet_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+        <span class="c1"># Release the resource</span>
+        <span class="n">wait</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc_time</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">wait</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tx_res</span><span class="o">.</span><span class="n">release</span><span class="p">(</span><span class="n">request</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="Node.share_dst"><a class="viewcode-back" href="../node.html#node.Node.share_dst">[docs]</a>    <span class="k">def</span> <span class="nf">share_dst</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;share_dst.</span>
@@ -321,25 +317,33 @@
         <span class="n">waiting_time</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">event_duration</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">waiting_time</span><span class="p">)</span>
 
-        <span class="c1"># TODO use the pop system instead of this pass and remove</span>
-        <span class="n">del_dst</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">dst</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">destination_queue</span><span class="p">:</span>
-            <span class="n">del_neigh</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">neigh</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">destination_queue</span><span class="p">[</span><span class="n">dst</span><span class="p">]:</span>
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">destination_queue</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">dst</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">destination_queue</span><span class="p">))</span>
+            <span class="n">neigh_l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">destination_queue</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
+            <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">neigh_l</span><span class="p">)</span> <span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">neigh</span> <span class="o">=</span> <span class="n">neigh_l</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
                 <span class="c1"># self._print(&quot;I should send {} to {}&quot;.format(dst,neigh))</span>
+                <span class="n">dst_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neighbors</span><span class="p">[</span><span class="n">neigh</span><span class="p">]</span><span class="o">.</span><span class="n">node</span>
                 <span class="n">route</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">routing_table</span><span class="p">[</span><span class="n">dst</span><span class="p">])</span>
+
+                <span class="c1"># Get the policy value that is in the routing table</span>
+                <span class="n">link</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neighbors</span><span class="p">[</span><span class="n">dst_node</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
+                <span class="c1"># Check the link export_policy if it is valid </span>
+                <span class="n">route</span><span class="o">.</span><span class="n">policy_value</span> <span class="o">=</span> <span class="n">link</span><span class="o">.</span><span class="n">test</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">policy_value</span><span class="p">)</span> 
+                <span class="c1"># If it is not valid jump to the next iteration</span>
+                <span class="k">if</span> <span class="n">route</span><span class="o">.</span><span class="n">policy_value</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
                 <span class="n">route</span><span class="o">.</span><span class="n">add_to_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span>
                 <span class="n">route</span><span class="o">.</span><span class="n">nh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span>
 
                 <span class="c1"># Create the event</span>
                 <span class="n">packet</span> <span class="o">=</span> <span class="n">Packet</span><span class="p">(</span><span class="n">Packet</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">,</span> <span class="n">route</span><span class="p">)</span>
-                <span class="n">dst_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neighbors</span><span class="p">[</span><span class="n">neigh</span><span class="p">]</span><span class="o">.</span><span class="n">node</span>
                 <span class="n">interrarival</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rate</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
                 <span class="n">transmission_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="n">interrarival</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span><span class="p">,</span>
                                            <span class="n">Events</span><span class="o">.</span><span class="n">TX</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">dst_node</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="n">packet</span><span class="p">)</span>
                 <span class="c1"># Send the event to the handler</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">event_store</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">transmission_event</span><span class="p">)</span>
-                <span class="n">del_neigh</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">neigh</span><span class="p">)</span>
 
             <span class="c1"># Check if a withdraw is needed</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">withdraw</span><span class="p">:</span>
@@ -352,15 +356,7 @@
                     <span class="n">withdraw_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="n">withdraw_time</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span><span class="p">,</span>
                                            <span class="n">Events</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> 
                                            <span class="n">obj</span><span class="o">=</span><span class="n">withdraw_packet</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">event_store</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">withdraw_event</span><span class="p">)</span>
-
-            <span class="c1"># Remove the neighbors that received the element from the queue</span>
-            <span class="k">for</span> <span class="n">del_elem</span> <span class="ow">in</span> <span class="n">del_neigh</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">destination_queue</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">del_elem</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">destination_queue</span><span class="p">[</span><span class="n">dst</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">del_dst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">del_elem</span> <span class="ow">in</span> <span class="n">del_dst</span><span class="p">:</span>
-            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">destination_queue</span><span class="p">[</span><span class="n">del_elem</span><span class="p">]</span></div>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">event_store</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">withdraw_event</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Node.program_withdraw"><a class="viewcode-back" href="../node.html#node.Node.program_withdraw">[docs]</a>    <span class="k">def</span> <span class="nf">program_withdraw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;program_withdraw.</span>
@@ -368,8 +364,9 @@
 <span class="sd">        shared destination</span>
 
 <span class="sd">        :param event: event that generates the withdraw, used to </span>
-<span class="sd">        get the delay time and the route that needs to be withdrawed</span>
+<span class="sd">                      get the delay time and the route that needs to be withdrawed</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="c1"># Wait the time defined by the withdraw distribution</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">event_duration</span><span class="p">)</span>
         <span class="c1"># Get the route</span>
@@ -389,6 +386,8 @@
         <span class="c1"># Generate the withdraw packet</span>
         <span class="n">route</span><span class="o">.</span><span class="n">add_to_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span>
         <span class="n">route</span><span class="o">.</span><span class="n">nh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">path</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">route</span><span class="o">.</span><span class="n">policy_value</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="n">withdraw_packet</span> <span class="o">=</span> <span class="n">Packet</span><span class="p">(</span><span class="n">Packet</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">,</span> <span class="n">route</span><span class="p">)</span>
         <span class="n">withdraw_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rate</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
         <span class="c1"># The update must be after the withdraw</span>
@@ -411,11 +410,6 @@
             <span class="n">route_update</span><span class="o">.</span><span class="n">nh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span>
             <span class="c1"># Create the event</span>
             <span class="n">packet_update</span> <span class="o">=</span> <span class="n">Packet</span><span class="p">(</span><span class="n">Packet</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">,</span> <span class="n">route_update</span><span class="p">)</span>
-            <span class="c1"># dst_node = event.destination </span>
-            <span class="c1"># transmission_event = Event(update_time, Events.TX, </span>
-            <span class="c1">#                     self, dst_node, obj=packet_update)</span>
-            <span class="c1"># Send the event to the handler</span>
-            <span class="c1"># self.event_store.put(transmission_event)</span>
 
         <span class="c1"># Send the packet to the neighborhod</span>
         <span class="k">for</span> <span class="n">neigh</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neighbors</span><span class="p">:</span>

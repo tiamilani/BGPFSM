@@ -1,0 +1,316 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>policies &#8212; BGPFSM 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for policies</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This program is free software: you can redistribute it and/or modify</span>
+<span class="c1"># it under the terms of the GNU General Public License as published by</span>
+<span class="c1"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c1"># (at your option) any later version.</span>
+<span class="c1">#</span>
+<span class="c1"># This program is distributed in the hope that it will be useful,</span>
+<span class="c1"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c1"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c1"># GNU General Public License for more details.</span>
+<span class="c1">#</span>
+<span class="c1"># You should have received a copy of the GNU General Public License</span>
+<span class="c1"># along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright (C) 2020 Mattia Milani &lt;mattia.milani@studenti.unitn.it&gt;</span>
+
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span><span class="p">,</span> <span class="n">deepcopy</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">math</span>
+
+<div class="viewcode-block" id="PolicyValue"><a class="viewcode-back" href="../policies.html#policies.PolicyValue">[docs]</a><span class="k">class</span> <span class="nc">PolicyValue</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;PolicyValue.</span>
+<span class="sd">    Class used to handle policy values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="PolicyValue.__init__"><a class="viewcode-back" href="../policies.html#policies.PolicyValue.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__init__.</span>
+
+<span class="sd">        :param value: Policy value to use</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check that value is an integer and that is higher than 0</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">!=</span> <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span> \
+                <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The policy value must be higher than 0, </span><span class="se">\</span>
+<span class="s2">                              </span><span class="si">{}</span><span class="s2"> &lt; 0&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="PolicyValue.fromString"><a class="viewcode-back" href="../policies.html#policies.PolicyValue.fromString">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">fromString</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;fromString.</span>
+
+<span class="sd">        :param string: String to transform in a policy value</span>
+<span class="sd">        :type string: str</span>
+<span class="sd">        :rtype: PolicyValue</span>
+<span class="sd">        :return: Policy value converted from the string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span> <span class="k">if</span> <span class="n">string</span> <span class="o">==</span> <span class="s2">&quot;inf&quot;</span> <span class="k">else</span> <span class="bp">cls</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">string</span><span class="p">))</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;value.</span>
+
+<span class="sd">        :return: the policy value actually handling by the policy</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span>
+
+    <span class="nd">@value</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;value.</span>
+
+<span class="sd">        :param value: Value to substitute to the actual policy value</span>
+<span class="sd">        :type value: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">!=</span> <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The policy value must be higher than 0, </span><span class="se">\</span>
+<span class="s2">                              </span><span class="si">{}</span><span class="s2"> &lt; 0&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="fm">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">policy_value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;__lt__.</span>
+
+<span class="sd">        :param policy_value: Policy value to compare</span>
+<span class="sd">        :type policy_value: PolicyValue</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;</span> <span class="n">policy_value</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="k">def</span> <span class="fm">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">policy_value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;__gt__.</span>
+
+<span class="sd">        :param policy_value: Policy value to compare</span>
+<span class="sd">        :type policy_value: PolicyValue</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__lt__</span><span class="p">(</span><span class="n">policy_value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">policy_value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;__eq__.</span>
+
+<span class="sd">        :param policy_value: Policy value to compare</span>
+<span class="sd">        :type policy_value: PolicyValue</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">policy_value</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="k">def</span> <span class="fm">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">policy_value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;__ne__.</span>
+
+<span class="sd">        :param policy_value: Policy value to compare</span>
+<span class="sd">        :type policy_value: PolicyValue</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">policy_value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__copy__.</span>
+<span class="sd">        Copy of the actual policy value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__deepcopy__.</span>
+<span class="sd">        Deep copy of the actual policy value</span>
+
+<span class="sd">        :param memo:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">id_self</span> <span class="o">=</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">_copy</span> <span class="o">=</span> <span class="n">memo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">id_self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">_copy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_copy</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span>
+                    <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">memo</span><span class="p">))</span>
+            <span class="n">memo</span><span class="p">[</span><span class="n">id_self</span><span class="p">]</span> <span class="o">=</span> <span class="n">_copy</span>
+        <span class="k">return</span> <span class="n">_copy</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__str__.</span>
+<span class="sd">        Return the policy value as a string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PolicyFunction"><a class="viewcode-back" href="../policies.html#policies.PolicyFunction">[docs]</a><span class="k">class</span> <span class="nc">PolicyFunction</span><span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">MutableSequence</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;PolicyFunction.</span>
+<span class="sd">    Class to handle policy functions</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PolicyFunction.__init__"><a class="viewcode-back" href="../policies.html#policies.PolicyFunction.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__init__.</span>
+
+<span class="sd">        :param string: String from which is possible to get the policy function</span>
+<span class="sd">                        The string must be composed by valid policy values</span>
+<span class="sd">                        &#39;inf&#39; will be substituted by math.inf</span>
+<span class="sd">                        values must be separated by a &#39;,&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_values</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> is not of type str&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">string</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">string</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> is empty&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">string</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">):</span>
+            <span class="n">elem</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PolicyValue</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="n">elem</span><span class="p">))</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;values.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: the actual list of policy values that is composed the function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_values</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__len__.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: the len of the policy function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__getitem__.</span>
+
+<span class="sd">        :param i: PolicyValue you would like to apply to the function</span>
+<span class="sd">                  the function would return the policy value of f(i)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">PolicyValue</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;It is possible to get an item only with policy values </span><span class="se">\</span>
+<span class="s2">                             </span><span class="si">{}</span><span class="s2"> is not a policy value&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">value</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="k">else</span> <span class="n">PolicyValue</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__delitem__.</span>
+<span class="sd">        This function has no effects</span>
+<span class="sd">        :param i:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># An element of a policy function can&#39;t be deleted</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__setitem__.</span>
+<span class="sd">        This function has no effects</span>
+<span class="sd">        :param i:</span>
+<span class="sd">        :param v:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># The policy function can&#39;t be modified</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="PolicyFunction.insert"><a class="viewcode-back" href="../policies.html#policies.PolicyFunction.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;insert.</span>
+<span class="sd">        This function has no effects</span>
+<span class="sd">        :param i:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># The policy function can&#39;t be amplified</span>
+        <span class="k">pass</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__str__.</span>
+<span class="sd">        Returns the policy function in a readable human format</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="s2">&quot;&lt;&quot;</span>
+        <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">res</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span>
+        <span class="n">res</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;&gt;&quot;</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">BGPFSM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mattia Milani.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

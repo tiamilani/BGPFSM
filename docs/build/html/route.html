@@ -35,12 +35,12 @@
 <span id="route-module"></span><h1>route module<a class="headerlink" href="#module-route" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="route.Route">
-<em class="property">class </em><code class="sig-prename descclassname">route.</code><code class="sig-name descname">Route</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">addr</span></em>, <em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">nh</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/route.html#Route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#route.Route" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">route.</code><code class="sig-name descname">Route</code><span class="sig-paren">(</span><em class="sig-param">addr</em>, <em class="sig-param">path</em>, <em class="sig-param">nh</em>, <em class="sig-param">policy_value=&lt;policies.PolicyValue object&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/route.html#Route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#route.Route" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class to manage a single route</p>
 <dl class="py method">
 <dt id="route.Route.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">addr</span></em>, <em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">nh</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/route.html#Route.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#route.Route.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">addr</em>, <em class="sig-param">path</em>, <em class="sig-param">nh</em>, <em class="sig-param">policy_value=&lt;policies.PolicyValue object&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/route.html#Route.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#route.Route.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>__init__.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -48,6 +48,7 @@
 <li><p><strong>addr</strong> – addr of the route</p></li>
 <li><p><strong>path</strong> – Path to reach the destination</p></li>
 <li><p><strong>nh</strong> – Nh for the address</p></li>
+<li><p><strong>policy_value</strong> – Policy value to associate with the route</p></li>
 </ul>
 </dd>
 </dl>
@@ -85,6 +86,13 @@
 <dt id="route.Route.path">
 <em class="property">property </em><code class="sig-name descname">path</code><a class="headerlink" href="#route.Route.path" title="Permalink to this definition">¶</a></dt>
 <dd><p>path.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="route.Route.policy_value">
+<em class="property">property </em><code class="sig-name descname">policy_value</code><a class="headerlink" href="#route.Route.policy_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>policy_value.
+:return: the policy value associated with the route</p>
 </dd></dl>
 
 <dl class="py method">

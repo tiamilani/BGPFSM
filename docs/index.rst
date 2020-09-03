@@ -15,22 +15,6 @@ Welcome to BGPFSM's documentation!
 Indices and tables
 ==================
 
-:ref:`genindex` | :ref:`modindex` | :ref:`search`
-
-FSM controller
-=====================
-.. automodule:: fsm
-   :members:
-   :noindex:
-
-Node models
-=================
-.. automodule:: node.Node
-   :members:
-   :noindex:
-
-Analyzer module
-===================
-.. automodule:: analyzer
-   :members:
-   :noindex:
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

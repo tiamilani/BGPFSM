@@ -184,7 +184,7 @@
         <span class="n">grouped_states</span> <span class="o">=</span> <span class="n">grouped_states</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;counter&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">grouped_states</span> <span class="o">=</span> <span class="n">grouped_states</span><span class="o">.</span><span class="n">T</span>
         <span class="c1"># print(self.states_df.sort_values(by=[&#39;counter&#39;], ascending=False))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">grouped_states</span><span class="p">)</span>
+        <span class="c1"># print(grouped_states)</span>
         <span class="n">box_plot</span> <span class="o">=</span> <span class="n">grouped_states</span><span class="o">.</span><span class="n">boxplot</span><span class="p">()</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">)</span></div>
         <span class="c1"># print(grouped_states)</span>

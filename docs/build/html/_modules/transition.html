@@ -56,22 +56,29 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">output_state</span> <span class="o">=</span> <span class="n">output_state</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="n">trigger_input</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">output</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">counter</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> is not of type int&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">counter</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">counter</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Counter must be strictly higher than 0 </span><span class="se">\</span>
+<span class="s2">                              </span><span class="si">{}</span><span class="s2"> has been passed&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">counter</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">=</span> <span class="n">counter</span></div>
 
     <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">hash</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="fm">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span> <span class="o">==</span> <span class="n">obj</span>
 
-    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> 
+        <span class="n">res</span> <span class="o">=</span> <span class="s2">&quot;(</span><span class="si">{}</span><span class="s2">-&gt;</span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init_state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_state</span><span class="p">,</span>
+                                           <span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">res</span> <span class="o">=</span> <span class="s2">&quot;(</span><span class="si">{}</span><span class="s2">-&gt;</span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init_state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_state</span><span class="p">,</span>
-                                       <span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="s2">&quot;(</span><span class="si">{}</span><span class="s2">-&gt;</span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init_state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_state</span><span class="p">,</span>
+                                           <span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">res</span></div>
 </pre></div>
 

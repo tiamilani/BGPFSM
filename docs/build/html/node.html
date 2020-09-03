@@ -100,7 +100,7 @@ Class to manage node inside the simulation</p>
 
 <dl class="py method">
 <dt id="node.Node.add_destination">
-<code class="sig-name descname">add_destination</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">destination</span></em>, <em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">nh</span></em>, <em class="sig-param"><span class="n">event</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node.html#Node.add_destination"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node.Node.add_destination" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">add_destination</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">destination</span></em>, <em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">nh</span></em>, <em class="sig-param"><span class="n">event</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">policy_value</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node.html#Node.add_destination"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node.Node.add_destination" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function that adds a destination to the data structure
 that manage destinations that needs to be shared inside the node</p>
 <dl class="field-list simple">
@@ -161,10 +161,10 @@ Function used to program a withdraw of a previusly
 shared destination</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>event</strong> – event that generates the withdraw, used to</p>
+<dd class="field-odd"><p><strong>event</strong> – event that generates the withdraw, used to 
+get the delay time and the route that needs to be withdrawed</p>
 </dd>
 </dl>
-<p>get the delay time and the route that needs to be withdrawed</p>
 </dd></dl>
 
 <dl class="py method">
