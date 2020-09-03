@@ -111,23 +111,87 @@ Parameters available for edges:
 		   for a single edge, the distribution has to respect what said in the
 		   distribution section of the readme.
 		   This parameter will override the json delay parameter for the edge
+* `policy`: <policy function> is possible to define a policy function for 
+			every single edge, policy functions are applyied like explanied
+			in [3] see the section policy function for more deep explanations
 		   
 example of graphml files are present on the `src/graphs` folder. 
 
-### Software parameters
+##### Policy functions
 
-For example is possible to have more delay distributions and more seeds.
-To show all the possible runs use the command '-l' or '-L'
+A policy function is applied like exporter filter.
+If the value returned by the function is not infinite the route will
+be sent with the value returned by f
 
-Is also possible to define more sections inside the same config file.
+policy functions are formally explained in [3] Sec IV-c
 
-The second input file, that will be pointed by the config file, is the graphml
-file that describes the network to take in consideration.
+An example of policy function could be this:
 
-For now the graphml file represent a direct graph with just the option of destinations.
-The destinations option gives to a node the possibility to export some networks.
-A node can export more destinations.
-An example of graphml file is given under /src/graphs/
+`<1, inf, inf>`
+
+This policy can simulate the peer behaviour of a node.
+It can send only routes that have a policy level of 0 and will substitute to
+the route the policy level with 1 before the actual transmission.
+
+In the graphml file is mandatory to not use `<` and `>` simbols, so a function
+can be easily defined with:
+
+`2, 2, 2` 
+
+Rotues that are originated by nodes will receive a policy level o `0` 
+automatically
+
+### parameters
+
+The fsm software present different options for your experiments.
+
+First of all you have to decide witch configuration file you want to use for
+the experiments.
+
+* `-c` use this option to specify a configuration json file
+* `-s` inside a single configuration file there could be multiple experiments
+	   use the option `-s` to speciy which section of the configuration you
+	   want to use, the default is `"simulation"`
+
+The fsm software could also present all the possible run that you can have
+using your selected configuration file and section.
+
+* `-l` This option will give a brief list of runs that you can have
+	   combining all the possible values in vectors elements, if you have
+	   a vector of 10 elements and a vector of 2 the total number of possible
+	   experimetns will be 20
+* `-L` This option like the previus one will show all the possible runs with
+	   also the associated parameters
+
+Once you have choose a run that you want to execute you can specify it with
+the `-r` argument.
+
+An example of command could be:
+
+`python3 fsm.py -c conf.json -s subSection2 -r 12`
+
+this command will use the file `conf.json` looking for the subsection `subSection2`
+and lunching the run number `12`
+
+### Multiple experiments
+
+Is possible to run multiple experiments thanks to the `multiple\_expriments.sh`
+bash script.
+Thanks to parallel [2] is possible to run multiple experiments in parallel.
+
+Params:
+* n: mandatory argument, it defines up to which run experiments shuld be run
+	 (use fsm.py -l option to see how much run you have in your configuration
+	 file)
+* s: (default = simulation) Not mandatory argument, it describe which section
+	 of the configuration file will be used during the experiments
+* j: (default = 1) parallelization level, by default no parallelization, 
+	 it defines the number of process that will be run simultaniously
+
+Will be created a log file that register the STD output of each program in current
+directory.
+
+**FUTURE** Argument option to disable the cretion of the output file
 
 ## Ouptut
 
@@ -211,3 +275,9 @@ known path.
 
 [1] A Finite State Model Update Propagation for Hard-State Path-Vector Protocols
 present in Biblio/FSM\_model.pdf
+
+[2] O. Tange (2011): GNU Parallel - The Command-Line Power Tool, ;login: 
+The USENIX Magazine, February 2011:42-47
+
+[3] Daggitt, Matthew L., and Timothy G. Griffin. "Rate of convergence of increasing path-vector routing protocols." 2018 IEEE 26th International Conference on Network Protocols (ICNP). IEEE, 2018.
+present in Biblio/icnp\_2018.pdf 

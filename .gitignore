@@ -1,4 +1,6 @@
 *.csv
+*.pkl
+.coverage
 *.lprof
 *.txt
 *.pdf

@@ -151,7 +151,7 @@ class sim:
             link_res = simpy.Resource(self._env, capacity=1)
             l = Link(self._env, self.nodes[e[1]], link_res, e[2])
             self.nodes[e[0]].add_neighbor(l)
-
+        
         # Mark the initialization as done
         self._initialize = True
 
