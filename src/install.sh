@@ -4,7 +4,7 @@
 # and analyze them
 #
 
-sudo apt-get install python-virtualenv prallel
+sudo apt-get install python-virtualenv parallel
 
 rm -rf env_test
 
