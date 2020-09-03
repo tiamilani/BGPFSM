@@ -8,20 +8,23 @@
 
 usage () {
 	echo "Usage: $0 -n ID [-s SECTION -j PP]"
-	echo "	options:"
+	echo "options:"
 	echo "	'-n' experiment identifier that limits the sequence of experiments"
 	echo "	'-s' (default = simulation) defines which section of the configuration"
 	echo "	will be required"
 	echo "	'-j' (default = 1) if setted it will use the parallelize the execution of the experiments"
 	echo "	The argument given to the j determines how much processes will be executed in parallel"
+	echo "	'-o' (default = .) set the output directory for the log files with the"
+	echo "	STDOUT of all the process"
 	exit 1
 }
 
 SECTION='simulation'
 J=1
 nflag=false
+outdir='./'
 
-while getopts ":n:s:j:" o; do
+while getopts ":n:s:j:o:" o; do
 	case "${o}" in
 		n)
 			nflag=true
@@ -32,6 +35,9 @@ while getopts ":n:s:j:" o; do
 			;;
 		j)
 			J=${OPTARG}
+			;;
+		o)
+			outdir=${OPTARG}
 			;;
 		*)
 			usage
@@ -50,12 +56,10 @@ then
 	usage
 fi
 
-# for i in $(seq 0 ${1})
-# do
-# 	python3 fsm.py -c json/config.json -s ${2} -r ${i} > out_${i}.log
-# 	echo ""
-# done | pv -pt -i0.1 -s$((${1} + 1)) -w 80 > /dev/null
+if [ ! -d "${outdir}" ]; then
+	mkdir "${outdir}"
+fi
 
-seq 0 ${N} | parallel -i% -j ${J} --bar python3 fsm.py -c json/config.json -s ${SECTION} -r % ">" out_%.log
+seq 0 ${N} | parallel -i% -j ${J} --bar python3 fsm.py -c json/config.json -s ${SECTION} -r % ">" ${outdir}out_%.log
 
 echo "Experiments done"
