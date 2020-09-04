@@ -117,7 +117,12 @@ class TestPolicyValue():
     @pytest.mark.parametrize("value", [0, 1, 2, 128, 2200, math.inf])
     def test_policy_value_deepcopy(self, value):
         pl = PolicyValue(value)
-        test = copy.deepcopy(pl)
+        memo={}
+        test = copy.deepcopy(pl, memo)
+        test.value = value + 100
+        assert not id(pl) == id(test)
+        assert id(pl.value) != id(test.value)
+        test = copy.deepcopy(pl, memo)
         test.value = value + 100
         assert not id(pl) == id(test)
         assert id(pl.value) != id(test.value)

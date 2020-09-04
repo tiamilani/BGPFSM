@@ -1,0 +1,6 @@
+[run]
+omit = 
+		src/env/*
+
+[tool:pytest]
+addopts = --cov=src/ --cov-report term-missing

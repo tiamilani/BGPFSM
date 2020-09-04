@@ -137,6 +137,8 @@ class PolicyFunction(collections.MutableSequence):
     Class to handle policy functions
     """
 
+    PASS_EVERYTHING = "pass-everything"
+
     def __init__(self, string):
         """__init__.
 
@@ -152,9 +154,12 @@ class PolicyFunction(collections.MutableSequence):
         if len(string) == 0:
             raise ValueError("{} is empty".format(string))
 
-        for elem in string.split(','):
-            elem = elem.strip()
-            self._values.append(PolicyValue.fromString(elem))
+        if string == self.PASS_EVERYTHING:
+            self._values = self.PASS_EVERYTHING
+        else:
+            for elem in string.split(','):
+                elem = elem.strip()
+                self._values.append(PolicyValue.fromString(elem))
 
     @property
     def values(self):
@@ -177,6 +182,8 @@ class PolicyFunction(collections.MutableSequence):
         :param i: PolicyValue you would like to apply to the function
                   the function would return the policy value of f(i)
         """
+        if self.values == self.PASS_EVERYTHING:
+            return i
         if not isinstance(i, PolicyValue):
             raise TypeError("It is possible to get an item only with policy values \
                              {} is not a policy value".format(i))

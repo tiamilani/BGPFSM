@@ -24,7 +24,7 @@ class Route():
     Class to manage a single route
     """
 
-    def __init__(self, addr, path, nh, policy_value=PolicyValue(0)):
+    def __init__(self, addr, path, nh, mine=False, policy_value=PolicyValue(0)):
         """__init__.
 
         :param addr: addr of the route
@@ -43,6 +43,7 @@ class Route():
         if not isinstance(policy_value, PolicyValue):
             raise TypeError(policy_value)
 
+        self._mine = mine
         self._policy_value = policy_value
 
     @classmethod
@@ -106,6 +107,10 @@ class Route():
         :type value: PolicyValue
         """
         self._policy_value = value
+
+    @property
+    def mine(self):
+        return self._mine
 
     def __lt__(self, route):
         """__lt__.

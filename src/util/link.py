@@ -51,6 +51,8 @@ class Link:
             self._delay = Distribution(json.loads(properties[Link.DELAY]))
         if Link.POLICY_FUNCTION in properties:
             self._policy_function = PolicyFunction(properties[Link.POLICY_FUNCTION])
+        else:
+            self._policy_function = PolicyFunction(PolicyFunction.PASS_EVERYTHING)
 
     def transmit(self, msg, delay):
         """
@@ -67,10 +69,9 @@ class Link:
         # can be delivered
         request = self._res.request()
         yield self._env.timeout(delay) & request
-        self._node._print("resource obtained, inserting msg: " + str(msg.obj))
+        self._node._print("Transmitting msg: " + str(msg.obj))
         self._node.event_store.put(msg)
         yield self._env.timeout(self.__waiter)
-        self._node._print("resource releasing")
         self._res.release(request)
         
     def tx(self, msg, delay):

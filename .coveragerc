@@ -1,0 +1,18 @@
+[run]
+branch=True
+command_line= -m pytest --cov=src/ --cov-report term-missing
+omit = 
+		tests/*
+		src/env/*
+		ignored/*
+		src/util/test.py
+source=
+		src/
+		src/util
+
+[tool:pytest]
+addopts = --cov=src/ --cov-report term-missing
+
+[report]
+show_missing=True
+

@@ -37,3 +37,5 @@ class Events:
     REANNOUNCE = 7
     # Rib state change event
     RIB_CHANGE = 8
+    # Introduction of a new Network
+    DST_ADD = 9

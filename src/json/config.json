@@ -65,11 +65,11 @@
 		// duration of each simulation in seconds
 		"duration" : 3600,
 		// Graph file to simulate
-		"graph": "graphs/policy_function_test.graphml",
+		"graph": "graphs/policy_function_test2.graphml",
 		// log file name using configuration parameters, use {seed} or {date-time}
 		"output" : "results/policy_test/PolicyFunction/output_{seed}_{withdraw_dist.min}_{reannouncement_dist.min}_{datarate.lambda}.csv",
 		// Verbose value
-		"verbose": "False",
+		"verbose": "True",
 		// Withdraw signaling 
 		"withdraw": "True",
 		// Reannouncement of a destination after a withdraw

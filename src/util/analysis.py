@@ -177,7 +177,7 @@ class SingleFileAnalysis():
 
         # Keep a set of transmitted routes, set because we are interested
         # uniquelly in which route has been transmitted and not to who
-        transmitted_routes = set()
+        transmitted_routes = []
 
         # Check each row of the events caused by the reception
         for row_event, row_value in zip(events_in_between['event'], 
@@ -188,18 +188,24 @@ class SingleFileAnalysis():
                 new_state = self.__evaluate_rib_change(row_value)
             # If the event is a TX i update the corresponding sets
             if row_event == Events.TX:
-                transmitted_routes.add(self.__evaluate_tx(row_value))
+                elem = self.__evaluate_tx(row_value)
+                if elem not in transmitted_routes:
+                    transmitted_routes.append(elem)
     
         # Evaluate the reception event
         inp = self.__evaluate_rx(rx_value)
 
         if len(transmitted_routes) == 0:
             transmitted_routes = None
+        else:
+            transmitted_routes = sorted(transmitted_routes)
 
         # The state has changed thanks to this reception message
         if len(self.actualState) != len(new_state):
             # Evaluate the difference in the new state vs the previus one
             if abs(len(self.actualState)-len(new_state)) != 1:
+                print(str(rx_event_id), str(rx_value))
+                print(str(self.actualState), str(new_state))
                 print("something really bad happened")
                 exit(3)
 
