@@ -112,6 +112,10 @@ class Route():
     def mine(self):
         return self._mine
 
+    @mine.setter
+    def mine(self, value):
+        self._mine = value
+
     def __lt__(self, route):
         """__lt__.
 
@@ -166,7 +170,8 @@ class Route():
                 deepcopy(self.addr, memo),
                 deepcopy(self.path, memo),
                 deepcopy(self.nh, memo),
-                deepcopy(self.policy_value, memo))
+                policy_value=deepcopy(self.policy_value, memo),
+                mine=deepcopy(self.mine, memo))
             memo[id_self] = _copy
         return _copy
 

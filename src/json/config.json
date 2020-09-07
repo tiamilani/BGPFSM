@@ -3,13 +3,17 @@
 		// seed(s) to initialize PRNGs
 		"seed" : [0, 1, 2, 3, 4],
 		// duration of each simulation in seconds
-		"duration" : 3600,
+		"duration" : 60,
 		// Graph file to simulate
 		"graph": "graphs/fig_4_fsm_model.graphml",
 		// log file name using configuration parameters, use {seed} or {date-time}
 		"output" : "results/test/experiment_fig_4/output_{seed}_{withdraw_dist.min}_{reannouncement_dist.min}_{datarate.lambda}.csv",
 		// Verbose value
 		"verbose": "True",
+		// Signaling flag
+		"signaling": "True",
+		// Signaling sequence, ignored if signaling false
+		"signaling_sequence": "AW",
 		// Withdraw signaling 
 		"withdraw": "True",
 		// Reannouncement of a destination after a withdraw
@@ -71,9 +75,9 @@
 		// Verbose value
 		"verbose": "True",
 		// Withdraw signaling 
-		"withdraw": "True",
+		"withdraw": "False",
 		// Reannouncement of a destination after a withdraw
-		"reannouncement": "True",
+		"reannouncement": "False",
 		// Withdraw interval distribution from the announcement
 		"withdraw_dist": [{"distribution": "unif", "min": 5, "max": 10, "int": 0.1},
 						  {"distribution": "unif", "min": 2, "max": 3, "int": 0.1}],

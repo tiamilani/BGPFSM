@@ -22,14 +22,15 @@ import networkx as nx
 from pathlib import Path
 import os
 
-sys.path.insert(1, 'util')
+myPath = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, myPath + '/util/')
 from config import Config
-from log import Log
 from singleton import Singleton
 from node import Node
 from event import Event
 from events import Events
 from link import Link
+from log import Log
 
 
 @Singleton

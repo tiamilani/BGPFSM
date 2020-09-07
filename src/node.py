@@ -58,6 +58,10 @@ class Node(Module):
     PAR_REANNOUNCE = "reannouncement"
     # Reannouncement distribution
     PAR_REANNOUNCE_DIST = "reannouncement_dist"
+    # Signaling param
+    PAR_SIGNALING = "signaling"
+    # Signaling sequence
+    PAR_SIGNALING_SEQUENCE = "signaling_sequence"
 
     def __init__(self, id, config):
         """__init__.
@@ -94,12 +98,17 @@ class Node(Module):
         self.withdraw = config.get_param(Node.PAR_WITHDRAW) in ("True", "true")
         # Reannouncement flag
         self.reannounce = config.get_param(Node.PAR_REANNOUNCE) in ("True", "true")
+        # Signaling flag
+        self.signaling = config.get_param(Node.PAR_SIGNALING) in ("True", "true")
         # Distributions used inside the node
         self.rate = Distribution(config.get_param(Node.PAR_DATARATE))
         self.proc_time = Distribution(config.get_param(Node.PAR_PROC_TIME))
         self.delay = Distribution(config.get_param(Node.PAR_DELAY))
         self.withdraw_dist = Distribution(config.get_param(Node.PAR_WITHDRAW_DIST))
         self.reannouncement_dist= Distribution(config.get_param(Node.PAR_REANNOUNCE_DIST))
+        # Signaling sequence
+        self.signaling_sequence = list(config.get_param(Node.PAR_SIGNALING_SEQUENCE))
+        self.signaling_accepted_simbols = ["A", "W"]
         # Resource for the acquisition of the tx channel resource
         self.tx_res = simpy.Resource(self._env, capacity=1)
 
@@ -141,7 +150,7 @@ class Node(Module):
     def new_network(self, route: Route, event: Event, share=True):
         old_best = self.rib[route.addr]
         new_best = self.rib.insert(route.addr, route, event=event)
-
+        self._print("The new network added has type mine: " + str(type(route.mine)))
         # Evaluate if the new route is the new best route for the destiantion
         if new_best != None and new_best != old_best:
             # If it is the new best route insert it in the routing table and 
@@ -151,6 +160,7 @@ class Node(Module):
             rt_change_event = Event(0, event.id, Events.RT_CHANGE, 
                                     self, self, obj=route)
             self.logger.log_rt_change(self, rt_change_event)
+            self._print("The new network added has type mine: " + str(type(route.mine)))
             
             if share:
                 proc_time = self.proc_time.get_value()
@@ -199,8 +209,10 @@ class Node(Module):
         self.logger.log_packet_rx(self, event)
         # Get the route
         route = packet.content
+        route.mine = False
         # If the packet contains an update it will be evaluated
         if packet.packet_type == Packet.UPDATE:
+            self._print("route mine type: " + str(type(route.mine)))
             self.new_network(route, event)
         # If the packet contains a withdrow it will be evaluated by the
         # Withdraw handler
@@ -236,6 +248,7 @@ class Node(Module):
             delay = self.delay.get_value()
         # Generate the reception event and pass it to the link
         evaluation = self.proc_time.get_value()
+        self._print("packet tx type mine: " + str(type(packet.content.mine)))
         reception_event = Event(evaluation, event.id, Events.RX, self, dst, 
                                 obj=packet, sent_time=self._env.now)
         link.tx(reception_event, delay)
@@ -246,6 +259,22 @@ class Node(Module):
         yield self._env.timeout(wait)
         self.tx_res.release(request)
 
+    def ensure_signaling(self, string):
+        if len(self.signaling_sequence) > 0:
+            self._print("Sequence: {}".format(self.signaling_sequence))
+            elem = self.signaling_sequence[0]
+            self.signaling_sequence = self.signaling_sequence[1:]
+            self._print("Elem: {} Sequence: {}".format(elem, self.signaling_sequence))
+            if elem != string:
+                if elem not in self.signaling_accepted_simbols:
+                    raise ValueError("Elem {} not accepted in signaling, accepted \
+                                      simbols: {}".format(elem, 
+                                        self.signaling_accepted_simbols))
+                raise ValueError("Expected {} but {} was found".format(string,
+                                                                   elem))
+            return elem
+        else:
+            return None
 
     def share_dst(self, event):
         """share_dst.
@@ -256,12 +285,20 @@ class Node(Module):
         waiting_time = event.event_duration
         yield self._env.timeout(waiting_time)
         dst = event.obj
+        
+        self._print("Share_dst: " + str(type(dst.mine)))
+        self._print(str(dst))
+        if self.signaling and dst.mine == True:
+            self._print("dst: {}, mine: {}".format(dst, dst.mine))
+            if self.ensure_signaling("A") == None:
+                return
 
         for neigh in self._neighbors:
             link = self._neighbors[neigh]
             dst_node = self._neighbors[neigh].node
             self._print("I have to send {} to {}".format(dst, neigh))
             route = deepcopy(dst)
+            self._print("I want to share a route with mine type: " + str(type(route.mine)))
 
             # Check the link export_policy if it is valid 
             route.policy_value = link.test(route.policy_value) 
@@ -274,6 +311,8 @@ class Node(Module):
             # Add the self id to the path and nh field
             route.add_to_path(self._id)
             route.nh = self._id
+
+            self._print("I want to share a route with mine type: " + str(type(route.mine)))
 
             # Create the event
             packet = Packet(Packet.UPDATE, route)
@@ -305,10 +344,15 @@ class Node(Module):
         """
         # Wait the time defined by the withdraw distribution
         yield self._env.timeout(event.event_duration)
+
         # Get the route
         packet = event.obj
         route = packet.content
         self._print("Route to withdraw: " + str(route))
+
+        if self.signaling and route.mine:
+            if self.ensure_signaling("W") == None:
+                return
 
         # Delete the route from the routing table and the rib
         old_best = self.rib[route.addr]

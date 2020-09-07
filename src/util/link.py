@@ -23,7 +23,9 @@ class Link:
     """
     Class defining a link between nodes
     this class contains properties for the link
-    like delay or preference
+    like delay or preference and link policy functions
+    Every link have a unique id
+    A single link can have a specific id
     """
 
     __link_counter = 0
@@ -34,7 +36,11 @@ class Link:
 
     def __init__(self, env, node, resource, properties):
         """
-        Creates a link automatically assign a uniqueid to the link
+        Creates a link and automatically assign a uniqueid to the link
+        It requires a simpy environment where to operate.
+        It also require a simpy resource to operate correctly and 
+        reserve the channel for a message.
+
         :param env: Simpy environment
         :param node: Node which the link is refered to
         :param resource: unitary resource used to lock the link
@@ -54,9 +60,10 @@ class Link:
         else:
             self._policy_function = PolicyFunction(PolicyFunction.PASS_EVERYTHING)
 
-    def transmit(self, msg, delay):
+    def transmit(self, msg: _T, delay: float) -> None:
         """
         Actual transmitting function
+
         :param msg: message that needs to be trasfered
         :param delay: time that needs to be waited before the message arrives
         to the destination
@@ -83,8 +90,8 @@ class Link:
         """
         self._env.process(self.transmit(msg, delay))
 
-    def test(self, pl):
-        return self._policy_function[pl]
+    def test(self, pf):
+        return self._policy_function[pf]
 
     @property
     def id(self):

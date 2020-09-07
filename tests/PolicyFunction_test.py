@@ -18,6 +18,7 @@ import sys
 import copy
 import pytest
 import math
+import random
 sys.path.insert(1, 'src/util')
 
 from policies import PolicyFunction
@@ -26,7 +27,7 @@ from policies import PolicyValue
 class TestPolicyFunction():
     
     @pytest.mark.parametrize("value", ["1, 2, 3", "3, 4, 6", "inf, inf, inf", 
-        "1", "inf"])
+        "1", "inf", PolicyFunction.PASS_EVERYTHING])
     def test_policy_functin_init(self, value):
         pf = PolicyFunction(value)
         assert id(pf) is not None
@@ -50,9 +51,13 @@ class TestPolicyFunction():
         assert len(pf) == len(value.split(','))
 
     @pytest.mark.parametrize("value", ["1, 2, 3", "3, 4, 6", "inf, inf, inf", 
-        "1", "inf"])
+        "1", "inf", PolicyFunction.PASS_EVERYTHING])
     def test_policy_functin_values_getitem(self, value):
         pf = PolicyFunction(value)
+        if value == PolicyFunction.PASS_EVERYTHING:
+            rnd = random.randint(0, 150)
+            assert pf[PolicyValue(rnd)].value == rnd
+            return
         values = [x.strip() for x in value.split(',')]
         for i in range(len(values)):
             pv = PolicyValue.fromString(i)

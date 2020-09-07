@@ -44,13 +44,13 @@ class TestRoute():
         assert route.policy_value.value == 0
 
     @pytest.mark.parametrize("addr", ["100.0.0.0/24", "10.0.0.0/24", "192.168.0.0/24"])
-    @pytest.mark.parametrize("path", ["NoPath", None, 1, -1])
+    @pytest.mark.parametrize("path", ["NoPath", None, 1, -1, [1, 2]])
     @pytest.mark.parametrize("nh", [None, 10])
     @pytest.mark.parametrize("pv", ["NoPolicy", None, 5, 128])
     def test_route_init_typeerror(self, addr, path, nh, pv):
         ipaddr = ipaddress.ip_network(addr)
         with pytest.raises(TypeError):
-            route = Route(ipaddr, path, nh, pv)
+            route = Route(ipaddr, path, nh, policy_value=pv)
 
     @pytest.mark.parametrize("addr, path, nh", [
         ("100.0.0.0/24", [], None),
@@ -97,6 +97,48 @@ class TestRoute():
         route.nh = new_nh
         assert route.nh is new_nh
  
+    @pytest.mark.parametrize("addr, path, nh, policy_value", [
+        ("100.0.0.0/24", [], None, 0),
+        ("100.0.1.0/24", [1, 2], None, 0),
+        ("10.0.0.0/24", [1, 2], None, 1),
+        ("10.0.0.0/24", [], None, 26),
+        ("10.0.0.0/24", [], 10, 14),
+    ])
+    def test_policyvalue(self, addr, path, nh, policy_value):
+        ipaddr = ipaddress.ip_network(addr)
+        pl = PolicyValue(policy_value)
+        route = Route(ipaddr, path, nh, policy_value=pl)
+        assert route.policy_value.value == pl.value
+
+    @pytest.mark.parametrize("addr, path, nh, policy_value", [
+        ("100.0.0.0/24", [], None, 0),
+        ("100.0.1.0/24", [1, 2], None, 0),
+        ("10.0.0.0/24", [1, 2], None, 1),
+        ("10.0.0.0/24", [], None, 26),
+        ("10.0.0.0/24", [], 10, 14),
+    ])
+    def test_policyvalue_setter(self, addr, path, nh, policy_value):
+        ipaddr = ipaddress.ip_network(addr)
+        pl = PolicyValue(policy_value)
+        route = Route(ipaddr, path, nh)
+        assert route.policy_value.value == 0 
+        route.policy_value = pl
+        assert route.policy_value.value == pl.value
+        assert id(route.policy_value) == id(pl)
+
+    @pytest.mark.parametrize("addr, path, nh, policy_value, mine", [
+        ("100.0.0.0/24", [], None, 0, True),
+        ("100.0.1.0/24", [1, 2], None, 0, False),
+        ("10.0.0.0/24", [1, 2], None, 1, True),
+        ("10.0.0.0/24", [], None, 26, False),
+        ("10.0.0.0/24", [], 10, 14, True),
+    ])
+    def test_mine(self, addr, path, nh, policy_value, mine):
+        ipaddr = ipaddress.ip_network(addr)
+        pv = PolicyValue(policy_value)
+        route = Route(ipaddr, path, nh, policy_value=pv, mine=mine)
+        assert route.mine == mine
+
     @pytest.mark.parametrize("addr, path, nh, new_as", [
         ("100.0.0.0/24", [] , None, 1),
         ("100.0.1.0/24", [1, 2, 3], 1, 4),
@@ -162,6 +204,8 @@ class TestRoute():
         ("{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 4, 3], 'policy_value': 0}", 
          "{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 5, 3], 'policy_value': 0}", True),
         ("{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 6, 3], 'policy_value': 0}", 
+         "{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 5, 3], 'policy_value': 0}", False),
+        ("{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 6, 3, 28], 'policy_value': 0}", 
          "{'addr': '100.0.1.0/24', 'nh': 2, 'path': [2, 5, 3], 'policy_value': 0}", False),
     ])
     def test_lt(self, route1, route2, lt_1):

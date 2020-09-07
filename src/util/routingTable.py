@@ -98,6 +98,8 @@ class RoutingTable(collections.MutableSequence):
 
     def insert(self, i, v):
         """insert.
+        Is not possible to insert any route in the Routing Table
+        This method has no effects
 
         :param i:
         :param v:

@@ -80,3 +80,25 @@ class TestPacket():
         
         assert str(p.content) == str(r)
 
+    @pytest.mark.parametrize("type_p, content, id_p, id_present, expected_id", [
+        (Packet.UPDATE, "hello", None, False, 12),
+        (Packet.WITHDRAW, "hello", None, False, 13),
+        (Packet.UPDATE, 27, None, False, 14),
+        (Packet.WITHDRAW, 27, None, False, 15),
+        (Packet.UPDATE, "hello", 5, True, 5),
+        (Packet.WITHDRAW, "hello", 25, True, 25),
+        (Packet.UPDATE, 27, 5, True, 5),
+        (Packet.WITHDRAW, 27, 25, True, 25)
+    ])
+    def test_packet_str(self, type_p, content, id_p, id_present, expected_id):
+        if id_present:
+            p = Packet(type_p, content, id=id_p)
+        else:
+            p = Packet(type_p, content)
+        
+        d = dict()
+        d["id"] = expected_id
+        d["type"] = type_p
+        d["content"] = str(content)
+        res = str(d) 
+        assert str(d) == str(p)
