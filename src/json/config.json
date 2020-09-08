@@ -3,7 +3,7 @@
 		// seed(s) to initialize PRNGs
 		"seed" : [0, 1, 2, 3, 4],
 		// duration of each simulation in seconds
-		"duration" : 60,
+		"duration" : 300,
 		// Graph file to simulate
 		"graph": "graphs/fig_4_fsm_model.graphml",
 		// log file name using configuration parameters, use {seed} or {date-time}
@@ -13,7 +13,7 @@
 		// Signaling flag
 		"signaling": "True",
 		// Signaling sequence, ignored if signaling false
-		"signaling_sequence": "AW",
+		"signaling_sequence": "AWWWA",
 		// Withdraw signaling 
 		"withdraw": "True",
 		// Reannouncement of a destination after a withdraw

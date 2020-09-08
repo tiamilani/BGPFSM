@@ -81,6 +81,10 @@ class Event:
         """
         return self._event_duration
 
+    @event_duration.setter
+    def event_duration(self, v):
+        self._event_duration = v
+
     @property
     def event_type(self):
         """

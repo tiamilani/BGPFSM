@@ -14,6 +14,7 @@
 # Copyright (C) 2016 Michele Segata <segata@ccs-labs.org>
 
 from distribution import Distribution
+from typing import Any
 import json
 import simpy
 
@@ -60,7 +61,7 @@ class Link:
         else:
             self._policy_function = PolicyFunction(PolicyFunction.PASS_EVERYTHING)
 
-    def transmit(self, msg: _T, delay: float) -> None:
+    def transmit(self, msg: Any, delay: float) -> None:
         """
         Actual transmitting function
 
