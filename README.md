@@ -13,6 +13,8 @@ Is possible to install all the required libraries using the script inside the
 
 ## Requirements
 
+Python >= 3.6 to install all the required libraries
+
 A list of all the required libraries is available in the file: 
 `scr/requirements.txt`
 
