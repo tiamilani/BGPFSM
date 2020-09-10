@@ -33,36 +33,6 @@
 		// Network delay distribution
 		"delay": {"distribution": "unif", "min": 0.001, "max": 1, "int": 0.001}
 	},
-	"policy_value_test" : {
-		// seed(s) to initialize PRNGs
-		"seed" : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-		// duration of each simulation in seconds
-		"duration" : 3600,
-		// Graph file to simulate
-		"graph": "graphs/policy_value_test.graphml",
-		// log file name using configuration parameters, use {seed} or {date-time}
-		"output" : "results/policy_test/PolicyValues/output_{seed}_{withdraw_dist.min}_{reannouncement_dist.min}_{datarate.lambda}.csv",
-		// Verbose value
-		"verbose": "True",
-		// Withdraw signaling 
-		"withdraw": "True",
-		// Reannouncement of a destination after a withdraw
-		"reannouncement": "False",
-		// Withdraw interval distribution from the announcement
-		"withdraw_dist": [{"distribution": "unif", "min": 5, "max": 10, "int": 0.1},
-						  {"distribution": "unif", "min": 2, "max": 3, "int": 0.1}],
-		// announcement interval distribution from the withdraw 
-		"reannouncement_dist": [{"distribution": "unif", "min": 5, "max": 10, "int": 0.1},
-							    {"distribution": "unif", "min": 1, "max": 3, "int": 0.1}],
-		// Transmission time required to start the actual message transmission 
-		"datarate": [{"distribution": "exp", "lambda" : 100},
-					 {"distribution": "exp", "lambda" : 200},
-					 {"distribution": "exp", "lambda" : 500}],
-		// Processing time distribution
-		"processing": {"distribution": "const", "mean": 0.00001},
-		// Network delay distribution
-		"delay": {"distribution": "unif", "min": 0.001, "max": 1, "int": 0.001}
-	},
 	"policy_function_test" : {
 		// seed(s) to initialize PRNGs
 		"seed" : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
@@ -144,31 +114,5 @@
 		"delay": [{"distribution": "unif", "min": 0.001, "max": 1, "int": 0.001},
 				  {"distribution": "unif", "min": 1, "max": 3, "int": 0.001},
 				  {"distribution": "unif", "min": 2, "max": 6, "int": 0.001}]
-	},
-	"loop_test" : {
-		// seed(s) to initialize PRNGs
-		"seed" : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-		// duration of each simulation in seconds
-		"duration" : 3600,
-		// Graph file to simulate
-		"graph": "graphs/loop_test.graphml",
-		// log file name using configuration parameters, use {seed} or {date-time}
-		"output" : "results/loop_test/output_{seed}_{withdraw_dist.min}_{reannouncement_dist.min}.csv",
-		// Verbose value
-		"verbose": "False",
-		// Withdraw signaling 
-		"withdraw": "True",
-		// Reannouncement of a destination after a withdraw
-		"reannouncement": "True",
-		// Withdraw interval distribution from the announcement
-		"withdraw_dist": {"distribution": "unif", "min": 5, "max": 10, "int": 0.1},
-		// announcement interval distribution from the withdraw 
-		"reannouncement_dist": {"distribution": "unif", "min": 5, "max": 10, "int": 0.1},
-		// Transmission time required to start the actual message transmission 
-		"datarate": {"distribution": "const", "mean" : 0.00001},
-		// Processing time distribution
-		"processing": {"distribution": "const", "mean": 0.00001},
-		// Network delay distribution
-		"delay": {"distribution": "unif", "min": 0.001, "max": 1, "int": 0.001}
 	}
 }

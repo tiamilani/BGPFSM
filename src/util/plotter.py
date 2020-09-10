@@ -20,6 +20,7 @@ from graphviz import Digraph
 import ast
 from route import Route
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import numpy as np
 
 class Plotter():
@@ -202,6 +203,7 @@ class Plotter():
         labs = [l.get_label() for l in lns]
         ax2.legend(lns, labs)
 
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
         ax.set_xlabel("# Of messages")
         ax.set_ylabel("Probability [0-1]")
         ax2.set_ylabel("# Of Outputs")

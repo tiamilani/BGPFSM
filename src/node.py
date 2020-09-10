@@ -369,33 +369,34 @@ class Node(Module):
             return
 
         # Send the packet to the neighborhod
-        for neigh in self._neighbors:
-            route_copy = deepcopy(packet.content)
-            # Generate the withdraw packet
-            route_copy.add_to_path(self._id)
-            route_copy.nh = self._id
-            dst_node = self._neighbors[neigh].node
-            self._print("Withdraw for {}".format(dst_node.id))
+        if new_best == None:
+            for neigh in self._neighbors:
+                route_copy = deepcopy(packet.content)
+                # Generate the withdraw packet
+                route_copy.add_to_path(self._id)
+                route_copy.nh = self._id
+                dst_node = self._neighbors[neigh].node
+                self._print("Withdraw for {}".format(dst_node.id))
 
-            # Get the policy value that is in the routing table
-            link = self._neighbors[dst_node.id]
-            # Check the link export_policy if it is valid 
-            route_copy.policy_value = link.test(route_copy.policy_value) 
-            # If it is not valid jump to the next iteration
-            if route_copy.policy_value.value == math.inf:
-                self._print("Withdraw aborted for policies")
-                continue
-            if route.nh == dst_node.id:
-                self._print("Withdraw aborted because the neighbor is my NH of the withdraw")
-                continue
+                # Get the policy value that is in the routing table
+                link = self._neighbors[dst_node.id]
+                # Check the link export_policy if it is valid 
+                route_copy.policy_value = link.test(route_copy.policy_value) 
+                # If it is not valid jump to the next iteration
+                if route_copy.policy_value.value == math.inf:
+                    self._print("Withdraw aborted for policies")
+                    continue
+                if route.nh == dst_node.id:
+                    self._print("Withdraw aborted because the neighbor is my NH of the withdraw")
+                    continue
 
-            withdraw_packet = Packet(Packet.WITHDRAW, route_copy)
-            withdraw_time = self.rate.get_value()
+                withdraw_packet = Packet(Packet.WITHDRAW, route_copy)
+                withdraw_time = self.rate.get_value()
 
-            transmission_event = Event(withdraw_time, event.event_cause,
-                                        Events.TX, self, dst_node,
-                                        obj=withdraw_packet)
-            self.event_store.put(transmission_event)
+                transmission_event = Event(withdraw_time, event.event_cause,
+                                            Events.TX, self, dst_node,
+                                            obj=withdraw_packet)
+                self.event_store.put(transmission_event)
 
         if new_best is not None:
             for neighbor in self._neighbors:
