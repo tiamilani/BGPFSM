@@ -62,6 +62,8 @@ class Node(Module):
     PAR_SIGNALING = "signaling"
     # Signaling sequence
     PAR_SIGNALING_SEQUENCE = "signaling_sequence"
+    # Implicit withdraw flag
+    PAR_IMPLICIT_WITHDRAW = "implicit_withdraw"
 
     def __init__(self, id, config):
         """__init__.
@@ -78,12 +80,6 @@ class Node(Module):
         Module.__init__(self)
         # Events queue, events that needs to be handle by the node
         self.event_store = simpy.Store(self._env)
-        # Destinations queue, this queue contains the destinations
-        # That are not yet distributed to neighbors
-        # The structure is a dictionary, the key is the destination
-        # And the object is a list of neighbor that didn't receive from
-        # us the destination yet
-        self.destination_queue = {}
         # Routing table, This table represent the routing knowledge
         # actually present in the node
         self.routing_table = RoutingTable()
@@ -100,6 +96,8 @@ class Node(Module):
         self.reannounce = config.get_param(Node.PAR_REANNOUNCE) in ("True", "true")
         # Signaling flag
         self.signaling = config.get_param(Node.PAR_SIGNALING) in ("True", "true")
+        # Implicit withdraw flag
+        self.implicit_withdraw = config.get_param(Node.PAR_IMPLICIT_WITHDRAW) in ("True", "true")
         # Distributions used inside the node
         self.rate = Distribution(config.get_param(Node.PAR_DATARATE))
         self.proc_time = Distribution(config.get_param(Node.PAR_PROC_TIME))
@@ -176,8 +174,9 @@ class Node(Module):
                     self.event_store.put(event)
 
     def new_network(self, route: Route, event: Event, share=True):
-        old_best = self.rib[route.addr]
-        new_best = self.rib.insert(route.addr, route, event=event)
+        old_best = deepcopy(self.rib[route.addr])
+        new_best = self.rib.insert(route.addr, route, event=event,
+                                   implicit_withdraw=self.implicit_withdraw)
         # Evaluate if the new route is the new best route for the destiantion
         if new_best != None and new_best != old_best:
             # If it is the new best route insert it in the routing table and 
@@ -193,8 +192,6 @@ class Node(Module):
                 new_dst_event = Event(proc_time, event.id, Events.NEW_DST, 
                                       self, self, obj=route)
                 self.event_store.put(new_dst_event)
-
-
 
     def add_destination(self, destination, path, nh, event=None, policy_value=0,
                         share=False):
@@ -367,6 +364,9 @@ class Node(Module):
             rt_change_event = Event(0, event.event_cause, Events.RT_CHANGE,
                                     self, self, obj=new_best)
             self.logger.log_rt_change(self, rt_change_event)
+        elif new_best == old_best:
+            self._print("Best route not changed, nothing to share")
+            return
 
         # Send the packet to the neighborhod
         for neigh in self._neighbors:
@@ -375,6 +375,7 @@ class Node(Module):
             route_copy.add_to_path(self._id)
             route_copy.nh = self._id
             dst_node = self._neighbors[neigh].node
+            self._print("Withdraw for {}".format(dst_node.id))
 
             # Get the policy value that is in the routing table
             link = self._neighbors[dst_node.id]
@@ -382,8 +383,10 @@ class Node(Module):
             route_copy.policy_value = link.test(route_copy.policy_value) 
             # If it is not valid jump to the next iteration
             if route_copy.policy_value.value == math.inf:
+                self._print("Withdraw aborted for policies")
                 continue
             if route.nh == dst_node.id:
+                self._print("Withdraw aborted because the neighbor is my NH of the withdraw")
                 continue
 
             withdraw_packet = Packet(Packet.WITHDRAW, route_copy)
@@ -393,10 +396,15 @@ class Node(Module):
                                         Events.TX, self, dst_node,
                                         obj=withdraw_packet)
             self.event_store.put(transmission_event)
-            if new_best is not None:
+
+        if new_best is not None:
+            for neighbor in self._neighbors:
+                self._print("I have a new best to send")
                 update_route = deepcopy(new_best)
                 update_route.add_to_path(self._id)
                 update_route.nh = self._id
+                dst_node = self._neighbors[neighbor].node
+                self._print("Update for {}".format(dst_node.id))
 
                 # Get the policy value that is in the routing table
                 link = self._neighbors[dst_node.id]
@@ -405,9 +413,11 @@ class Node(Module):
                 # If it is not valid jump to the next iteration
                 if update_route.policy_value.value == math.inf:
                     continue
+                if new_best.nh == dst_node.id:
+                    continue
 
                 update_packet = Packet(Packet.UPDATE, update_route)
-                update_time = self.rate.get_value() + withdraw_time
+                update_time = self.rate.get_value()
 
                 transmission_event = Event(update_time, event.event_cause, 
                                            Events.TX, self, dst_node, 
@@ -482,8 +492,6 @@ class Node(Module):
         res = "Node: {}\n".format(self._id)
         res += "Neighborhood: {}\n".format([n.node.id for n in self._neighbors.values()])
         res += "Destinations queue: "
-        for dst in self.destination_queue:
-            res += "{}-{} ".format(str(dst), str(self.destination_queue[dst]))
         res += "\n" + str(self.routing_table)
         res += str(self.rib)
         return res
