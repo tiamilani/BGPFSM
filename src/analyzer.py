@@ -45,7 +45,7 @@ parser.add_argument("-r", "--render", dest="render", default=False,
                     the same output directory of the gv file")
 parser.add_argument("-d", "--display", dest="display", default=False,
                     action='store_true', help="Display the rendering produced")
-parser.add_argument("-s", "--security", dest="security", default=False,
+parser.add_argument("-S", "--security", dest="security", default=False,
                     action='store_true', help="Enable the security checks: \
                     disable output file overwrite")
 parser.add_argument("-t", "--time", dest="time", default=False,
@@ -61,6 +61,10 @@ parser.add_argument("-pi", "--pickle", dest="pickle", default=False,
                             from the input folder instead of load again the  \
                             entire dataset, at the end it will save dataframes \
                             in pickle format in the output folder")
+parser.add_argument("-s", "--signaling", dest="signaling", default=False,
+                    action="store_true", help="If you want to analyze a\
+                            signaling experiment use this option to have a csv \
+                            of the output signals")
 
 if __name__ == "__main__":
     # Parse the arguments
@@ -80,6 +84,7 @@ if __name__ == "__main__":
     transitions_df = None
     route_to_id = None
     states_route = None
+    signaling_df = pd.DataFrame(columns=['id', 'output', 'counter']).set_index('id')
     i = 0
 
     # Check if it is possible to load pickles files
@@ -88,12 +93,14 @@ if __name__ == "__main__":
         if os.path.isfile(outputFile_path + "_states.pkl") and \
            os.path.isfile(outputFile_path + "_transitions.pkl") and \
            os.path.isfile(outputFile_path + "_route_id.pkl") and \
-           os.path.isfile(outputFile_path + "_states_id.pkl"):
+           os.path.isfile(outputFile_path + "_states_id.pkl") and \
+           os.path.isfile(outputFile_path + "_signaling_out.pkl"):
             # Load pickles files
             states_df = pickle.load(open(outputFile_path + "_states.pkl", "rb"))
             transitions_df = pickle.load(open(outputFile_path + "_transitions.pkl", "rb"))
             route_to_id = pickle.load(open(outputFile_path + "_route_id.pkl", "rb"))
             states_route = pickle.load(open(outputFile_path + "_states_id.pkl", "rb"))
+            signaling_df = pickle.load(open(outputFile_path + "_signaling_out.pkl", "rb"))
 
     # If states is not none means that pickles has been loaded and it is not 
     # necessary to parse the files
@@ -149,6 +156,15 @@ if __name__ == "__main__":
                 evaluate_time= timeit.default_timer()
 
             sf.evaluate_fsm()
+            if options.signaling:
+                signaling_list = sf.evaluate_signaling(order_by_time=True)
+                if hash(signaling_list) not in signaling_df.index:
+                    # print("Ehi a new sequence: {}".format(signaling_list))
+                    new_row = pd.Series(data={'output': signaling_list, 'counter': 1}, 
+                                        name=hash(signaling_list))
+                    signaling_df = signaling_df.append(new_row, ignore_index=False)
+                else:
+                    signaling_df.loc[hash(signaling_list), 'counter'] += 1
             
             if options.time:
                 print("The evaluate time has been:", timeit.default_timer() - evaluate_time)
@@ -171,7 +187,7 @@ if __name__ == "__main__":
                 states_df = pd.concat([states_df, sr_df], axis=1)
                 states_df = states_df.fillna(0)
                 states_df['counter'] = states_df['counter'] + states_df[str(i)]
-
+            
             states_df['counter'] = states_df['counter'].astype(int)
             for j in range(0,i):
                 states_df[str(j)] = states_df[str(j)].astype(int)
@@ -194,7 +210,7 @@ if __name__ == "__main__":
             for j in range(0,i):
                 transitions_df[str(j)] = transitions_df[str(j)].astype(int)
             transitions_df['counter'] = transitions_df['counter'].astype(int)
-
+            
             route_to_id = sf.get_route_df()
             states_route = sf.get_states_route_df()
 
@@ -206,6 +222,8 @@ if __name__ == "__main__":
     SingleFileAnalysis.dump_df(outputFile_path + "_transitions.csv", transitions_df)
     SingleFileAnalysis.dump_df(outputFile_path + "_route_id.csv", route_to_id)
     SingleFileAnalysis.dump_df(outputFile_path + "_states_id.csv", states_route)
+    if options.signaling:
+        SingleFileAnalysis.dump_df(outputFile_path + "_signaling_out.csv", signaling_df)
 
     # Save results as pickle
     if options.pickle:
@@ -213,10 +231,13 @@ if __name__ == "__main__":
         pickle.dump(transitions_df, open(outputFile_path + "_transitions.pkl", "wb"))
         pickle.dump(route_to_id, open(outputFile_path + "_route_id.pkl", "wb"))
         pickle.dump(states_route, open(outputFile_path + "_states_id.pkl", "wb"))
+        pickle.dump(signaling_df, open(outputFile_path + "_signaling_out.pkl", "wb"))
     
     #Generate the graph
-    plt = Plotter(states_df, transitions_df, route_to_id)
-    plt.states_stage_boxplot(outputFile_path + "_states_boxplot.pdf")
+    plt = Plotter(states=states_df, transitions=transitions_df, 
+                  route_id=route_to_id, signaling=signaling_df)
+    plt.signaling_nmessage_probability(outputFile_path + "_signaling_nmessage_prob.pdf")
+    # plt.states_stage_boxplot(outputFile_path + "_states_boxplot.pdf")
     dot = Digraph(comment='Node Graph')
     graph = plt.get_detailed_fsm_graphviz(dot)
     if options.verbose:

@@ -22,14 +22,15 @@ import networkx as nx
 from pathlib import Path
 import os
 
-sys.path.insert(1, 'util')
+myPath = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, myPath + '/util/')
 from config import Config
-from log import Log
 from singleton import Singleton
 from node import Node
 from event import Event
 from events import Events
 from link import Link
+from log import Log
 
 
 @Singleton
@@ -140,17 +141,22 @@ class sim:
         # Setup the graph and nodes
         graphFile = self._config.get_param(self.PAR_GRAPH)
         G = nx.read_graphml(graphFile)
+        sharing_nodes = []
         for v in G.nodes(data=True):
             node = Node(v[0], self._config)
             self.nodes[node.id] = node
             if self.PAR_NETWORK in v[1]:
                 for net in v[1][self.PAR_NETWORK].split(','):
                     node.add_destination(net, [], None)
+            sharing_nodes.append(node)
 
         for e in G.edges(data=True):
             link_res = simpy.Resource(self._env, capacity=1)
             l = Link(self._env, self.nodes[e[1]], link_res, e[2])
             self.nodes[e[0]].add_neighbor(l)
+
+        for node in sharing_nodes:
+            node.force_share_dst()
         
         # Mark the initialization as done
         self._initialize = True
@@ -168,8 +174,8 @@ class sim:
         # Register the end time and do the subtraction
         end_time = time.time()
         total_time = round(end_time - start_time)
-        """for node in self.nodes:
-            print(self.nodes[node])"""
+        for node in self.nodes:
+            print(self.nodes[node])
         print("\nMaximum simulation time reached. Terminating")
         print("Total simulation time: %d hours, %d minutes, %d seconds" %
               (total_time // 3600, total_time % 3600 // 60,

@@ -15,6 +15,7 @@
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
 import pandas as pd
+from collections import OrderedDict
 from events import Events
 from packet import Packet
 from route import Route
@@ -53,6 +54,7 @@ class SingleFileAnalysis():
         self.states = {}
         # Last state of the node during the evolution
         self.actualState = set() 
+        self.experiment_actualState = set()
         # Set of transitions
         self.transitions = {}
         
@@ -65,6 +67,7 @@ class SingleFileAnalysis():
             self.id_to_route = route_df.to_dict('index')
             self.id_to_route = {int(k): Route.fromString(v['value']) for k, v in self.id_to_route.items()}
             self.route_to_id = {str(v): k for k, v in self.id_to_route.items()}
+            SingleFileAnalysis.ROUTE_COUNTER = max(self.route_to_id.values()) + 1
 
         if isinstance(states_routes, self.NoneType):
             # Routes associated with the states
@@ -115,9 +118,9 @@ class SingleFileAnalysis():
         route.policy_value = tmp_pv
         # If the route is not in the dictionary of routes add it
         if str(route) not in self.route_to_id.keys():
-            self.route_to_id[str(route)] = self.ROUTE_COUNTER
-            self.id_to_route[str(self.ROUTE_COUNTER)] = route
-            self.ROUTE_COUNTER += 1
+            self.route_to_id[str(route)] = SingleFileAnalysis.ROUTE_COUNTER
+            self.id_to_route[str(SingleFileAnalysis.ROUTE_COUNTER)] = route
+            SingleFileAnalysis.ROUTE_COUNTER += 1
         # Check the packet type and return the corresponding compressed version
         if packet.packet_type == Packet.UPDATE:
             return "A" + str(self.route_to_id[str(route)])
@@ -177,7 +180,13 @@ class SingleFileAnalysis():
 
         # Keep a set of transmitted routes, set because we are interested
         # uniquelly in which route has been transmitted and not to who
-        transmitted_routes = set()
+        transmitted_routes = []
+
+        """print(rx_value)
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.width', None)
+        pd.set_option('display.max_colwidth', None)
+        print(events_in_between)"""
 
         # Check each row of the events caused by the reception
         for row_event, row_value in zip(events_in_between['event'], 
@@ -188,36 +197,56 @@ class SingleFileAnalysis():
                 new_state = self.__evaluate_rib_change(row_value)
             # If the event is a TX i update the corresponding sets
             if row_event == Events.TX:
-                transmitted_routes.add(self.__evaluate_tx(row_value))
+                elem = self.__evaluate_tx(row_value)
+                if elem not in transmitted_routes:
+                    transmitted_routes.append(elem)
     
         # Evaluate the reception event
         inp = self.__evaluate_rx(rx_value)
 
         if len(transmitted_routes) == 0:
             transmitted_routes = None
+        else:
+            transmitted_routes = sorted(transmitted_routes)
 
         # The state has changed thanks to this reception message
-        if len(self.actualState) != len(new_state):
-            # Evaluate the difference in the new state vs the previus one
-            if abs(len(self.actualState)-len(new_state)) != 1:
+        if len(self.experiment_actualState ^ new_state) > 0:
+            # print(self.actualState, self.experiment_actualState, new_state)
+            # Evaluate the differenVce in the new state vs the previus one
+            if abs(len(self.experiment_actualState)-len(new_state)) > 1:
+                print(str(rx_event_id), str(rx_value))
+                print(str(self.actualState), str(new_state))
                 print("something really bad happened")
                 exit(3)
 
             # resulting_elem = self.__evalaute_state_difference(new_state).pop()
             pkt = Packet.fromString(rx_value)
             route = Route.fromString(pkt.content)
-            pv_t = PolicyValue(0)
-            route.policy_value = pv_t
-            if pkt.packet_type == Packet.UPDATE:  
+            route.policy_value = PolicyValue(0) 
+            if abs(len(self.experiment_actualState)-len(new_state)) == 1:
+                if pkt.packet_type == Packet.UPDATE:  
+                    if str(route) not in self.states_routes.keys():
+                        self.states_routes[str(route)] = self.route_to_id[str(route)]
+                    self.experiment_actualState = new_state.copy()
+                    new_state = self.actualState.copy()
+                    new_state.add(self.states_routes[str(route)])    
+                elif pkt.packet_type == Packet.WITHDRAW:
+                    self.experiment_actualState = new_state.copy()
+                    new_state = self.actualState.copy()
+                    new_state.remove(self.states_routes[str(route)])   
+            else:
+                self.experiment_actualState = new_state.copy()
+                new_state = self.actualState.copy()
+                for elem in self.route_to_id:
+                    old_rt = Route.fromString(elem)
+                    if old_rt.nh == route.nh:
+                        if self.route_to_id[elem] in new_state: 
+                            new_state.remove(self.route_to_id[elem])
                 if str(route) not in self.states_routes.keys():
                     self.states_routes[str(route)] = self.route_to_id[str(route)]
-                new_state = self.actualState.copy()
-                new_state.add(self.states_routes[str(route)])    
-            elif pkt.packet_type == Packet.WITHDRAW:
-                new_state = self.actualState.copy()
-                new_state.remove(self.states_routes[str(route)])   
-            # print(self.states_routes)
-            # print(self.actualState, new_state)
+                new_state.add(self.states_routes[str(route)])
+                # print(self.states_routes)
+                # print(self.actualState, new_state)
 
             # Check if the state has already been known
             if str(new_state) not in self.states.keys():
@@ -226,6 +255,7 @@ class SingleFileAnalysis():
             else:
                 # The state is already in the dictionary, increase the counter
                 self.states[str(new_state)] += 1
+            # print(new_state)
 
         # Create the new transition
         transition = Transition(self.actualState, new_state,
@@ -262,13 +292,24 @@ class SingleFileAnalysis():
         tmp_rx = self.df[(self.df.event == Events.RX)]
 
         # To activate a useful O(LogN) index search the datafram must be sorted
-        # This will break the event time order, but we already estrapolated
+        # This will break the event time order, but we already extrapolated
         # RX events in time order
         self.df.sort_index(inplace=True)
 
         tmp_rx.apply(lambda row: self.__evaluate_event_rx(row.event_id, 
                                                            row.value), axis=1)
         return (self.states, self.transitions)
+
+    def get_out_signal(self, values):
+        values = values.apply(self.__evaluate_tx)
+        return ''.join(list(OrderedDict.fromkeys(values.values))) 
+
+    # @profile
+    def evaluate_signaling(self, order_by_time=False):
+        tmp_df = self.df.sort_values(by=['time']) if order_by_time else self.df
+        tmp_df = tmp_df[tmp_df.event == Events.TX][['value']]
+        tmp_v = tmp_df.groupby(by=["event_cause"], sort=False).value.agg(self.get_out_signal)
+        return ''.join(tmp_v.values)
 
     def get_states_as_df(self, states=None) -> pd.DataFrame:
         if states == None:

@@ -1,5 +1,3 @@
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
@@ -31,7 +29,8 @@ class PolicyValue():
         # Check that value is an integer and that is higher than 0
         if value != math.inf and value != -math.inf \
                 and not isinstance(value, int):
-            raise TypeError(value)
+            raise TypeError("The policy value should be integer or \
+                            infinite".format(value))
         if value < 0:
             raise ValueError("The policy value must be higher than 0, \
                               {} < 0".format(value))
@@ -137,6 +136,8 @@ class PolicyFunction(collections.MutableSequence):
     Class to handle policy functions
     """
 
+    PASS_EVERYTHING = "pass-everything"
+
     def __init__(self, string):
         """__init__.
 
@@ -152,9 +153,12 @@ class PolicyFunction(collections.MutableSequence):
         if len(string) == 0:
             raise ValueError("{} is empty".format(string))
 
-        for elem in string.split(','):
-            elem = elem.strip()
-            self._values.append(PolicyValue.fromString(elem))
+        if string == self.PASS_EVERYTHING:
+            self._values = self.PASS_EVERYTHING
+        else:
+            for elem in string.split(','):
+                elem = elem.strip()
+                self._values.append(PolicyValue.fromString(elem))
 
     @property
     def values(self):
@@ -177,6 +181,8 @@ class PolicyFunction(collections.MutableSequence):
         :param i: PolicyValue you would like to apply to the function
                   the function would return the policy value of f(i)
         """
+        if self.values == self.PASS_EVERYTHING:
+            return PolicyValue(i.value)
         if not isinstance(i, PolicyValue):
             raise TypeError("It is possible to get an item only with policy values \
                              {} is not a policy value".format(i))

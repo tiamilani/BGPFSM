@@ -21,6 +21,7 @@ sys.path.insert(1, 'src/util')
 
 from route import Route
 from routingTable import RoutingTable 
+# from log import Log
 
 
 @pytest.fixture(scope='function', autouse=True)
@@ -50,3 +51,19 @@ def rt_3(request, require_route):
     rt[str(route2)] = route2
     rt[str(route3)] = route3
     return rt
+
+# @pytest.fixture(scope='session', autouse=True)
+# def out_file(request):
+#     tmp_out = tmpdir_factory.mktemp("logs").join("out.log")
+
+"""
+@pytest.fixture(scope='session', autouse=True)
+def logger(request, out_file):
+    logger = Log(out_file, log_routing_change=True,
+                           log_rib_change=True,
+                           log_packets=True,
+                           log_paths=True,
+                           log_states=True)
+    return logger
+"""
+

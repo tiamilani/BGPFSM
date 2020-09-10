@@ -17,8 +17,10 @@
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
 import sys
+import os
 
-sys.path.insert(1, '..')
+myPath = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, myPath + '/../')
 import bgp_sim
 from events import Events
 

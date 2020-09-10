@@ -58,6 +58,12 @@ class Node(Module):
     PAR_REANNOUNCE = "reannouncement"
     # Reannouncement distribution
     PAR_REANNOUNCE_DIST = "reannouncement_dist"
+    # Signaling param
+    PAR_SIGNALING = "signaling"
+    # Signaling sequence
+    PAR_SIGNALING_SEQUENCE = "signaling_sequence"
+    # Implicit withdraw flag
+    PAR_IMPLICIT_WITHDRAW = "implicit_withdraw"
 
     def __init__(self, id, config):
         """__init__.
@@ -74,12 +80,6 @@ class Node(Module):
         Module.__init__(self)
         # Events queue, events that needs to be handle by the node
         self.event_store = simpy.Store(self._env)
-        # Destinations queue, this queue contains the destinations
-        # That are not yet distributed to neighbors
-        # The structure is a dictionary, the key is the destination
-        # And the object is a list of neighbor that didn't receive from
-        # us the destination yet
-        self.destination_queue = {}
         # Routing table, This table represent the routing knowledge
         # actually present in the node
         self.routing_table = RoutingTable()
@@ -94,12 +94,19 @@ class Node(Module):
         self.withdraw = config.get_param(Node.PAR_WITHDRAW) in ("True", "true")
         # Reannouncement flag
         self.reannounce = config.get_param(Node.PAR_REANNOUNCE) in ("True", "true")
+        # Signaling flag
+        self.signaling = config.get_param(Node.PAR_SIGNALING) in ("True", "true")
+        # Implicit withdraw flag
+        self.implicit_withdraw = config.get_param(Node.PAR_IMPLICIT_WITHDRAW) in ("True", "true")
         # Distributions used inside the node
         self.rate = Distribution(config.get_param(Node.PAR_DATARATE))
         self.proc_time = Distribution(config.get_param(Node.PAR_PROC_TIME))
         self.delay = Distribution(config.get_param(Node.PAR_DELAY))
         self.withdraw_dist = Distribution(config.get_param(Node.PAR_WITHDRAW_DIST))
         self.reannouncement_dist= Distribution(config.get_param(Node.PAR_REANNOUNCE_DIST))
+        # Signaling sequence
+        self.signaling_sequence = list(config.get_param(Node.PAR_SIGNALING_SEQUENCE))
+        self.signaling_accepted_simbols = ["A", "W"]
         # Resource for the acquisition of the tx channel resource
         self.tx_res = simpy.Resource(self._env, capacity=1)
 
@@ -124,32 +131,70 @@ class Node(Module):
         # Evaluate if the link is already present
         if link.id not in self._neighbors:
             self._neighbors[link.node.id] = link
-            # share to this link all the known routes inside the routing table
-            for route in self.routing_table:
-                dst = route.addr
-                # Add the node to de destination sharing queue
-                if dst in self.destination_queue:
-                    self.destination_queue[dst].append(link.node.id)
-                else:
-                    self.destination_queue[dst] = [link.node.id]
-
-                if route.nh in self.destination_queue[dst]:
-                    self.destination_queue[dst].remove(route.nh)
-
-                # Create a new destination event for each route in the routing
-                # Table that needs to be shared
-                if len(self.destination_queue[dst]) > 0:
-                    proc_time = self.proc_time.get_value()
-                    new_dst_event = Event(proc_time, None, Events.NEW_DST, self, self)
-                    self.event_store.put(new_dst_event)
-
+                
         else:
-            print("{} - Neighbor {} already in the set".format(self._id, link.node.id))
+            self._print("{} - Neighbor {} already in the set".format(self._id, 
+                                                                link.node.id))
             exit(1)
 
-    # TODO Split this function and create a function for new_route_evaluation
-    # TODO Accept as ingress a route and not all the route parameters
-    def add_destination(self, destination, path, nh, event=None, policy_value=0):
+    def evaluate_signaling_event(self, elem, route):
+        if elem == "A":
+            proc_time = self.reannouncement_dist.get_value()
+            event = Event(proc_time, None, Events.NEW_DST, self, self, 
+                          obj=route)
+        elif elem == "W":
+            withdraw_packet = Packet(Packet.WITHDRAW, route)
+            withdraw_time = self.withdraw_dist.get_value()
+            event = Event(withdraw_time, None, Events.WITHDRAW, self, self, 
+                          obj=withdraw_packet)
+        else:
+            raise ValueError("Elem {} not accepted in signaling, accepted \
+                              simbols: {}".format(elem, 
+                                self.signaling_accepted_simbols))
+        return event
+
+
+    def force_share_dst(self):
+        for route in self.routing_table:
+            # Create a new destination event for each route in the routing
+            # Table that needs to be shared
+            if not self.signaling:
+                proc_time = self.proc_time.get_value()
+                new_dst_event = Event(proc_time, None, Events.NEW_DST, self, self,
+                                      route)
+                self.event_store.put(new_dst_event)
+            else:
+                time = 0
+                for elem in self.signaling_sequence:
+                    event = self.evaluate_signaling_event(elem, route)
+                    self._print("New event to signal t: {}, delay: {}".format(
+                                time, event.event_duration))
+                    time += event.event_duration 
+                    event.event_duration = time
+                    self.event_store.put(event)
+
+    def new_network(self, route: Route, event: Event, share=True):
+        old_best = deepcopy(self.rib[route.addr])
+        new_best = self.rib.insert(route.addr, route, event=event,
+                                   implicit_withdraw=self.implicit_withdraw)
+        # Evaluate if the new route is the new best route for the destiantion
+        if new_best != None and new_best != old_best:
+            # If it is the new best route insert it in the routing table and 
+            # Log the event
+            self.routing_table[route.addr] = route
+            self._print("New route in the routing table {}".format(route))
+            rt_change_event = Event(0, event.id, Events.RT_CHANGE, 
+                                    self, self, obj=route)
+            self.logger.log_rt_change(self, rt_change_event)
+            
+            if share:
+                proc_time = self.proc_time.get_value()
+                new_dst_event = Event(proc_time, event.id, Events.NEW_DST, 
+                                      self, self, obj=route)
+                self.event_store.put(new_dst_event)
+
+    def add_destination(self, destination, path, nh, event=None, policy_value=0,
+                        share=False):
         """
         Function that adds a destination to the data structure
         that manage destinations that needs to be shared inside the node
@@ -160,46 +205,9 @@ class Node(Module):
         """
         network = ipaddress.ip_network(destination)
         policy = PolicyValue(policy_value)
-        r = Route(network, path, nh, policy_value=policy)
-
-        # Insert the route in the rib
-        old_best = self.rib[network]
-        new_best = self.rib.insert(network, r, event=event)
-        # Evaluate if the new route is the new best route for the destiantion
-        if new_best != None and new_best != old_best:
-            # If it is the new best route insert it in the routing table and 
-            # Log the event
-            self.routing_table[network] = r
-            if event is not None:
-                rt_change_event = Event(0, event.id, Events.RT_CHANGE, 
-                                        self, self, obj=r)
-            else:
-                rt_change_event = Event(0, None, Events.RT_CHANGE, 
-                                        self, self, obj=r)
-            self.logger.log_rt_change(self, rt_change_event)
-
-            # Share the destination with all the neighbors
-            if len(self._neighbors.keys()) > 0:
-                self.destination_queue[network] = list(self._neighbors.keys())
-            else:
-                self.destination_queue[network] = []
-            
-            # Remove the NH from the list of neighbors
-            if nh in self.destination_queue[network]:
-                self.destination_queue[network].remove(nh)
-
-            # Generate the new destination event that will trigger all the TX
-            if len(self.destination_queue[network]) > 0:
-                proc_time = self.proc_time.get_value()
-                if event is not None:
-                    new_dst_event = Event(proc_time, event.id, Events.NEW_DST, 
-                                          self, self)
-                else:
-                    new_dst_event = Event(proc_time, None, Events.NEW_DST, 
-                                          self, self)
-                self.event_store.put(new_dst_event)
-            else:
-                del self.destination_queue[network]
+        r = Route(network, path, nh, policy_value=policy, mine=True)
+        intro_event = Event(0, None, Events.DST_ADD, self, self)
+        self.new_network(r, intro_event, share=share)
 
     def change_state(self, waiting_time):
         """change_state.
@@ -224,18 +232,17 @@ class Node(Module):
         self.logger.log_packet_rx(self, event)
         # Get the route
         route = packet.content
+        route.mine = False
         # If the packet contains an update it will be evaluated
         if packet.packet_type == Packet.UPDATE:
-            self.add_destination(route.addr, route.path, route.nh, event=event,
-                                 policy_value=route.policy_value.value)
-        # If the packet contains a withdrow the evaluation depends on the number
-        # Of neighbors
+            self.new_network(route, event)
+        # If the packet contains a withdrow it will be evaluated by the
+        # Withdraw handler
         if packet.packet_type == Packet.WITHDRAW:
             # self.withdraw_handler(event, packet)
             route = deepcopy(packet.content)
             withdraw_packet = Packet(Packet.WITHDRAW, route)
-            withdraw_time = self.proc_time.get_value()
-            withdraw_event = Event(withdraw_time, event.id, Events.WITHDRAW, 
+            withdraw_event = Event(0, event.id, Events.WITHDRAW, 
                                    self, self, obj=withdraw_packet)
             self.event_store.put(withdraw_event)
 
@@ -282,47 +289,42 @@ class Node(Module):
         """
         waiting_time = event.event_duration
         yield self._env.timeout(waiting_time)
+        dst = event.obj
+        
+        for neigh in self._neighbors:
+            link = self._neighbors[neigh]
+            dst_node = self._neighbors[neigh].node
+            self._print("I have to send {} to {}".format(dst, neigh))
+            route = deepcopy(dst)
 
-        while len(self.destination_queue) > 0:
-            dst = next(iter(self.destination_queue))
-            neigh_l = self.destination_queue.pop(dst)
-            while len(neigh_l) >0:
-                neigh = neigh_l.pop()
-                # self._print("I should send {} to {}".format(dst,neigh))
-                dst_node = self._neighbors[neigh].node
-                route = deepcopy(self.routing_table[dst])
+            # Check the link export_policy if it is valid 
+            route.policy_value = link.test(route.policy_value) 
+            # If it is not valid jump to the next iteration
+            if route.policy_value.value == math.inf:
+                continue
+            if route.nh == dst_node.id:
+                continue
 
-                # Get the policy value that is in the routing table
-                link = self._neighbors[dst_node.id]
-                # Check the link export_policy if it is valid 
-                route.policy_value = link.test(route.policy_value) 
-                # If it is not valid jump to the next iteration
-                if route.policy_value.value == math.inf:
-                    continue
+            # Add the self id to the path and nh field
+            route.add_to_path(self._id)
+            route.nh = self._id
 
-                route.add_to_path(self._id)
-                route.nh = self._id
+            # Create the event
+            packet = Packet(Packet.UPDATE, route)
+            interrarival = self.rate.get_value()
+            transmission_event = Event(interrarival, event.event_cause,
+                                       Events.TX, self, dst_node, obj=packet)
+            # Send the event to the handler
+            self.event_store.put(transmission_event)
 
-                # Create the event
-                packet = Packet(Packet.UPDATE, route)
-                interrarival = self.rate.get_value()
-                transmission_event = Event(interrarival, event.event_cause,
-                                           Events.TX, self, dst_node, obj=packet)
-                # Send the event to the handler
-                self.event_store.put(transmission_event)
-
-            # Check if a withdraw is needed
-            if self.withdraw:
-                # Check if the route is originated by the current node
-                if len(self.routing_table[dst].path) == 0:
-                    # Generate the withdraw event
-                    withdraw_packet = Packet(Packet.WITHDRAW, 
-                                            self.routing_table[dst])
-                    withdraw_time = self.withdraw_dist.get_value()
-                    withdraw_event = Event(withdraw_time, event.event_cause,
-                                           Events.WITHDRAW, self, self, 
-                                           obj=withdraw_packet)
-                    self.event_store.put(withdraw_event)
+        if dst.mine and not self.signaling and self.withdraw:
+            # Generate the withdraw event
+            withdraw_packet = Packet(Packet.WITHDRAW, dst)
+            withdraw_time = self.withdraw_dist.get_value()
+            withdraw_event = Event(withdraw_time, event.event_cause,
+                                   Events.WITHDRAW, self, self, 
+                                   obj=withdraw_packet)
+            self.event_store.put(withdraw_event)
 
     def program_withdraw(self, event):
         """program_withdraw.
@@ -335,9 +337,12 @@ class Node(Module):
 
         # Wait the time defined by the withdraw distribution
         yield self._env.timeout(event.event_duration)
+
         # Get the route
         packet = event.obj
-        route = deepcopy(packet.content)
+        route = packet.content
+        self._print("Route to withdraw: " + str(route))
+
         # Delete the route from the routing table and the rib
         old_best = self.rib[route.addr]
         if self.rib.contains(route.addr, route):
@@ -346,19 +351,9 @@ class Node(Module):
             change_event.id = event.event_cause
             self.rib.remove(route.addr, route, event=change_event)
         else:
+            self._print("Rib does not contains: " + str(route))
             return
         new_best = self.rib[route.addr]
-
-        # Generate the withdraw packet
-        route.add_to_path(self._id)
-        route.nh = self._id
-        if len(packet.content.path) != 0:
-            route.policy_value.value = 1
-        withdraw_packet = Packet(Packet.WITHDRAW, route)
-        withdraw_time = self.rate.get_value()
-        # The update must be after the withdraw
-        update_time = self.rate.get_value() + withdraw_time
-        packet_update = None
 
         if new_best == None:
             del self.routing_table[route.addr]
@@ -370,31 +365,72 @@ class Node(Module):
             rt_change_event = Event(0, event.event_cause, Events.RT_CHANGE,
                                     self, self, obj=new_best)
             self.logger.log_rt_change(self, rt_change_event)
-
-            route_update = deepcopy(self.routing_table[route.addr])
-            route_update.add_to_path(self._id)
-            route_update.nh = self._id
-            # Create the event
-            packet_update = Packet(Packet.UPDATE, route_update)
+        elif new_best == old_best:
+            self._print("Best route not changed, nothing to share")
+            return
 
         # Send the packet to the neighborhod
-        for neigh in self._neighbors:
-            dst_node = self._neighbors[neigh].node
-            transmission_event = Event(withdraw_time, event.event_cause,
-                                        Events.TX, self, dst_node,
-                                        obj=withdraw_packet)
-            self.event_store.put(transmission_event)
-            if packet_update is not None:
+        if new_best == None:
+            for neigh in self._neighbors:
+                route_copy = deepcopy(packet.content)
+                # Generate the withdraw packet
+                route_copy.add_to_path(self._id)
+                route_copy.nh = self._id
+                dst_node = self._neighbors[neigh].node
+                self._print("Withdraw for {}".format(dst_node.id))
+
+                # Get the policy value that is in the routing table
+                link = self._neighbors[dst_node.id]
+                # Check the link export_policy if it is valid 
+                route_copy.policy_value = link.test(route_copy.policy_value) 
+                # If it is not valid jump to the next iteration
+                if route_copy.policy_value.value == math.inf:
+                    self._print("Withdraw aborted for policies")
+                    continue
+                if route.nh == dst_node.id:
+                    self._print("Withdraw aborted because the neighbor is my NH of the withdraw")
+                    continue
+
+                withdraw_packet = Packet(Packet.WITHDRAW, route_copy)
+                withdraw_time = self.rate.get_value()
+
+                transmission_event = Event(withdraw_time, event.event_cause,
+                                            Events.TX, self, dst_node,
+                                            obj=withdraw_packet)
+                self.event_store.put(transmission_event)
+
+        if new_best is not None:
+            for neighbor in self._neighbors:
+                self._print("I have a new best to send")
+                update_route = deepcopy(new_best)
+                update_route.add_to_path(self._id)
+                update_route.nh = self._id
+                dst_node = self._neighbors[neighbor].node
+                self._print("Update for {}".format(dst_node.id))
+
+                # Get the policy value that is in the routing table
+                link = self._neighbors[dst_node.id]
+                # Check the link export_policy if it is valid 
+                update_route.policy_value = link.test(update_route.policy_value) 
+                # If it is not valid jump to the next iteration
+                if update_route.policy_value.value == math.inf:
+                    continue
+                if new_best.nh == dst_node.id:
+                    continue
+
+                update_packet = Packet(Packet.UPDATE, update_route)
+                update_time = self.rate.get_value()
+
                 transmission_event = Event(update_time, event.event_cause, 
                                            Events.TX, self, dst_node, 
-                                           obj=packet_update)
+                                           obj=update_packet)
                 self.event_store.put(transmission_event)
 
         # Check if it's needed a redistribution
-        if self.reannounce and len(packet.content.path) == 0:
+        if not self.signaling and self.reannounce and packet.content.mine == 0:
             reannouncement_timing = self.reannouncement_dist.get_value()
             redistribute_event = Event(reannouncement_timing, None, Events.REANNOUNCE,
-                                        self, self, obj=packet.content.addr)
+                                        self, self, obj=route.addr)
             self.event_store.put(redistribute_event)
 
     def reannounce_handler(self, event):
@@ -406,7 +442,8 @@ class Node(Module):
         """
         yield self._env.timeout(event.event_duration)
         net = event.obj
-        self.add_destination(net, [], None)
+        self._print("I have to reintroduce {}".format(net))
+        self.add_destination(net, [], None, share=True)
 
     def handle_event(self):
         """handle_event.
@@ -457,8 +494,6 @@ class Node(Module):
         res = "Node: {}\n".format(self._id)
         res += "Neighborhood: {}\n".format([n.node.id for n in self._neighbors.values()])
         res += "Destinations queue: "
-        for dst in self.destination_queue:
-            res += "{}-{} ".format(str(dst), str(self.destination_queue[dst]))
         res += "\n" + str(self.routing_table)
         res += str(self.rib)
         return res

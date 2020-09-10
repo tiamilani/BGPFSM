@@ -43,7 +43,6 @@ class TestRoutingTable():
     def test_routing_table_len(self, empty_rt, empty_route):
         rt = empty_rt
         route = empty_route
-        print(rt)
         assert len(rt) == 0
         rt[str(route)] = route
         assert len(rt) == 1
@@ -53,6 +52,13 @@ class TestRoutingTable():
         rt[str(route)] = route
         rt[str(route)] = route
         assert len(rt) == 1
+
+    @pytest.mark.parametrize("i", [1, 2, -1, 256, None, "hello", set([1, 2])])
+    @pytest.mark.parametrize("v", [1, 2, -1, 256, None, "hello", set([1, 2])])
+    def test_routing_table_len(self, empty_rt, i, v):
+        rt = empty_rt
+        rt.insert(i, v)
+        assert len(rt) == 0
 
     @pytest.mark.parametrize("route, present", [
         ("10.0.0.0/24", True),
@@ -95,6 +101,10 @@ class TestRoutingTable():
                 assert str(route) == str(r)
                 return
         assert rt_3[str(r)] == None
+
+    def test_routing_table_getKey_none(self, empty_rt):
+        rt = empty_rt
+        assert rt.getKey(1) == None
 
     def test_routing_table_str(self, rt_3, require_route):
         route1 = require_route("10.0.0.0/24")

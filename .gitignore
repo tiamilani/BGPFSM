@@ -15,3 +15,4 @@
 ignored/*
 src/results/*
 src/env/*
+src/.ycm_extra_conf.py

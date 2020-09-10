@@ -20,23 +20,31 @@ from graphviz import Digraph
 import ast
 from route import Route
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
+import numpy as np
 
 class Plotter():
 
-    def __init__(self, states: pd.DataFrame, transitions: pd.DataFrame, 
-                   route_id: pd.DataFrame):
-        self.states_df = states
-        self.states = states.to_dict('index')    
-        self.states = {v['state']: int(v['counter']) for k, v in self.states.items()}
-        self.transitions_df = transitions
-        self.transitions = transitions.to_dict('index')
-        self.transitions = {k: Transition(v['start_node'], v['end_node'], 
-                            v['cause'], v['response'], counter=v['counter']) \
-                            for k, v in self.transitions.items()}
-        self.route_identifier_df = route_id
-        self.route_identifier = route_id.to_dict('index')
-        self.route_identifier = {int(k): Route.fromString(v['value']) \
-                                 for k, v in self.route_identifier.items()}
+    def __init__(self, states=None, transitions=None, route_id=None, 
+                 signaling=None):
+        NoneType = type(None)
+        if not isinstance(states, NoneType):
+            self.states_df = states
+            self.states = states.to_dict('index')    
+            self.states = {v['state']: int(v['counter']) for k, v in self.states.items()}
+        if not isinstance(transitions, NoneType):
+            self.transitions_df = transitions
+            self.transitions = transitions.to_dict('index')
+            self.transitions = {k: Transition(v['start_node'], v['end_node'], 
+                                v['cause'], v['response'], counter=v['counter']) \
+                                for k, v in self.transitions.items()}
+        if not isinstance(route_id, NoneType):
+            self.route_identifier_df = route_id
+            self.route_identifier = route_id.to_dict('index')
+            self.route_identifier = {int(k): Route.fromString(v['value']) \
+                                     for k, v in self.route_identifier.items()}
+        if not isinstance(signaling, NoneType):
+            self.signaling_df = signaling
 
     def get_fsm_graphviz(self, dot: Digraph) -> Digraph:
         """get_fsm_graphviz.
@@ -155,6 +163,52 @@ class Plotter():
         plt.savefig(output_file, format="pdf")
         # print(grouped_states)
         # print(self.states_df)
+
+    def signaling_nmessage_probability(self, output_file):
+        experiments = self.signaling_df.counter.sum()
+        advertisement = pd.DataFrame()
+        withdraw = pd.DataFrame()
+        total = pd.DataFrame()
+        
+        advertisement['probability'] = self.signaling_df.counter.values / experiments
+        withdraw['probability'] =  advertisement['probability'] 
+        total['probability'] =  advertisement['probability'] 
+        advertisement['messages'] = np.array([x.count('A') for x \
+                                              in self.signaling_df.output.values])
+        withdraw['messages'] = np.array([x.count('W') for x \
+                                        in self.signaling_df.output.values])
+        total['messages'] = advertisement['messages'] + withdraw['messages']
+
+        advertisement = advertisement.groupby(by=['messages']).sum().reset_index()
+        withdraw = withdraw.groupby(by=['messages']).sum().reset_index()
+        total_gr = total.groupby(by=['messages']).sum().reset_index()
+        total_size = total.groupby(by=['messages']).size().reset_index()
+        # print(advertisement, "\n", withdraw, "\n", total)
+
+        fig, ax = plt.subplots()
+        ax2 = ax.twinx()
+
+        l1 = ax.plot(advertisement['messages'], advertisement['probability'], 
+                      label="Advertisement messages")
+        l2 = ax.plot(withdraw['messages'], withdraw['probability'], 
+                      label="Withdraw messages")
+        l3 = ax.plot(total_gr['messages'], total_gr['probability'], 
+                      label="Total messages")
+        l4 = ax2.plot(total_size['messages'].values, total_size[0].values,
+                      'r', label="# possible outputs")
+        ax.grid()
+        ax2.grid()
+        # plt.xticks(np.arange(total.messages.max()+1), np.arange(total.messages.max()+1))
+        lns = l1+l2+l3+l4
+        labs = [l.get_label() for l in lns]
+        ax2.legend(lns, labs)
+
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        ax.set_xlabel("# Of messages")
+        ax.set_ylabel("Probability [0-1]")
+        ax2.set_ylabel("# Of Outputs")
+        
+        fig.savefig(output_file, format="pdf")
 
     def __str__(self):
         res = "States: \n" + str(self.states) + \

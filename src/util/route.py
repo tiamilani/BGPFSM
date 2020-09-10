@@ -24,7 +24,7 @@ class Route():
     Class to manage a single route
     """
 
-    def __init__(self, addr, path, nh, policy_value=PolicyValue(0)):
+    def __init__(self, addr, path, nh, mine=False, policy_value=PolicyValue(0)):
         """__init__.
 
         :param addr: addr of the route
@@ -43,6 +43,7 @@ class Route():
         if not isinstance(policy_value, PolicyValue):
             raise TypeError(policy_value)
 
+        self._mine = mine
         self._policy_value = policy_value
 
     @classmethod
@@ -107,6 +108,14 @@ class Route():
         """
         self._policy_value = value
 
+    @property
+    def mine(self):
+        return self._mine
+
+    @mine.setter
+    def mine(self, value):
+        self._mine = value
+
     def __lt__(self, route):
         """__lt__.
 
@@ -161,7 +170,8 @@ class Route():
                 deepcopy(self.addr, memo),
                 deepcopy(self.path, memo),
                 deepcopy(self.nh, memo),
-                deepcopy(self.policy_value, memo))
+                policy_value=deepcopy(self.policy_value, memo),
+                mine=deepcopy(self.mine, memo))
             memo[id_self] = _copy
         return _copy
 

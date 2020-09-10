@@ -13,6 +13,8 @@ Is possible to install all the required libraries using the script inside the
 
 ## Requirements
 
+Python >= 3.6 to install all the required libraries
+
 A list of all the required libraries is available in the file: 
 `scr/requirements.txt`
 
@@ -113,7 +115,8 @@ Parameters available for edges:
 		   This parameter will override the json delay parameter for the edge
 * `policy`: <policy function> is possible to define a policy function for 
 			every single edge, policy functions are applyied like explanied
-			in [3] see the section policy function for more deep explanations
+			in [3] see the section policy function for more deep explanations,
+			default: pass everything
 		   
 example of graphml files are present on the `src/graphs` folder. 
 

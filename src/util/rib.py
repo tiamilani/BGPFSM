@@ -182,7 +182,7 @@ class Rib(collections.MutableSequence):
             return False
         return True
 
-    def insert(self, i, v, event=None):
+    def insert(self, i, v, event=None, implicit_withdraw=False):
         """insert.
         Function to insert an object in the rib at the addr i
 
@@ -197,6 +197,11 @@ class Rib(collections.MutableSequence):
             if i not in self._table:
                 self._table[i] = [v]
             elif v not in self._table[i]:
+                for net in self._table[i]:
+                    if net.nh == v.nh:
+                        print("{}: Removing {} from rib".format(self.id, net))
+                        self.actual_state.remove(self._support_route_identifier[str(net)])
+                        self._table[i].remove(net)
                 self._table[i].append(v)
                 # Sort the list for importance of the routes
                 self._table[i] = sorted(self._table[i])
