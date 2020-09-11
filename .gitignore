@@ -1,6 +1,7 @@
 *.csv
 *.pkl
 .coverage
+.pylintrc
 *.lprof
 *.txt
 *.pdf

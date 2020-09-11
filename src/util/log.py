@@ -41,7 +41,7 @@ class Log:
         :param log_paths: enable/disable logging of new paths
         :param log_states: enable/disable logging of the state of nodes
         """
-        self.sim = bgp_sim.sim.Instance()
+        self.sim = bgp_sim.Sim.Instance()
         self.log_file = open(output_file, "w")
         self.log_file.write("event_id|event_cause|event|time|node|value\n")
         self.log_packets = log_packets

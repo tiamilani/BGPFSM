@@ -18,7 +18,7 @@ class Module:
         Constructor. Gets simulation instance for scheduling events and
         automatically assigns an ID to the module
         """
-        self.sim = bgp_sim.sim.Instance()
+        self.sim = bgp_sim.Sim.Instance()
         # auto assign module id
         self.module_id = Module.__modules_count
         Module.__modules_count = Module.__modules_count + 1

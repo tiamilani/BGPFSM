@@ -100,11 +100,9 @@
 		"reannouncement": "False",
 		// Withdraw interval distribution from the announcement
 		"withdraw_dist": [{"distribution": "unif", "min": 1, "max": 10, "int": 0.1},
-						  {"distribution": "unif", "min": 3, "max": 10, "int": 0.1},
 						  {"distribution": "unif", "min": 7, "max": 10, "int": 0.1}],
 		// announcement interval distribution from the withdraw 
 		"reannouncement_dist": [{"distribution": "unif", "min": 1, "max": 10, "int": 0.1},
-								{"distribution": "unif", "min": 3, "max": 10, "int": 0.1},
 								{"distribution": "unif", "min": 7, "max": 10, "int": 0.1}],
 		// Transmission time required to start the actual message transmission 
 		"datarate": {"distribution": "exp", "lambda" : 100},
@@ -112,7 +110,6 @@
 		"processing": {"distribution": "const", "mean": 0.00001},
 		// Network delay distribution
 		"delay": [{"distribution": "unif", "min": 0.001, "max": 1, "int": 0.001},
-				  {"distribution": "unif", "min": 1, "max": 3, "int": 0.001},
 				  {"distribution": "unif", "min": 2, "max": 6, "int": 0.001}]
 	}
 }

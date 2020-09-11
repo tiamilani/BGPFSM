@@ -13,6 +13,15 @@
 #
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
+"""
+node module
+==========
+
+Module used to represent a node in the network.
+All the node logic is inside this module
+
+"""
+
 import sys
 import time
 import simpy
@@ -33,13 +42,12 @@ from distribution import Distribution
 from rib import Rib
 from policies import PolicyValue
 
-
 class Node(Module):
     """Node.
     Class to manage node inside the simulation
     """
 
-    # States of the node 
+    # States of the node
     IDLE = 0
     STATE_CHANGING = 1
 
@@ -65,17 +73,17 @@ class Node(Module):
     # Implicit withdraw flag
     PAR_IMPLICIT_WITHDRAW = "implicit_withdraw"
 
-    def __init__(self, id, config):
+    def __init__(self, id_node, config):
         """__init__.
 
-        :param id: identifier of the node
+        :param id_node: identifier of the node
         :param config: Configuration file
         """
-        self._id = id
+        self._id = id_node
         # Initial state of the node is IDLE
         self._state = Node.IDLE
         # Simulation environment
-        self._env = bgp_sim.sim.Instance().env
+        self._env = bgp_sim.Sim.Instance().env # pylint: disable=no-member
         # Initialization of commond modules
         Module.__init__(self)
         # Events queue, events that needs to be handle by the node
@@ -123,38 +131,54 @@ class Node(Module):
     def add_neighbor(self, link):
         """
         Add a neighbor to the set of neighbors
-        If the neighbor is already in the set it throws an error 
+        If the neighbor is already in the set it throws an error
         and terminate
-        
-        :param link: link that has to be added 
+
+        :param link: link that has to be added
         """
         # Evaluate if the link is already present
         if link.id not in self._neighbors:
             self._neighbors[link.node.id] = link
-                
-        else:
-            self._print("{} - Neighbor {} already in the set".format(self._id, 
-                                                                link.node.id))
-            exit(1)
 
-    def evaluate_signaling_event(self, elem, route):
+        else:
+            self._print("{} - Neighbor {} already in the set".format(self._id,
+                                                                link.node.id))
+            sys.exit(1)
+
+    def evaluate_signaling_event(self, elem: str, route: Route) -> Event:
+        """evaluate_signaling_event.
+
+        Evaluate a signaling event and returns the event associated with the
+        sigaling
+
+        :param elem: signal to manage
+        :type elem: str
+        :param route: Route to share or withdraw
+        :type route: Route
+        :rtype: Event
+
+        :raise ValueError: When is passed an element that is not a valid signal
+        """
         if elem == "A":
             proc_time = self.reannouncement_dist.get_value()
-            event = Event(proc_time, None, Events.NEW_DST, self, self, 
+            event = Event(proc_time, None, Events.NEW_DST, self, self,
                           obj=route)
         elif elem == "W":
             withdraw_packet = Packet(Packet.WITHDRAW, route)
             withdraw_time = self.withdraw_dist.get_value()
-            event = Event(withdraw_time, None, Events.WITHDRAW, self, self, 
+            event = Event(withdraw_time, None, Events.WITHDRAW, self, self,
                           obj=withdraw_packet)
         else:
             raise ValueError("Elem {} not accepted in signaling, accepted \
-                              simbols: {}".format(elem, 
+                              simbols: {}".format(elem,
                                 self.signaling_accepted_simbols))
         return event
 
 
     def force_share_dst(self):
+        """force_share_dst.
+        Function used as kick starter for nodes that have to share a destination
+        """
         for route in self.routing_table:
             # Create a new destination event for each route in the routing
             # Table that needs to be shared
@@ -169,7 +193,7 @@ class Node(Module):
                     event = self.evaluate_signaling_event(elem, route)
                     self._print("New event to signal t: {}, delay: {}".format(
                                 time, event.event_duration))
-                    time += event.event_duration 
+                    time += event.event_duration
                     event.event_duration = time
                     self.event_store.put(event)
 
@@ -179,17 +203,17 @@ class Node(Module):
                                    implicit_withdraw=self.implicit_withdraw)
         # Evaluate if the new route is the new best route for the destiantion
         if new_best != None and new_best != old_best:
-            # If it is the new best route insert it in the routing table and 
+            # If it is the new best route insert it in the routing table and
             # Log the event
             self.routing_table[route.addr] = route
             self._print("New route in the routing table {}".format(route))
-            rt_change_event = Event(0, event.id, Events.RT_CHANGE, 
+            rt_change_event = Event(0, event.id, Events.RT_CHANGE,
                                     self, self, obj=route)
             self.logger.log_rt_change(self, rt_change_event)
-            
+
             if share:
                 proc_time = self.proc_time.get_value()
-                new_dst_event = Event(proc_time, event.id, Events.NEW_DST, 
+                new_dst_event = Event(proc_time, event.id, Events.NEW_DST,
                                       self, self, obj=route)
                 self.event_store.put(new_dst_event)
 
@@ -219,7 +243,7 @@ class Node(Module):
 
     def rx_pkt(self, event):
         """recept.
-        Function to handle packet reception 
+        Function to handle packet reception
 
         :param event: receiving event that triggered the reception
         """
@@ -242,7 +266,7 @@ class Node(Module):
             # self.withdraw_handler(event, packet)
             route = deepcopy(packet.content)
             withdraw_packet = Packet(Packet.WITHDRAW, route)
-            withdraw_event = Event(0, event.id, Events.WITHDRAW, 
+            withdraw_event = Event(0, event.id, Events.WITHDRAW,
                                    self, self, obj=withdraw_packet)
             self.event_store.put(withdraw_event)
 
@@ -266,11 +290,11 @@ class Node(Module):
         # Evaluate the delay necessary for the transfer
         if link.delay is not None:
             delay = link.delay.get_value()
-        else: 
+        else:
             delay = self.delay.get_value()
         # Generate the reception event and pass it to the link
         evaluation = self.proc_time.get_value()
-        reception_event = Event(evaluation, event.id, Events.RX, self, dst, 
+        reception_event = Event(evaluation, event.id, Events.RX, self, dst,
                                 obj=packet, sent_time=self._env.now)
         link.tx(reception_event, delay)
         # Log the transmission
@@ -290,15 +314,15 @@ class Node(Module):
         waiting_time = event.event_duration
         yield self._env.timeout(waiting_time)
         dst = event.obj
-        
+
         for neigh in self._neighbors:
             link = self._neighbors[neigh]
             dst_node = self._neighbors[neigh].node
             self._print("I have to send {} to {}".format(dst, neigh))
             route = deepcopy(dst)
 
-            # Check the link export_policy if it is valid 
-            route.policy_value = link.test(route.policy_value) 
+            # Check the link export_policy if it is valid
+            route.policy_value = link.test(route.policy_value)
             # If it is not valid jump to the next iteration
             if route.policy_value.value == math.inf:
                 continue
@@ -322,16 +346,16 @@ class Node(Module):
             withdraw_packet = Packet(Packet.WITHDRAW, dst)
             withdraw_time = self.withdraw_dist.get_value()
             withdraw_event = Event(withdraw_time, event.event_cause,
-                                   Events.WITHDRAW, self, self, 
+                                   Events.WITHDRAW, self, self,
                                    obj=withdraw_packet)
             self.event_store.put(withdraw_event)
 
     def program_withdraw(self, event):
         """program_withdraw.
-        Function used to program a withdraw of a previusly 
+        Function used to program a withdraw of a previusly
         shared destination
 
-        :param event: event that generates the withdraw, used to 
+        :param event: event that generates the withdraw, used to
         get the delay time and the route that needs to be withdrawed
         """
         # Wait the time defined by the withdraw distribution
@@ -345,7 +369,7 @@ class Node(Module):
         # Delete the route from the routing table and the rib
         old_best = self.rib[route.addr]
         if self.rib.contains(route.addr, route):
-            change_event = Event(0, event.event_cause, Events.RIB_CHANGE, 
+            change_event = Event(0, event.event_cause, Events.RIB_CHANGE,
                     None, None)
             change_event.id = event.event_cause
             self.rib.remove(route.addr, route, event=change_event)
@@ -380,8 +404,8 @@ class Node(Module):
 
                 # Get the policy value that is in the routing table
                 link = self._neighbors[dst_node.id]
-                # Check the link export_policy if it is valid 
-                route_copy.policy_value = link.test(route_copy.policy_value) 
+                # Check the link export_policy if it is valid
+                route_copy.policy_value = link.test(route_copy.policy_value)
                 # If it is not valid jump to the next iteration
                 if route_copy.policy_value.value == math.inf:
                     self._print("Withdraw aborted for policies")
@@ -409,8 +433,8 @@ class Node(Module):
 
                 # Get the policy value that is in the routing table
                 link = self._neighbors[dst_node.id]
-                # Check the link export_policy if it is valid 
-                update_route.policy_value = link.test(update_route.policy_value) 
+                # Check the link export_policy if it is valid
+                update_route.policy_value = link.test(update_route.policy_value)
                 # If it is not valid jump to the next iteration
                 if update_route.policy_value.value == math.inf:
                     continue
@@ -420,8 +444,8 @@ class Node(Module):
                 update_packet = Packet(Packet.UPDATE, update_route)
                 update_time = self.rate.get_value()
 
-                transmission_event = Event(update_time, event.event_cause, 
-                                           Events.TX, self, dst_node, 
+                transmission_event = Event(update_time, event.event_cause,
+                                           Events.TX, self, dst_node,
                                            obj=update_packet)
                 self.event_store.put(transmission_event)
 

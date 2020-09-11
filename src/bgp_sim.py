@@ -1,40 +1,46 @@
 #!/usr/bin/env python
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
+# it under the terms of the graphNU grapheneral Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# graphNU grapheneral Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the graphNU grapheneral Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
+"""
+bgp_sim module
+==============
+
+Use it to run bgp like simulations
+
+"""
+
 import sys
-import simpy
 import time
 import random
-import networkx as nx
 from pathlib import Path
 import os
+import simpy
+import networkx as nx
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + '/util/')
 from config import Config
 from singleton import Singleton
-from node import Node
-from event import Event
-from events import Events
 from link import Link
 from log import Log
+from node import Node
 
 
 @Singleton
-class sim:
+class Sim:
     """sim.
         Simulation class for a bgp experiment
     """
@@ -44,10 +50,10 @@ class sim:
     PAR_SECTION = "Simulation"
     # simulation duration parameter
     PAR_DURATION = "duration"
-    # seed for PRNGs
+    # seed for PRNgraphs
     PAR_SEED = "seed"
-    # Graph file
-    PAR_GRAPH = "graph"
+    # graphraph file
+    PAR_graphRAPH = "graph"
     # Verbose param
     PAR_VERBOSE = "verbose"
     # Destnations param
@@ -57,10 +63,11 @@ class sim:
         """__init__
             Init of the simulation class
         """
+
         # Loacl variables initialization
         self._env = simpy.Environment()
         self.nodes = {}
-        self._configFile = ""
+        self._config_file = ""
         self._section = ""
         self.verbose = False
         self._initialize = False
@@ -76,10 +83,10 @@ class sim:
         :param config_file: file that contains the configuration
         :param section: section of the file that have to be considered
         """
-        self._configFile = config_file
+        self._config_file = config_file
         self._section = section
         # Save the configuration object
-        self._config = Config(self._configFile, self._section)
+        self._config = Config(self._config_file, self._section)
 
     def get_runs_count(self):
         """
@@ -88,7 +95,7 @@ class sim:
         """
 
         # Check if the configuration has been done
-        if self._configFile == "" or self._section == "":
+        if self._config_file == "" or self._section == "":
             print("Configuration error. Call set_config() before "
                   "get_runs_count()")
             sys.exit(1)
@@ -110,20 +117,20 @@ class sim:
         """
 
         # Check if the configuration has been setted
-        if self._configFile == "" or self._section == "":
+        if self._config_file == "" or self._section == "":
             print("Configuration error. Call set_config() before initialize()")
             sys.exit(1)
 
         # set and check run number
-        self.run_number = run
-        if self.run_number >= self._config.get_runs_count():
+        run_number = run
+        if run_number >= self._config.get_runs_count():
             print("Simulation error. Run number {} does not exist. Please run "
                   "the simulator with the --list option to list all possible "
-                  "runs".format(self.run_number))
+                  "runs".format(run_number))
             sys.exit(1)
 
         # Set run number
-        self._config.set_run_number(self.run_number)
+        self._config.set_run_number(run_number)
         # Set the logger
         Path('/'.join(self._config.get_output_file().split('/')[:-1])).mkdir(
                 parents=True, exist_ok=True)
@@ -139,29 +146,32 @@ class sim:
             self.verbose = self._config.get_param(self.PAR_VERBOSE) in ("True", "true")
 
         # Setup the graph and nodes
-        graphFile = self._config.get_param(self.PAR_GRAPH)
-        G = nx.read_graphml(graphFile)
+        graph_file = self._config.get_param(self.PAR_graphRAPH)
+        graph = nx.read_graphml(graph_file)
         sharing_nodes = []
-        for v in G.nodes(data=True):
-            node = Node(v[0], self._config)
+        for vert in graph.nodes(data=True):
+            node = Node(vert[0], self._config)
             self.nodes[node.id] = node
-            if self.PAR_NETWORK in v[1]:
-                for net in v[1][self.PAR_NETWORK].split(','):
+            if self.PAR_NETWORK in vert[1]:
+                for net in vert[1][self.PAR_NETWORK].split(','):
                     node.add_destination(net, [], None)
             sharing_nodes.append(node)
 
-        for e in G.edges(data=True):
+        for edge in graph.edges(data=True):
             link_res = simpy.Resource(self._env, capacity=1)
-            l = Link(self._env, self.nodes[e[1]], link_res, e[2])
-            self.nodes[e[0]].add_neighbor(l)
+            link = Link(self._env, self.nodes[edge[1]], link_res, edge[2])
+            self.nodes[edge[0]].add_neighbor(link)
 
         for node in sharing_nodes:
             node.force_share_dst()
-        
         # Mark the initialization as done
         self._initialize = True
 
     def run(self):
+        """run.
+        Run the simulation with the local configuration
+        The simulation must be initialized before running it
+        """
         # Check if the system has been initialized
         if not self.initialize:
             print("Cannot run the simulation. Call initialize() first")
