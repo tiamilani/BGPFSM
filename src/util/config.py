@@ -13,7 +13,18 @@
 #
 # Copyright (C) 2016 Michele Segata <segata@ccs-labs.org>
 
-# because in python2 / is integer division, while in python3 / is float division
+"""
+Config module
+============
+
+module to manage different condifurations
+-----------------------------------------
+
+This module is used to read a json file that contains the environment
+information about the experiments
+
+"""
+
 import json
 import re
 import sys
@@ -40,12 +51,11 @@ class Config:
         self.config_file = config_file
         self.section = section
         # load configuration from json
-        json_content = self.remove_comments(config_file)
+        json_content = Config.remove_comments(config_file)
         try:
             self.cfg = json.loads(json_content)
-        except Exception as e:
+        except Exception: # pylint: disable=broad-except
             print("Unable to parse " + self.config_file)
-            print(e.message)
             sys.exit(1)
         if section not in self.cfg:
             print("Error: the file %s does not contain section %s",
@@ -86,19 +96,19 @@ class Config:
         # cartesian product, we simply multiply the sizes of all parameters
         # given as a list of values
         count = 1
-        for p in self.cfg[self.section].keys():
-            if type(self.cfg[self.section][p]) == list:
-                count = count * len(self.cfg[self.section][p])
+        for permutation in self.cfg[self.section].keys():
+            if isinstance(self.cfg[self.section][permutation], list):
+                count = count * len(self.cfg[self.section][permutation])
 
         # list of run ids, going from 0 to count - 1
         runs = range(count)
         # map from run number to index of a parameter inside its array
         par_map = {}
         prev_size = 1
-        for p in self.cfg[self.section].keys():
-            if type(self.cfg[self.section][p]) == list:
-                own_size = len(self.cfg[self.section][p])
-                par_map[p] = list(map((lambda x: x // prev_size % own_size),
+        for permutation in self.cfg[self.section].keys():
+            if isinstance(self.cfg[self.section][permutation], list):
+                own_size = len(self.cfg[self.section][permutation])
+                par_map[permutation] = list(map((lambda x: x // prev_size % own_size), # pylint: disable=cell-var-from-loop
                                       runs))
                 prev_size = prev_size * own_size
 
@@ -120,22 +130,23 @@ class Config:
         self.run_number = run_number
         self.compute_output_file_name()
 
-    def remove_comments(self, json_file):
+    @classmethod
+    def remove_comments(cls, json_file):
         """
         Removes the comments from a json file (non standard)
         :param json_file: json file name
         :returns: the content of the file without comments
         """
         # regular expression to remove comments from json file
-        cr = re.compile('(^)?[^\S\n]*/(?:\*(.*?)\*/[^\S\n]*|/[^\n]*)($)?',
+        comments_removed = re.compile('(^)?[^\S\n]*/(?:\*(.*?)\*/[^\S\n]*|/[^\n]*)($)?', # pylint: disable=anomalous-backslash-in-string
                         re.DOTALL | re.MULTILINE)
         content = ''.join(open(json_file).readlines())
         # looking for comments
-        match = cr.search(content)
+        match = comments_removed.search(content)
         while match:
             # single line comment
             content = content[:match.start()] + content[match.end():]
-            match = cr.search(content)
+            match = comments_removed.search(content)
         return content
 
     def get_param(self, param):
@@ -153,12 +164,10 @@ class Config:
                 return self.cfg[self.section][param][index]
             # if instead the parameter is not in par_map, then it's a single
             # value. Just return it
-            else:
-                return self.cfg[self.section][param]
-        else:
-            return None
+            return self.cfg[self.section][param]
+        return None
 
-    def compute_output_file_name(self):
+    def compute_output_file_name(self): # pylint: disable=too-many-branches
         """
         Computes output file name. The user can specify an output file name with
         variables that point to parameters in the configuration file. For
@@ -183,15 +192,15 @@ class Config:
         output = ""
         # states saying whether we are currently parsing normal text or the name
         # of a variable
-        OUTVAR = 0
-        INVAR = 1
+        OUTVAR = 0 # pylint: disable=invalid-name
+        INVAR = 1 # pylint: disable=invalid-name
         # at the beginning we are outsize of a variable
         state = OUTVAR
         # name of the variable we are currently parsing
         var_name = ""
         # loop through all characters
-        for i in range(len(template)):
-            if template[i] == '{':
+        for _, template_obj in enumerate(template):
+            if template_obj == '{':
                 # if the character is { then a variable is starting
                 if state == OUTVAR:
                     # if that is the case, we must be in the OUTVAR state
@@ -201,7 +210,7 @@ class Config:
                     # if not, there is a syntax error like {{
                     print("Invalid syntax for %s" % template)
                     sys.exit(1)
-            elif template[i] == '}':
+            elif template_obj == '}':
                 # if the character is }, then this is the end of a variable name
                 if state == INVAR:
                     # if syntax is correct, we search for the value of the
@@ -221,7 +230,7 @@ class Config:
                         if isinstance(obj, list):
                             obj = index
                     elif var == "date-time":
-                        obj = datetime.now().strftime("%d-%m-%Y-%H-%M-%S-%f") 
+                        obj = datetime.now().strftime("%d-%m-%Y-%H-%M-%S-%f")
                     else:
                         # otherwise we simply take the only value it has
                         obj = config[var]
@@ -247,10 +256,10 @@ class Config:
                 # this is neither a { nor a }. so it's a standard character
                 if state == INVAR:
                     # if inside a variable, add character to variable name
-                    var_name = var_name + template[i]
+                    var_name = var_name + template_obj
                 else:
                     # otherwise add character to output file name
-                    output = output + template[i]
+                    output = output + template_obj
 
         if state == INVAR:
             # if we are not in the OUTVAR state at the end of the template,
@@ -261,6 +270,10 @@ class Config:
         self.output_file = output
 
     def get_output_file(self):
+        """
+        get_output_file
+        Returns the output file name
+        """
         return self.output_file
 
     def get_params(self, run_number):

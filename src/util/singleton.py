@@ -1,3 +1,5 @@
+# pylint: disable=missing-module-docstring,invalid-name,attribute-defined-outside-init
+
 class Singleton:
     """
     A non-thread-safe helper class to ease implementing singletons.

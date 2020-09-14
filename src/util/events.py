@@ -11,15 +11,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Copyright (C) 2016 Michele Segata <segata@ccs-labs.org>
+# Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
+"""
 
-class Events:
+Events module
+=============
+
+Events has multiple possible types.
+All events types are raggruped in this module
+inside the class Events
+
+"""
+
+class Events: # pylint: disable=too-few-public-methods
     """
     Defines event types for the simulation
     """
 
-    # Change state event 
+    # Change state event
     STATE_CHANGE = 0
     # Transmission event
     TX = 1

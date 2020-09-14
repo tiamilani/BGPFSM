@@ -13,18 +13,30 @@
 #
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
+"""
+Route module
+============
+
+Module used to handle routes
+----------------------------
+
+Every route contains different information that can be used
+The route class could be used to store this information
+
+"""
+
 import ipaddress
-from copy import copy, deepcopy
+from copy import deepcopy
 import ast
 
 from policies import PolicyValue
 
 class Route():
     """Route
-    Class to manage a single route
+    Class to manage a route objects
     """
 
-    def __init__(self, addr, path, nh, mine=False, policy_value=PolicyValue(0)):
+    def __init__(self, addr, path, nh, mine=False, policy_value=PolicyValue(0)): # pylint: disable=too-many-arguments
         """__init__.
 
         :param addr: addr of the route
@@ -38,7 +50,7 @@ class Route():
             raise TypeError(path)
         self._path = path.copy()
         self._nh = nh
-        
+
         # Check that the policy value is an object of class PolicyValue
         if not isinstance(policy_value, PolicyValue):
             raise TypeError(policy_value)
@@ -47,9 +59,15 @@ class Route():
         self._policy_value = policy_value
 
     @classmethod
-    def fromString(cls, string):
+    def fromString(cls, string: str): # pylint: disable=invalid-name
+        """fromString.
+        Method to get a route object from the string representation
+
+        :param string: String representation of the route
+        :type string: str
+        """
         res = ast.literal_eval(string)
-        return cls(ipaddress.ip_network(res["addr"]), 
+        return cls(ipaddress.ip_network(res["addr"]),
                    res["path"], res["nh"],
                    policy_value = PolicyValue.fromString(res["policy_value"]))
 
@@ -80,12 +98,12 @@ class Route():
         return self._path
 
     @property
-    def nh(self):
+    def nh(self): # pylint: disable=invalid-name
         """nh."""
         return self._nh
 
     @nh.setter
-    def nh(self, value):
+    def nh(self, value): # pylint: disable=invalid-name
         """nh.
 
         :param value: set the Nh
@@ -110,6 +128,9 @@ class Route():
 
     @property
     def mine(self):
+        """mine.
+        Property that returns the mine object
+        """
         return self._mine
 
     @mine.setter
@@ -127,11 +148,11 @@ class Route():
         # Check the path len
         if len(self.path) < len(route.path):
             return True
-        elif len(self.path) == len(route.path):
+        if len(self.path) == len(route.path):
             # Check the nh id
             if int(self.nh) < int(route.nh):
                 return True
-            elif self.nh == route.nh:
+            if self.nh == route.nh:
                 # check the path without the first as
                 actual = Route(self.addr, self.path[1:], self.path[1])
                 new = Route(route.addr, route.path[1:], route.path[1])
@@ -150,12 +171,12 @@ class Route():
             self.path == route.path and \
             self.nh == route.nh and \
             self.policy_value == route.policy_value:
-                return True
+            return True
         return False
 
     def __copy__(self):
         """__copy__."""
-        return type(self)(self.addr, self.path, self.nh, 
+        return type(self)(self.addr, self.path, self.nh,
                           policy_value=self.policy_value)
 
     def __deepcopy__(self, memo):
@@ -177,9 +198,9 @@ class Route():
 
     def __str__(self):
         """__str__."""
-        d = dict()
-        d["addr"] = str(self.addr)
-        d["nh"] = self.nh
-        d["path"] = self.path
-        d["policy_value"] = str(self.policy_value)
-        return str(d)
+        dictionary_route = dict()
+        dictionary_route["addr"] = str(self.addr)
+        dictionary_route["nh"] = self.nh
+        dictionary_route["path"] = self.path
+        dictionary_route["policy_value"] = str(self.policy_value)
+        return str(dictionary_route)

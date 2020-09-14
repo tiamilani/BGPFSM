@@ -13,6 +13,20 @@
 #
 # Copyright (C) 2016 Michele Segata <segata@ccs-labs.org>
 
+"""
+Packet module
+=============
+
+Packet controller system
+------------------------
+
+In this module is possible to define different packets that will be used
+during the simulation
+
+For now a general packet could be an update ora withdraw
+
+"""
+
 import ast
 
 class Packet:
@@ -27,27 +41,33 @@ class Packet:
     UPDATE = 0
     WITHDRAW = 1
 
-    def __init__(self, packet_type, content, id=None):
+    def __init__(self, packet_type, content, id_packet=None):
         """
         Creates a packet automatically assigning a unique ID to it
-        :param packet_type: type of the packet 
-        :param content: content of the packet 
+        :param packet_type: type of the packet
+        :param content: content of the packet
         """
-        if id == None:
+        if id_packet is None:
             self._id = Packet.__packets_count
             Packet.__packets_count = Packet.__packets_count + 1
         else:
-            self._id = id
+            self._id = id_packet
         self._packet_type = packet_type
-        self._content = content 
+        self._content = content
 
     @classmethod
-    def fromString(cls, string):
+    def fromString(cls, string: str): # pylint: disable=invalid-name
+        """fromString.
+        Function to get the packet object from a string representation
+
+        :param string: string to transform in a packet
+        :rtype: Packet
+        """
         res = ast.literal_eval(string)
-        return cls(res["type"], res["content"], id=res["id"])
+        return cls(res["type"], res["content"], id_packet=res["id"])
 
     @property
-    def id(self):
+    def id(self): # pylint: disable=invalid-name
         """
         Returns packet id
         :returns: id of the packet
@@ -78,9 +98,9 @@ class Packet:
         """
         Prints the packet in a human readable format
         """
-        d = dict()
-        d["id"] = self.id
-        d["type"] = self.packet_type
-        d["content"] = str(self.content)
-        res = str(d) 
+        string_dict = dict()
+        string_dict["id"] = self.id
+        string_dict["type"] = self.packet_type
+        string_dict["content"] = str(self.content)
+        res = str(string_dict)
         return res

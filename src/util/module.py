@@ -1,3 +1,11 @@
+"""
+Module
+======
+
+Basic simulation modules
+
+"""
+
 import sys
 sys.path.insert(1, '..')
 import bgp_sim
@@ -18,7 +26,7 @@ class Module:
         Constructor. Gets simulation instance for scheduling events and
         automatically assigns an ID to the module
         """
-        self.sim = bgp_sim.Sim.Instance()
+        self.sim = bgp_sim.Sim.Instance() # pylint: disable=no-member
         # auto assign module id
         self.module_id = Module.__modules_count
         Module.__modules_count = Module.__modules_count + 1
@@ -27,14 +35,14 @@ class Module:
         # Get verbose flag from simulator
         self.verbose = self.sim.verbose
 
-    def initialize(self):
+    def initialize(self): # pylint: disable=no-self-use
         """
         Initialization method called by the simulation for each newly
         instantiated module
         """
         return
 
-    def handle_event(self, event):
+    def handle_event(self, event): # pylint: disable=unused-argument
         """
         This function should be overridden by inheriting modules to handle
         events for this module. If not overridden, this method will throw an

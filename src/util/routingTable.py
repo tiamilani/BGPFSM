@@ -13,7 +13,20 @@
 #
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
-import ipaddress
+# pylint: disable=invalid-name
+
+"""
+RoutingTable module
+==================
+
+Manage the routing table
+------------------------
+
+Is possible to create a routing table and manage it, it can contains
+only one route per address
+
+"""
+
 import collections
 import sys
 
@@ -21,7 +34,7 @@ sys.path.insert(1, '..')
 from route import Route
 
 
-class RoutingTableIterator():
+class RoutingTableIterator(): # pylint: disable=too-few-public-methods
     """
     Iterator class for the routing table object
     """
@@ -47,7 +60,7 @@ class RoutingTableIterator():
         raise StopIteration
 
 
-class RoutingTable(collections.MutableSequence):
+class RoutingTable(collections.MutableSequence): # pylint: disable=too-many-ancestors
     """RoutingTable.
     Class used to handle the routing table of a node
     """
@@ -57,29 +70,28 @@ class RoutingTable(collections.MutableSequence):
         self._table = {}
         self.oktype = Route
 
-    def check(self, v):
+    def check(self, value):
         """check.
 
-        :param v: check that V is a route instance
+        :param value: check that V is a route instance
         """
-        if not isinstance(v, self.oktype):
-            raise TypeError(v)
+        if not isinstance(value, self.oktype):
+            raise TypeError(value)
 
-    def __len__(self): 
+    def __len__(self):
         """__len__."""
         return len(self._table)
 
-    def __getitem__(self, i): 
+    def __getitem__(self, i):
         """__getitem__.
 
         :param i: key addr
         """
         if i in self._table:
             return self._table[i]
-        else:
-            return None
+        return None
 
-    def __delitem__(self, i): 
+    def __delitem__(self, i):
         """__delitem__.
 
         :param i: key addr
@@ -96,7 +108,7 @@ class RoutingTable(collections.MutableSequence):
         self.check(v)
         self._table[i] = v
 
-    def insert(self, i, v):
+    def insert(self, i, v): # pylint: disable=arguments-differ
         """insert.
         Is not possible to insert any route in the Routing Table
         This method has no effects
@@ -104,9 +116,8 @@ class RoutingTable(collections.MutableSequence):
         :param i:
         :param v:
         """
-        pass
 
-    def getKey(self, i):
+    def getKey(self, i): # pylint: disable=invalid-name
         """getKey.
 
         :param i: index
@@ -125,7 +136,7 @@ class RoutingTable(collections.MutableSequence):
         :returns: string with all the routing information
         """
         res = "Routing Table:\n"
-        rt = sorted(self._table)
-        for route in rt:
+        routing_table = sorted(self._table)
+        for route in routing_table:
             res += str(self._table[route]) + "\n"
         return res
