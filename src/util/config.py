@@ -15,7 +15,7 @@
 
 """
 Config module
-============
+=============
 
 module to manage different condifurations
 -----------------------------------------
