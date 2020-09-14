@@ -16,13 +16,21 @@
 # Modified by Mattia Milani
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
+"""
+Log module
+==========
+
+Used to log information in csv format
+
+"""
+
 import sys
 import os
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + '/../')
-import bgp_sim
 from events import Events
+import bgp_sim
 
 
 class Log:
@@ -30,7 +38,7 @@ class Log:
     Defines data logging utilities
     """
 
-    def __init__(self, output_file, log_routing_change=True, log_rib_change=True,
+    def __init__(self, output_file, log_routing_change=True, log_rib_change=True, # pylint: disable=too-many-arguments
             log_packets=False, log_paths=False, log_states=False):
         """
         Constructor.
@@ -41,7 +49,7 @@ class Log:
         :param log_paths: enable/disable logging of new paths
         :param log_states: enable/disable logging of the state of nodes
         """
-        self.sim = bgp_sim.sim.Instance()
+        self.sim = bgp_sim.Sim.Instance() # pylint: disable=no-member
         self.log_file = open(output_file, "w")
         self.log_file.write("event_id|event_cause|event|time|node|value\n")
         self.log_packets = log_packets
@@ -60,8 +68,9 @@ class Log:
         :param route: the new route in the routing table
         """
         if self.log_routing_change:
-            self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id, 
-                                            event.event_cause if event.event_cause is not None else -1,
+            self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id,
+                                            event.event_cause if event.event_cause is not None \
+                                                    else -1,
                                             Events.RT_CHANGE,
                                             self.sim.env.now, node.id,
                                             event.obj))
@@ -75,7 +84,9 @@ class Log:
         """
         if self.log_rib:
             self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id,
-                                            event.event_cause if event.event_cause is not None else -1, Events.RIB_CHANGE,
+                                            event.event_cause if event.event_cause is not None \
+                                                    else -1,
+                                            Events.RIB_CHANGE,
                                             self.sim.env.now, node_id, event.obj))
 
     def log_packet_tx(self, node, event):
@@ -86,12 +97,13 @@ class Log:
         """
         if self.log_packets:
             self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id,
-                                                event.event_cause if event.event_cause is not None else -1,
+                                                event.event_cause if event.event_cause is not None \
+                                                        else -1,
                                                 Events.TX,
-                                                self.sim.env.now, 
-                                                node.id, 
+                                                self.sim.env.now,
+                                                node.id,
                                                 event.obj))
-    
+
     def log_packet_rx(self, node, event):
         """
         Logs a packet rx.
@@ -100,10 +112,11 @@ class Log:
         """
         if self.log_packets:
             self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id,
-                                                event.event_cause if event.event_cause is not None else -1,
+                                                event.event_cause if event.event_cause is not None \
+                                                        else -1,
                                                 Events.RX,
-                                                self.sim.env.now, 
-                                                node.id, 
+                                                self.sim.env.now,
+                                                node.id,
                                                 event.obj))
 
     def log_path(self, node_id, event):
@@ -114,10 +127,11 @@ class Log:
         """
         if self.log_paths:
             self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id,
-                                                event.event_cause if event.event_cause is not None else -1,
+                                                event.event_cause if event.event_cause is not None \
+                                                        else -1,
                                                 Events.NEW_PATH,
-                                                self.sim.env.now, 
-                                                node_id, 
+                                                self.sim.env.now,
+                                                node_id,
                                                 event.obj))
 
     def log_state(self, node):
@@ -128,5 +142,5 @@ class Log:
         """
         if self.log_states:
             self.log_file.write("{}|{}|{}|{}\n".format(Events.STATE_CHANGE,
-                                                    self.sim.env.now, 
+                                                    self.sim.env.now,
                                                     node.id, node.state))

@@ -11,14 +11,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Copyright (C) 2016 Michele Segata <segata@ccs-labs.org>
+# Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
-from distribution import Distribution
+"""
+link module
+===========
+
+Module to handle links
+----------------------
+
+The goal of this module is to handle the links objects
+The class link is able to transmit messages emulating delays
+
+"""
+
 from typing import Any
 import json
-import simpy
+from distribution import Distribution
 
-from policies import PolicyFunction
+from policies import PolicyValue, PolicyFunction
 
 class Link:
     """
@@ -39,7 +50,7 @@ class Link:
         """
         Creates a link and automatically assign a uniqueid to the link
         It requires a simpy environment where to operate.
-        It also require a simpy resource to operate correctly and 
+        It also require a simpy resource to operate correctly and
         reserve the channel for a message.
 
         :param env: Simpy environment
@@ -61,6 +72,10 @@ class Link:
         else:
             self._policy_function = PolicyFunction(PolicyFunction.PASS_EVERYTHING)
 
+    def _print(self, msg: str) -> None:
+        if self._node.verbose:
+            print("{}-{}-->{} ".format(self._env.now, self._id, self._node.id) + msg)
+
     def transmit(self, msg: Any, delay: float) -> None:
         """
         Actual transmitting function
@@ -73,16 +88,16 @@ class Link:
         # it means the message is the first in the sequence of messages
         # that needs to be transfered
         # link:[----msg2----msg1+res--->dst]
-        # Once a node have the resource and has waited for delay time it 
+        # Once a node have the resource and has waited for delay time it
         # can be delivered
         request = self._res.request()
         yield self._env.timeout(delay) & request
-        self._node._print("Transmitting msg: " + str(msg.obj))
+        self._print("Transmitting msg: " + str(msg.obj))
         self._node.event_store.put(msg)
         yield self._env.timeout(self.__waiter)
         self._res.release(request)
-        
-    def tx(self, msg, delay):
+
+    def tx(self, msg, delay): # pylint: disable=invalid-name
         """
         Transmission function fot the node
         use this function to trigger a simpy process
@@ -91,11 +106,18 @@ class Link:
         """
         self._env.process(self.transmit(msg, delay))
 
-    def test(self, pf):
-        return self._policy_function[pf]
+    def test(self, policy_value: PolicyValue) -> PolicyValue:
+        """test.
+        Test if a policy value is applicable to the policy function of the link
+
+        :param policy_value: policy value to test
+        :type policy_value: PolicyValue
+        :rtype: PolicyValue
+        """
+        return self._policy_function[policy_value]
 
     @property
-    def id(self):
+    def id(self): # pylint: disable=invalid-name
         """
         Returns the link id
         :returns: id of the link

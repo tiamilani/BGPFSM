@@ -11,7 +11,41 @@
 #
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
-from copy import copy, deepcopy
+"""
+Policies module
+===============
+
+Module used to handle policies and filters
+------------------------------------------
+
+The goal of this module is to make the use of policies easier
+it is possible to use policy values and policy functions.
+Values will be used inside policy functions.
+
+A policy function detemines when a message will be transfered and
+with which policy value associated
+
+Example of policy function
+>>> <0, inf, inf>
+
+This policy function is used between clients and providers.
+The function result is given by the position required.
+For example
+
+>>> f(0)=0
+>>> f(1)=inf
+>>> f(5)=inf
+>>> f(inf)=inf
+
+The input of the policy function is a policy value and the output of it
+is a policy value itself.
+
+Other than numbers the only value accepted by policy values is "inf"
+
+"""
+
+
+from copy import deepcopy
 import collections
 import math
 
@@ -30,14 +64,14 @@ class PolicyValue():
         if value != math.inf and value != -math.inf \
                 and not isinstance(value, int):
             raise TypeError("The policy value should be integer or \
-                            infinite".format(value))
+                            infinite, {} given".format(value))
         if value < 0:
             raise ValueError("The policy value must be higher than 0, \
                               {} < 0".format(value))
         self._value = value
 
     @classmethod
-    def fromString(cls, string: str):
+    def fromString(cls, string: str): # pylint: disable=invalid-name
         """fromString.
 
         :param string: String to transform in a policy value
@@ -131,7 +165,7 @@ class PolicyValue():
         """
         return str(self.value)
 
-class PolicyFunction(collections.MutableSequence):
+class PolicyFunction(collections.MutableSequence): # pylint: disable=too-many-ancestors
     """PolicyFunction.
     Class to handle policy functions
     """
@@ -163,14 +197,14 @@ class PolicyFunction(collections.MutableSequence):
     @property
     def values(self):
         """values.
-        
+
         :return: the actual list of policy values that is composed the function
         """
         return self._values
 
     def __len__(self):
         """__len__.
-        
+
         :return: the len of the policy function
         """
         return len(self.values)
@@ -194,7 +228,6 @@ class PolicyFunction(collections.MutableSequence):
         :param i:
         """
         # An element of a policy function can't be deleted
-        pass
 
     def __setitem__(self, i, v):
         """__setitem__.
@@ -203,15 +236,13 @@ class PolicyFunction(collections.MutableSequence):
         :param v:
         """
         # The policy function can't be modified
-        pass
 
-    def insert(self, i):
+    def insert(self, v): # pylint: disable=arguments-differ
         """insert.
         This function has no effects
         :param i:
         """
         # The policy function can't be amplified
-        pass
 
     def __str__(self):
         """__str__.

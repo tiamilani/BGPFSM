@@ -13,7 +13,21 @@
 #
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
-import ipaddress
+"""
+Rib module
+==========
+
+Control a routing information base
+----------------------------------
+
+Is possible to create and handle a routing information base using this module
+It povides an iterable rib.
+Is possible to register only routes in the rib.
+New routes will be evaluated before the insertion.
+A new route could override old routes from neighbours.
+
+"""
+
 import collections
 import sys
 
@@ -23,7 +37,7 @@ from events import Events
 from event import Event
 
 
-class RibIterator():
+class RibIterator(): # pylint: disable=too-few-public-methods
     """
     Iterator class for the RIB table object
     """
@@ -41,7 +55,7 @@ class RibIterator():
         Returns the next object for the RIB table
         """
         if self._idx < len(self._rt):
-            key_result = self._rt.getKey(self._idx)
+            key_result = self._rt.get_key(self._idx)
             result = self._rt[key_result]
             self._idx += 1
             return result
@@ -49,12 +63,12 @@ class RibIterator():
         raise StopIteration
 
 
-class Rib(collections.MutableSequence):
+class Rib(collections.MutableSequence): # pylint: disable=too-many-ancestors
     """Rib.
     Class used to handle the routing information base of a node
     """
 
-    ROUTE_COUNTER = 0
+    __ROUTE_COUNTER = 0
 
     def __init__(self, node_id, logger):
         """__init__.
@@ -64,24 +78,24 @@ class Rib(collections.MutableSequence):
         """
         self._table = {}
         self.oktype = Route
-        self.id = node_id
+        self.id = node_id # pylint: disable=invalid-name
         self.logger = logger
         self._support_route_identifier = {}
         self.actual_state = set()
 
-    def check(self, v):
+    def check(self, value):
         """check.
 
-        :param v: check the type of v
+        :param value: check the type of value
         """
-        if not isinstance(v, self.oktype):
-            raise TypeError(v)
+        if not isinstance(value, self.oktype):
+            raise TypeError(value)
 
-    def __len__(self): 
+    def __len__(self):
         """__len__."""
         return len(self._table)
 
-    def __getitem__(self, i): 
+    def __getitem__(self, i):
         """__getitem__.
 
         :param i: key addr
@@ -93,7 +107,7 @@ class Rib(collections.MutableSequence):
                 return self._table[i][0]
         return None
 
-    def __delitem__(self, i): 
+    def __delitem__(self, i):
         """__delitem__.
         delete the first element in the list in the i reference of the table
 
@@ -101,7 +115,7 @@ class Rib(collections.MutableSequence):
         """
         del self._table[i][0]
 
-    def __setitem__(self, i, j, v):
+    def __setitem__(self, i, j, v): # pylint: disable=unexpected-special-method-signature
         """__setitem__.
 
         :param i: table addres key
@@ -113,20 +127,27 @@ class Rib(collections.MutableSequence):
         self._table[i][j] = v
 
     def update_rib_state(self, route, event, insertion=True):
+        """update_rib_state.
+        Used to update the actual state of the rib after an update
+
+        :param route: route removed or inserted
+        :param event: Cause event
+        :param insertion: (Default True) determine the type of update
+        """
         # Concatenation of all route ids
         if insertion:
             if str(route) not in self._support_route_identifier.keys():
-                self._support_route_identifier[str(route)] = self.ROUTE_COUNTER
-                self.ROUTE_COUNTER += 1
+                self._support_route_identifier[str(route)] = self.__ROUTE_COUNTER
+                self.__ROUTE_COUNTER += 1 # pylint: disable=invalid-name
             if self._support_route_identifier[str(route)] not in self.actual_state:
                 self.actual_state.add(self._support_route_identifier[str(route)])
                 if event is not None:
-                    rib_change_event = Event(0, event.id, Events.RIB_CHANGE, 
+                    rib_change_event = Event(0, event.id, Events.RIB_CHANGE,
                                              None, None, obj=self.actual_state)
                 else:
-                    rib_change_event = Event(0, None, Events.RIB_CHANGE, 
+                    rib_change_event = Event(0, None, Events.RIB_CHANGE,
                                              None, None, obj=self.actual_state)
-                    
+
                 self.logger.log_rib_change(self.id, rib_change_event)
         if not insertion:
             self.actual_state.remove(self._support_route_identifier[str(route)])
@@ -135,23 +156,23 @@ class Rib(collections.MutableSequence):
                 rib_change_event = Event(0, event.id, Events.RIB_CHANGE,
                                          None, None, obj=self.actual_state)
             else:
-                rib_change_event = Event(0, None, Events.RIB_CHANGE, 
+                rib_change_event = Event(0, None, Events.RIB_CHANGE,
                                          None, None, obj=self.actual_state)
             self.logger.log_rib_change(self.id, rib_change_event)
 
-    def contains(self, i, v):
+    def contains(self, i, value):
         """contains.
-        check if the table contains the object v in the vector for the addr i
+        check if the table contains the object value in the vector for the addr i
 
         :param i: addr key
-        :param v: route to check
+        :param value: route to check
         """
         if i in self._table:
-            if v in self._table[i]:
+            if value in self._table[i]:
                 return True
         return False
 
-    def remove(self, i, v, event=None):
+    def remove(self, i, v, event=None): # pylint: disable=arguments-differ
         """remove.
         remove object v from the vector of addr i if present
 
@@ -182,7 +203,7 @@ class Rib(collections.MutableSequence):
             return False
         return True
 
-    def insert(self, i, v, event=None, implicit_withdraw=False):
+    def insert(self, i, v, event=None, implicit_withdraw=False): # pylint: disable=arguments-differ
         """insert.
         Function to insert an object in the rib at the addr i
 
@@ -197,11 +218,12 @@ class Rib(collections.MutableSequence):
             if i not in self._table:
                 self._table[i] = [v]
             elif v not in self._table[i]:
-                for net in self._table[i]:
-                    if net.nh == v.nh:
-                        print("{}: Removing {} from rib".format(self.id, net))
-                        self.actual_state.remove(self._support_route_identifier[str(net)])
-                        self._table[i].remove(net)
+                if implicit_withdraw:
+                    for net in self._table[i]:
+                        if net.nh == v.nh:
+                            print("{}: Removing {} from rib".format(self.id, net))
+                            self.actual_state.remove(self._support_route_identifier[str(net)])
+                            self._table[i].remove(net)
                 self._table[i].append(v)
                 # Sort the list for importance of the routes
                 self._table[i] = sorted(self._table[i])
@@ -219,8 +241,8 @@ class Rib(collections.MutableSequence):
         # If it was not possible to enter the path then return None
         return None
 
-    def getKey(self, i):
-        """getKey.
+    def get_key(self, i):
+        """get_key.
         Return the ith key
 
         :param i: index
@@ -239,7 +261,7 @@ class Rib(collections.MutableSequence):
         :returns: string with all the routing information
         """
         res = "RIB:\n"
-        rt = sorted(self._table)
-        for route in rt:
+        rib_table = sorted(self._table)
+        for route in rib_table:
             res += str([str(x) for x in self._table[route]]) + "\n"
         return res

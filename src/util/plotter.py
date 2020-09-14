@@ -14,28 +14,50 @@
 #
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
+"""
+Plotter Module
+==============
+
+This module is used to plot information about the data retrived by the
+analyzer.
+
+"""
+
+import ast
 import pandas as pd
 from transition import Transition
 from graphviz import Digraph
-import ast
 from route import Route
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 
 class Plotter():
+    """
+    Plotter class
+    Main class used for the plotting system.
+    Initialize the DataFrame variables
+    """
 
-    def __init__(self, states=None, transitions=None, route_id=None, 
+
+    def __init__(self, states=None, transitions=None, route_id=None,
                  signaling=None):
+        """__init__.
+
+        :param states: States DataFrame
+        :param transitions: Transitions DataFrame
+        :param route_id: Route to id DataFrame
+        :param signaling: Signaling results DataFrame
+        """
         NoneType = type(None)
         if not isinstance(states, NoneType):
             self.states_df = states
-            self.states = states.to_dict('index')    
+            self.states = states.to_dict('index')
             self.states = {v['state']: int(v['counter']) for k, v in self.states.items()}
         if not isinstance(transitions, NoneType):
             self.transitions_df = transitions
             self.transitions = transitions.to_dict('index')
-            self.transitions = {k: Transition(v['start_node'], v['end_node'], 
+            self.transitions = {k: Transition(v['start_node'], v['end_node'],
                                 v['cause'], v['response'], counter=v['counter']) \
                                 for k, v in self.transitions.items()}
         if not isinstance(route_id, NoneType):
@@ -67,7 +89,7 @@ class Plotter():
                         best_id = new_elem
                 res = "<" + str(state) + ">"
                 res = res.replace(str(best_id), "<B>" + str(best_id) + "</B>")
-                dot.node(str(state), label=res) 
+                dot.node(str(state), label=res)
         # Insert every transition like edge
         for trans in self.transitions.values():
             inp = trans.init_state if trans.init_state != "set()" else "{}"
@@ -79,7 +101,8 @@ class Plotter():
             dot.edge(inp, out, label=" {}:{} ".format(trans.input, trans_output))
         return dot
 
-    def __route_to_table_content(self, id_r: int, route: Route) -> str: 
+    @classmethod
+    def __route_to_table_content(cls, id_r: int, route: Route) -> str:
         """__route_to_table_content.
         Given a route it returns the tabular expression of it in graphvizc
 
@@ -88,7 +111,7 @@ class Plotter():
         :returns: string format in graphviz of the route
         """
         res = '|{' + str(id_r) + '|' + str(route.addr) + '|' + str(route.nh) +\
-               '|' + str(route.path) + '}' 
+               '|' + str(route.path) + '}'
         return res
 
     def __message_table(self, table: Digraph) -> Digraph:
@@ -100,12 +123,16 @@ class Plotter():
         """
         res = r'{{Messages Table}|{id|addr|nh|path}'
         for _id in self.route_identifier:
-            res += self.__route_to_table_content(_id, self.route_identifier[_id])
+            res += Plotter.__route_to_table_content(_id, self.route_identifier[_id])
         res += '}'
         table.node('route_table', res)
         return table
 
     def __get_single_states_ids_set(self) -> set:
+        """__get_single_states_ids_set.
+
+        :rtype: set
+        """
         res = set()
         for state_set in self.states.keys():
             state_set = ast.literal_eval(state_set) if state_set != "set()" else set()
@@ -149,9 +176,13 @@ class Plotter():
         with graph.subgraph(node_attr={'shape': 'record'}) as table:
             table = self.__states_table(table)
 
-        return graph 
-    
+        return graph
+
     def states_stage_boxplot(self, output_file):
+        """states_stage_boxplot.
+
+        :param output_file:
+        """
         self.states_df['level'] = self.states_df.apply(lambda x: len(x.state.split(',')) \
                 if x.state != "set()" else 0, axis=1)
         grouped_states = self.states_df.groupby(by=['level']).sum()
@@ -159,20 +190,24 @@ class Plotter():
         grouped_states = grouped_states.T
         # print(self.states_df.sort_values(by=['counter'], ascending=False))
         # print(grouped_states)
-        box_plot = grouped_states.boxplot()
+        grouped_states.boxplot()
         plt.savefig(output_file, format="pdf")
         # print(grouped_states)
         # print(self.states_df)
 
-    def signaling_nmessage_probability(self, output_file):
+    def signaling_nmessage_probability(self, output_file): # pylint: disable=too-many-locals
+        """signaling_nmessage_probability.
+
+        :param output_file:
+        """
         experiments = self.signaling_df.counter.sum()
         advertisement = pd.DataFrame()
         withdraw = pd.DataFrame()
         total = pd.DataFrame()
-        
+
         advertisement['probability'] = self.signaling_df.counter.values / experiments
-        withdraw['probability'] =  advertisement['probability'] 
-        total['probability'] =  advertisement['probability'] 
+        withdraw['probability'] =  advertisement['probability']
+        total['probability'] =  advertisement['probability']
         advertisement['messages'] = np.array([x.count('A') for x \
                                               in self.signaling_df.output.values])
         withdraw['messages'] = np.array([x.count('W') for x \
@@ -185,21 +220,21 @@ class Plotter():
         total_size = total.groupby(by=['messages']).size().reset_index()
         # print(advertisement, "\n", withdraw, "\n", total)
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots() # pylint: disable=invalid-name
         ax2 = ax.twinx()
 
-        l1 = ax.plot(advertisement['messages'], advertisement['probability'], 
+        legend1 = ax.plot(advertisement['messages'], advertisement['probability'],
                       label="Advertisement messages")
-        l2 = ax.plot(withdraw['messages'], withdraw['probability'], 
+        legend2 = ax.plot(withdraw['messages'], withdraw['probability'],
                       label="Withdraw messages")
-        l3 = ax.plot(total_gr['messages'], total_gr['probability'], 
+        legend3 = ax.plot(total_gr['messages'], total_gr['probability'],
                       label="Total messages")
-        l4 = ax2.plot(total_size['messages'].values, total_size[0].values,
+        legend4 = ax2.plot(total_size['messages'].values, total_size[0].values,
                       'r', label="# possible outputs")
         ax.grid()
         ax2.grid()
         # plt.xticks(np.arange(total.messages.max()+1), np.arange(total.messages.max()+1))
-        lns = l1+l2+l3+l4
+        lns = legend1+legend2+legend3+legend4
         labs = [l.get_label() for l in lns]
         ax2.legend(lns, labs)
 
@@ -207,10 +242,11 @@ class Plotter():
         ax.set_xlabel("# Of messages")
         ax.set_ylabel("Probability [0-1]")
         ax2.set_ylabel("# Of Outputs")
-        
+
         fig.savefig(output_file, format="pdf")
 
-    def __str__(self):
+    def __str__(self): # pylint: disable=no-self-use
+        """__str__."""
         res = "States: \n" + str(self.states) + \
               "Transitions: \n" + str(self.transitions) + \
               "Route identifier: \n" + str(self.route_identifier)

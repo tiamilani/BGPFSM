@@ -14,42 +14,63 @@
 #
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
-from optparse import OptionParser
-from bgp_sim import sim
+"""
+fsm module
+==========
+
+Use it to run descrete event simulations for protocols
+
+:Example:
+
+>>> python3 fsm.py -c json/config.json
+
+Arguments
+---------
+
+Please refer to the help and the README for a mroe compleate explanation
+of the arguments.
+
+`--list` to get the list of available simulations with the configuration file
+`--LIST` to have a compleate list of simulations with parameters
+`-r` used to define which run will be executed
+`-c` MANDATORY argument that defines which configuration file will be used
+`-s` Defines the section of the configuration file to use, default: simulation
+
+"""
+
+import argparse
 import sys
+from bgp_sim import Sim
 
 # setup command line parameters
-parser = OptionParser(usage="usage: %prog [options]",
+parser = argparse.ArgumentParser(usage="usage: %prog [options]",
                       description="Runs a simulation configured in the "
                                   "specified config file under the specified "
-                                  "section")
-parser.add_option("-l", "--list", dest="list", default=False,
+                                  "section",
+                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument("-l", "--list", dest="list", default=False,
                   action="store_true", help="list the available runs and exit")
-parser.add_option("-L", "--LIST", dest="verbose_list", default=False,
+parser.add_argument("-L", "--LIST", dest="verbose_list", default=False,
                   action="store_true", help="list the available runs with "
                                             "simulation parameters and exit")
-parser.add_option("-r", "--run", dest="run", default=0, action="store",
-                  help="run simulation number RUN [default: %default]",
-                  metavar="RUN", type="int")
-parser.add_option("-c", "--config", dest="config", default="config.json",
-                  action="store",
-                  help="simulation config file [default: %default]")
-parser.add_option("-s", "--section", dest="section", default="simulation",
-                  action="store",
-                  help="section inside configuration file [default: %default]")
+parser.add_argument("-r", "--run", dest="run", default=0, action="store",
+                  help="run simulation number RUN", type=int)
+parser.add_argument("-c", "--config", dest="config", default="config.json",
+                  action="store", help="simulation config file")
+parser.add_argument("-s", "--section", dest="section", default="simulation",
+                  action="store", help="section inside configuration file")
 
 if __name__ == "__main__":
     # Parse the arguments
-    (options, args) = parser.parse_args()
+    options = parser.parse_args()
 
     # Check the config and section to be setted
     if options.config == "" or options.section == "":
         print("Required parameters config and section missing")
-        print(parser.get_usage())
         sys.exit(1)
 
     # Set the configuration
-    simulation = sim.Instance() 
+    simulation = Sim.Instance() # pylint: disable=no-member
     simulation.set_config(options.config, options.section)
 
     # list simulation runs and exit

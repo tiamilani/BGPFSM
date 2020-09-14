@@ -29,7 +29,7 @@ from plotter import Plotter
 from tqdm import tqdm
 
 # Setup command line parameters
-parser = argparse.ArgumentParser(usage="python2 analyzer.py [options]",
+parser = argparse.ArgumentParser(usage="python3 analyzer.py [options]",
                         description="Analize an output file from the fsm bgp "
                                   "simulator to produce the state graph of "
                                   "a node.",

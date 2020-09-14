@@ -13,8 +13,19 @@
 #
 # Copyright (C) 2016 Michele Segata <segata@ccs-labs.org>
 
-from events import Events
+"""
+event module
+===========
 
+Module that handle events
+-------------------------
+
+This module is used to handle different elements
+It is possible to create, modify and use events
+
+Events types must be defined in the Events module
+
+"""
 
 class Event:
     """
@@ -23,7 +34,7 @@ class Event:
     # counter used for assigning unique IDs to events
     event_counter = 0
 
-    def __init__(self, event_duration, event_cause, event_type, source, 
+    def __init__(self, event_duration, event_cause, event_type, source, # pylint: disable=too-many-arguments
                 destination, obj=None, sent_time=None):
         """
         Creates an event.
@@ -47,13 +58,13 @@ class Event:
     def __eq__(self, other):
         if not isinstance(other, Event):
             return False
-        if other.event_id == self.event_id:
+        if other.id == self.id:
             return True
         return False
 
     def __lt__(self, other):
         # if the event is the same, it is not lower than itself
-        if other.event_id == self.event_id:
+        if other.id == self.id:
             return False
         if self.event_duration < other.event_duration:
             return True
@@ -61,17 +72,17 @@ class Event:
             return False
         # if the time is exactly the same, the one with the lower id is the
         # lowest of the two
-        return self.event_id < other.event_id
+        return self.id < other.id
 
     @property
-    def id(self):
+    def id(self): # pylint: disable=invalid-name
         """
         Returns the event id
         """
         return self._event_id
 
     @id.setter
-    def id(self, v):
+    def id(self, v): # pylint: disable=invalid-name
         self._event_id = v
 
     @property
@@ -82,8 +93,13 @@ class Event:
         return self._event_duration
 
     @event_duration.setter
-    def event_duration(self, v):
-        self._event_duration = v
+    def event_duration(self, event_duration):
+        """
+        Set the event duration
+
+        :param event_duration: Duration of the event
+        """
+        self._event_duration = event_duration
 
     @property
     def event_type(self):
@@ -131,11 +147,8 @@ class Event:
         """
         Prints the event in a human readable format
         """
-        res = "Event time: %f\n" % self._event_duration
-        t = ""
-        if self._event_type == Events.STATE_CHANGE:
-            t = "STATE_CHANGE"
-        res += "Event type: %s\n" % t
-        res += "Source node: %d\n" % self.source.id
-        res += "Destination node: %d\n" % self.destination.id
+        res =  "Event time: {}\n".format(self.event_duration)
+        res += "Event type: {}\n".format(self.event_type)
+        res += "Source node: {}\n".format(self.source.id)
+        res += "Destination node: {}\n".format(self.destination.id)
         return res
