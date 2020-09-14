@@ -15,7 +15,7 @@
 
 """
 node module
-==========
+===========
 
 Module used to represent a node in the network.
 All the node logic is inside this module
@@ -399,7 +399,7 @@ class Node(Module):
         shared destination
 
         :param event: event that generates the withdraw, used to
-        get the delay time and the route that needs to be withdrawed
+            get the delay time and the route that needs to be withdrawed
         """
 
         # Wait the time defined by the withdraw distribution

@@ -57,7 +57,7 @@ class Link:
         :param node: Node which the link is refered to
         :param resource: unitary resource used to lock the link
         :param properties: properties of the link in the graphml that
-        needs to be evaluated
+            needs to be evaluated
         """
         self._id = Link.__link_counter
         Link.__link_counter += 1
@@ -82,7 +82,7 @@ class Link:
 
         :param msg: message that needs to be trasfered
         :param delay: time that needs to be waited before the message arrives
-        to the destination
+            to the destination
         """
         # Request of the unique resource, if the resource is available
         # it means the message is the first in the sequence of messages

@@ -15,7 +15,7 @@
 
 """
 event module
-===========
+============
 
 Module that handle events
 -------------------------
