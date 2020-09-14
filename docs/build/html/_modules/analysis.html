@@ -49,6 +49,7 @@
 <span class="c1"># Copyright (C) 2020 Mattia Milani &lt;mattia.milani@studenti.unitn.it&gt;</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">events</span> <span class="kn">import</span> <span class="n">Events</span>
 <span class="kn">from</span> <span class="nn">packet</span> <span class="kn">import</span> <span class="n">Packet</span>
 <span class="kn">from</span> <span class="nn">route</span> <span class="kn">import</span> <span class="n">Route</span>
@@ -87,6 +88,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">states</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="c1"># Last state of the node during the evolution</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">actualState</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">experiment_actualState</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="c1"># Set of transitions</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span> <span class="o">=</span> <span class="p">{}</span>
         
@@ -99,6 +101,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">id_to_route</span> <span class="o">=</span> <span class="n">route_df</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;index&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">id_to_route</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">Route</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_to_route</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">):</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_to_route</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="n">SingleFileAnalysis</span><span class="o">.</span><span class="n">ROUTE_COUNTER</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">states_routes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">NoneType</span><span class="p">):</span>
             <span class="c1"># Routes associated with the states</span>
@@ -149,9 +152,9 @@
         <span class="n">route</span><span class="o">.</span><span class="n">policy_value</span> <span class="o">=</span> <span class="n">tmp_pv</span>
         <span class="c1"># If the route is not in the dictionary of routes add it</span>
         <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ROUTE_COUNTER</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">id_to_route</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ROUTE_COUNTER</span><span class="p">)]</span> <span class="o">=</span> <span class="n">route</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ROUTE_COUNTER</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)]</span> <span class="o">=</span> <span class="n">SingleFileAnalysis</span><span class="o">.</span><span class="n">ROUTE_COUNTER</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">id_to_route</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">SingleFileAnalysis</span><span class="o">.</span><span class="n">ROUTE_COUNTER</span><span class="p">)]</span> <span class="o">=</span> <span class="n">route</span>
+            <span class="n">SingleFileAnalysis</span><span class="o">.</span><span class="n">ROUTE_COUNTER</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="c1"># Check the packet type and return the corresponding compressed version</span>
         <span class="k">if</span> <span class="n">packet</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">==</span> <span class="n">Packet</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;A&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)])</span>
@@ -211,7 +214,13 @@
 
         <span class="c1"># Keep a set of transmitted routes, set because we are interested</span>
         <span class="c1"># uniquelly in which route has been transmitted and not to who</span>
-        <span class="n">transmitted_routes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">transmitted_routes</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="sd">&quot;&quot;&quot;print(rx_value)</span>
+<span class="sd">        pd.set_option(&#39;display.max_columns&#39;, None)</span>
+<span class="sd">        pd.set_option(&#39;display.width&#39;, None)</span>
+<span class="sd">        pd.set_option(&#39;display.max_colwidth&#39;, None)</span>
+<span class="sd">        print(events_in_between)&quot;&quot;&quot;</span>
 
         <span class="c1"># Check each row of the events caused by the reception</span>
         <span class="k">for</span> <span class="n">row_event</span><span class="p">,</span> <span class="n">row_value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">events_in_between</span><span class="p">[</span><span class="s1">&#39;event&#39;</span><span class="p">],</span> 
@@ -222,36 +231,56 @@
                 <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__evaluate_rib_change</span><span class="p">(</span><span class="n">row_value</span><span class="p">)</span>
             <span class="c1"># If the event is a TX i update the corresponding sets</span>
             <span class="k">if</span> <span class="n">row_event</span> <span class="o">==</span> <span class="n">Events</span><span class="o">.</span><span class="n">TX</span><span class="p">:</span>
-                <span class="n">transmitted_routes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__evaluate_tx</span><span class="p">(</span><span class="n">row_value</span><span class="p">))</span>
+                <span class="n">elem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__evaluate_tx</span><span class="p">(</span><span class="n">row_value</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">elem</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">transmitted_routes</span><span class="p">:</span>
+                    <span class="n">transmitted_routes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
     
         <span class="c1"># Evaluate the reception event</span>
         <span class="n">inp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__evaluate_rx</span><span class="p">(</span><span class="n">rx_value</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">transmitted_routes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">transmitted_routes</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">transmitted_routes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">transmitted_routes</span><span class="p">)</span>
 
         <span class="c1"># The state has changed thanks to this reception message</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actualState</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_state</span><span class="p">):</span>
-            <span class="c1"># Evaluate the difference in the new state vs the previus one</span>
-            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actualState</span><span class="p">)</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">new_state</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiment_actualState</span> <span class="o">^</span> <span class="n">new_state</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># print(self.actualState, self.experiment_actualState, new_state)</span>
+            <span class="c1"># Evaluate the differenVce in the new state vs the previus one</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiment_actualState</span><span class="p">)</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">new_state</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">rx_event_id</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">rx_value</span><span class="p">))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actualState</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">new_state</span><span class="p">))</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;something really bad happened&quot;</span><span class="p">)</span>
                 <span class="n">exit</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 
             <span class="c1"># resulting_elem = self.__evalaute_state_difference(new_state).pop()</span>
             <span class="n">pkt</span> <span class="o">=</span> <span class="n">Packet</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="n">rx_value</span><span class="p">)</span>
             <span class="n">route</span> <span class="o">=</span> <span class="n">Route</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="n">pkt</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
-            <span class="n">pv_t</span> <span class="o">=</span> <span class="n">PolicyValue</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-            <span class="n">route</span><span class="o">.</span><span class="n">policy_value</span> <span class="o">=</span> <span class="n">pv_t</span>
-            <span class="k">if</span> <span class="n">pkt</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">==</span> <span class="n">Packet</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">:</span>  
+            <span class="n">route</span><span class="o">.</span><span class="n">policy_value</span> <span class="o">=</span> <span class="n">PolicyValue</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> 
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiment_actualState</span><span class="p">)</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">new_state</span><span class="p">))</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">pkt</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">==</span> <span class="n">Packet</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">:</span>  
+                    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">experiment_actualState</span> <span class="o">=</span> <span class="n">new_state</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">actualState</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">new_state</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)])</span>    
+                <span class="k">elif</span> <span class="n">pkt</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">==</span> <span class="n">Packet</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">experiment_actualState</span> <span class="o">=</span> <span class="n">new_state</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">actualState</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">new_state</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)])</span>   
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">experiment_actualState</span> <span class="o">=</span> <span class="n">new_state</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">actualState</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span><span class="p">:</span>
+                    <span class="n">old_rt</span> <span class="o">=</span> <span class="n">Route</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">old_rt</span><span class="o">.</span><span class="n">nh</span> <span class="o">==</span> <span class="n">route</span><span class="o">.</span><span class="n">nh</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span><span class="p">[</span><span class="n">elem</span><span class="p">]</span> <span class="ow">in</span> <span class="n">new_state</span><span class="p">:</span> 
+                            <span class="n">new_state</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span><span class="p">[</span><span class="n">elem</span><span class="p">])</span>
                 <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">route_to_id</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)]</span>
-                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">actualState</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-                <span class="n">new_state</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)])</span>    
-            <span class="k">elif</span> <span class="n">pkt</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">==</span> <span class="n">Packet</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">:</span>
-                <span class="n">new_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">actualState</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-                <span class="n">new_state</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)])</span>   
-            <span class="c1"># print(self.states_routes)</span>
-            <span class="c1"># print(self.actualState, new_state)</span>
+                <span class="n">new_state</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states_routes</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)])</span>
+                <span class="c1"># print(self.states_routes)</span>
+                <span class="c1"># print(self.actualState, new_state)</span>
 
             <span class="c1"># Check if the state has already been known</span>
             <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">new_state</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
@@ -260,6 +289,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># The state is already in the dictionary, increase the counter</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">new_state</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="c1"># print(new_state)</span>
 
         <span class="c1"># Create the new transition</span>
         <span class="n">transition</span> <span class="o">=</span> <span class="n">Transition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actualState</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span>
@@ -296,13 +326,24 @@
         <span class="n">tmp_rx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">event</span> <span class="o">==</span> <span class="n">Events</span><span class="o">.</span><span class="n">RX</span><span class="p">)]</span>
 
         <span class="c1"># To activate a useful O(LogN) index search the datafram must be sorted</span>
-        <span class="c1"># This will break the event time order, but we already estrapolated</span>
+        <span class="c1"># This will break the event time order, but we already extrapolated</span>
         <span class="c1"># RX events in time order</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="n">tmp_rx</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__evaluate_event_rx</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">event_id</span><span class="p">,</span> 
                                                            <span class="n">row</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SingleFileAnalysis.get_out_signal"><a class="viewcode-back" href="../analysis.html#analysis.SingleFileAnalysis.get_out_signal">[docs]</a>    <span class="k">def</span> <span class="nf">get_out_signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__evaluate_tx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">OrderedDict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span> </div>
+
+    <span class="c1"># @profile</span>
+<div class="viewcode-block" id="SingleFileAnalysis.evaluate_signaling"><a class="viewcode-back" href="../analysis.html#analysis.SingleFileAnalysis.evaluate_signaling">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_signaling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order_by_time</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">tmp_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="n">order_by_time</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span>
+        <span class="n">tmp_df</span> <span class="o">=</span> <span class="n">tmp_df</span><span class="p">[</span><span class="n">tmp_df</span><span class="o">.</span><span class="n">event</span> <span class="o">==</span> <span class="n">Events</span><span class="o">.</span><span class="n">TX</span><span class="p">][[</span><span class="s1">&#39;value&#39;</span><span class="p">]]</span>
+        <span class="n">tmp_v</span> <span class="o">=</span> <span class="n">tmp_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;event_cause&quot;</span><span class="p">],</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_out_signal</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmp_v</span><span class="o">.</span><span class="n">values</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SingleFileAnalysis.get_states_as_df"><a class="viewcode-back" href="../analysis.html#analysis.SingleFileAnalysis.get_states_as_df">[docs]</a>    <span class="k">def</span> <span class="nf">get_states_as_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">states</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">states</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>

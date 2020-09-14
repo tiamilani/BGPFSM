@@ -33,6 +33,12 @@
             
   <div class="section" id="module-config">
 <span id="config-module"></span><h1>config module<a class="headerlink" href="#module-config" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>Config module<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-to-manage-different-condifurations">
+<h3>module to manage different condifurations<a class="headerlink" href="#module-to-manage-different-condifurations" title="Permalink to this headline">¶</a></h3>
+<p>This module is used to read a json file that contains the environment
+information about the experiments</p>
 <dl class="py class">
 <dt id="config.Config">
 <em class="property">class </em><code class="sig-prename descclassname">config.</code><code class="sig-name descname">Config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config_file</span></em>, <em class="sig-param"><span class="n">section</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/config.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#config.Config" title="Permalink to this definition">¶</a></dt>
@@ -69,7 +75,8 @@ distribution parameter by using, in this specific case, {size.lambda}.</p>
 <dl class="py method">
 <dt id="config.Config.get_output_file">
 <code class="sig-name descname">get_output_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/config.html#Config.get_output_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#config.Config.get_output_file" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Returns the output file name</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="config.Config.get_param">
@@ -123,7 +130,7 @@ run = 5, a = 2, b = 1</p>
 
 <dl class="py method">
 <dt id="config.Config.remove_comments">
-<code class="sig-name descname">remove_comments</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">json_file</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/config.html#Config.remove_comments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#config.Config.remove_comments" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="sig-name descname">remove_comments</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">json_file</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/config.html#Config.remove_comments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#config.Config.remove_comments" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes the comments from a json file (non standard)
 :param json_file: json file name
 :returns: the content of the file without comments</p>
@@ -138,6 +145,8 @@ run = 5, a = 2, b = 1</p>
 
 </dd></dl>
 
+</div>
+</div>
 </div>
 
 

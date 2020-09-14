@@ -33,12 +33,40 @@
             
   <div class="section" id="module-policies">
 <span id="policies-module"></span><h1>policies module<a class="headerlink" href="#module-policies" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>Policies module<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-used-to-handle-policies-and-filters">
+<h3>Module used to handle policies and filters<a class="headerlink" href="#module-used-to-handle-policies-and-filters" title="Permalink to this headline">¶</a></h3>
+<p>The goal of this module is to make the use of policies easier
+it is possible to use policy values and policy functions.
+Values will be used inside policy functions.</p>
+<p>A policy function detemines when a message will be transfered and
+with which policy value associated</p>
+<p>Example of policy function
+&gt;&gt;&gt; &lt;0, inf, inf&gt;</p>
+<p>This policy function is used between clients and providers.
+The function result is given by the position required.
+For example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">=</span><span class="mi">0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">=</span><span class="n">inf</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">=</span><span class="n">inf</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="n">inf</span><span class="p">)</span><span class="o">=</span><span class="n">inf</span>
+</pre></div>
+</div>
+<p>The input of the policy function is a policy value and the output of it
+is a policy value itself.</p>
+<p>Other than numbers the only value accepted by policy values is “inf”</p>
 <dl class="py class">
 <dt id="policies.PolicyFunction">
 <em class="property">class </em><code class="sig-prename descclassname">policies.</code><code class="sig-name descname">PolicyFunction</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/policies.html#PolicyFunction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#policies.PolicyFunction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">collections.abc.MutableSequence</span></code></p>
 <p>PolicyFunction.
 Class to handle policy functions</p>
+<dl class="py attribute">
+<dt id="policies.PolicyFunction.PASS_EVERYTHING">
+<code class="sig-name descname">PASS_EVERYTHING</code><em class="property"> = 'pass-everything'</em><a class="headerlink" href="#policies.PolicyFunction.PASS_EVERYTHING" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt id="policies.PolicyFunction.__init__">
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/policies.html#PolicyFunction.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#policies.PolicyFunction.__init__" title="Permalink to this definition">¶</a></dt>
@@ -55,7 +83,7 @@ values must be separated by a ‘,’</p>
 
 <dl class="py method">
 <dt id="policies.PolicyFunction.insert">
-<code class="sig-name descname">insert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/policies.html#PolicyFunction.insert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#policies.PolicyFunction.insert" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">insert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/policies.html#PolicyFunction.insert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#policies.PolicyFunction.insert" title="Permalink to this definition">¶</a></dt>
 <dd><p>insert.
 This function has no effects
 :param i:</p>
@@ -121,6 +149,8 @@ Class used to handle policy values</p>
 
 </dd></dl>
 
+</div>
+</div>
 </div>
 
 

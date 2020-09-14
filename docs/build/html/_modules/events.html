@@ -45,15 +45,25 @@
 <span class="c1"># You should have received a copy of the GNU General Public License</span>
 <span class="c1"># along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
 <span class="c1">#</span>
-<span class="c1"># Copyright (C) 2016 Michele Segata &lt;segata@ccs-labs.org&gt;</span>
+<span class="c1"># Copyright (C) 2020 Mattia Milani &lt;mattia.milani@studenti.unitn.it&gt;</span>
 
+<span class="sd">&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="Events"><a class="viewcode-back" href="../events.html#events.Events">[docs]</a><span class="k">class</span> <span class="nc">Events</span><span class="p">:</span>
+<span class="sd">Events module</span>
+<span class="sd">=============</span>
+
+<span class="sd">Events has multiple possible types.</span>
+<span class="sd">All events types are raggruped in this module</span>
+<span class="sd">inside the class Events</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Events"><a class="viewcode-back" href="../events.html#events.Events">[docs]</a><span class="k">class</span> <span class="nc">Events</span><span class="p">:</span> <span class="c1"># pylint: disable=too-few-public-methods</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Defines event types for the simulation</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="c1"># Change state event </span>
+    <span class="c1"># Change state event</span>
     <span class="n">STATE_CHANGE</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="c1"># Transmission event</span>
     <span class="n">TX</span> <span class="o">=</span> <span class="mi">1</span>
@@ -70,7 +80,9 @@
     <span class="c1"># Reannouncement event</span>
     <span class="n">REANNOUNCE</span> <span class="o">=</span> <span class="mi">7</span>
     <span class="c1"># Rib state change event</span>
-    <span class="n">RIB_CHANGE</span> <span class="o">=</span> <span class="mi">8</span></div>
+    <span class="n">RIB_CHANGE</span> <span class="o">=</span> <span class="mi">8</span>
+    <span class="c1"># Introduction of a new Network</span>
+    <span class="n">DST_ADD</span> <span class="o">=</span> <span class="mi">9</span></div>
 </pre></div>
 
           </div>

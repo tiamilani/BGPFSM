@@ -1,0 +1,624 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>node_BACKUP_26214 &#8212; BGPFSM 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for node_BACKUP_26214</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This program is free software: you can redistribute it and/or modify</span>
+<span class="c1"># it under the terms of the GNU General Public License as published by</span>
+<span class="c1"># the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c1"># (at your option) any later version.</span>
+<span class="c1">#</span>
+<span class="c1"># This program is distributed in the hope that it will be useful,</span>
+<span class="c1"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c1"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c1"># GNU General Public License for more details.</span>
+<span class="c1">#</span>
+<span class="c1"># You should have received a copy of the GNU General Public License</span>
+<span class="c1"># along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright (C) 2020 Mattia Milani &lt;mattia.milani@studenti.unitn.it&gt;</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">node module</span>
+<span class="sd">==========</span>
+
+<span class="sd">Module used to represent a node in the network.</span>
+<span class="sd">All the node logic is inside this module</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">ipaddress</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span> <span class="nn">simpy</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;util&#39;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">module</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span> <span class="nn">event</span> <span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">events</span> <span class="kn">import</span> <span class="n">Events</span>
+<span class="kn">from</span> <span class="nn">packet</span> <span class="kn">import</span> <span class="n">Packet</span>
+<span class="kn">from</span> <span class="nn">routingTable</span> <span class="kn">import</span> <span class="n">RoutingTable</span>
+<span class="kn">from</span> <span class="nn">route</span> <span class="kn">import</span> <span class="n">Route</span>
+<span class="kn">from</span> <span class="nn">distribution</span> <span class="kn">import</span> <span class="n">Distribution</span>
+<span class="kn">from</span> <span class="nn">rib</span> <span class="kn">import</span> <span class="n">Rib</span>
+<span class="kn">from</span> <span class="nn">policies</span> <span class="kn">import</span> <span class="n">PolicyValue</span>
+
+<span class="kn">import</span> <span class="nn">bgp_sim</span>
+
+<div class="viewcode-block" id="Node"><a class="viewcode-back" href="../node_BACKUP_26214.html#node_BACKUP_26214.Node">[docs]</a><span class="k">class</span> <span class="nc">Node</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Node.</span>
+<span class="sd">    Class to manage node inside the simulation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># States of the node</span>
+    <span class="n">IDLE</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">STATE_CHANGING</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="c1"># Param that the node can get from the configuration</span>
+    <span class="c1"># Distribution for the message transmission</span>
+    <span class="n">PAR_DATARATE</span> <span class="o">=</span> <span class="s2">&quot;datarate&quot;</span>
+    <span class="c1"># Processing time distribution</span>
+    <span class="n">PAR_PROC_TIME</span> <span class="o">=</span> <span class="s2">&quot;processing&quot;</span>
+    <span class="c1"># Message arrival time distribution</span>
+    <span class="n">PAR_DELAY</span> <span class="o">=</span> <span class="s2">&quot;delay&quot;</span>
+    <span class="c1"># Withdraw param</span>
+    <span class="n">PAR_WITHDRAW</span> <span class="o">=</span> <span class="s2">&quot;withdraw&quot;</span>
+    <span class="c1"># Withdraw distribution</span>
+    <span class="n">PAR_WITHDRAW_DIST</span> <span class="o">=</span> <span class="s2">&quot;withdraw_dist&quot;</span>
+    <span class="c1"># reannouncement param</span>
+    <span class="n">PAR_REANNOUNCE</span> <span class="o">=</span> <span class="s2">&quot;reannouncement&quot;</span>
+    <span class="c1"># Reannouncement distribution</span>
+    <span class="n">PAR_REANNOUNCE_DIST</span> <span class="o">=</span> <span class="s2">&quot;reannouncement_dist&quot;</span>
+    <span class="c1"># Signaling param</span>
+    <span class="n">PAR_SIGNALING</span> <span class="o">=</span> <span class="s2">&quot;signaling&quot;</span>
+    <span class="c1"># Signaling sequence</span>
+    <span class="n">PAR_SIGNALING_SEQUENCE</span> <span class="o">=</span> <span class="s2">&quot;signaling_sequence&quot;</span>
+    <span class="c1"># Implicit withdraw flag</span>
+    <span class="n">PAR_IMPLICIT_WITHDRAW</span> <span class="o">=</span> <span class="s2">&quot;implicit_withdraw&quot;</span>
+
+<div class="viewcode-block" id="Node.__init__"><a class="viewcode-back" href="../node_BACKUP_26214.html#node_BACKUP_26214.Node.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id_node</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__init__.</span>
+
+<span class="sd">        :param id_node: identifier of the node</span>
+<span class="sd">        :param config: Configuration file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_id</span> <span class="o">=</span> <span class="n">id_node</span>
+        <span class="c1"># Initial state of the node is IDLE</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">Node</span><span class="o">.</span><span class="n">IDLE</span>
+        <span class="c1"># Simulation environment</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_env</span> <span class="o">=</span> <span class="n">bgp_sim</span><span class="o">.</span><span class="n">Sim</span><span class="o">.</span><span class="n">Instance</span><span class="p">()</span><span class="o">.</span><span class="n">env</span> <span class="c1"># pylint: disable=no-member</span>
+        <span class="c1"># Initialization of commond modules</span>
+        <span class="n">Module</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="c1"># Events queue, events that needs to be handle by the node</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_store</span> <span class="o">=</span> <span class="n">simpy</span><span class="o">.</span><span class="n">Store</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="p">)</span>
+        <span class="c1"># Routing table, This table represent the routing knowledge</span>
+        <span class="c1"># actually present in the node</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routing_table</span> <span class="o">=</span> <span class="n">RoutingTable</span><span class="p">()</span>
+        <span class="c1"># Rib table, this table represent all the routing knowledge</span>
+        <span class="c1"># present in the node, plus routes that are not the best</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rib</span> <span class="o">=</span> <span class="n">Rib</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
+        <span class="c1"># Event handler of a node</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reception</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handle_event</span><span class="p">())</span>
+        <span class="c1"># Neighbor of the node</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_neighbors</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># Withdraw flag</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">withdraw</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="n">Node</span><span class="o">.</span><span class="n">PAR_WITHDRAW</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;True&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">)</span>
+        <span class="c1"># Reannouncement flag</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reannounce</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="n">Node</span><span class="o">.</span><span class="n">PAR_REANNOUNCE</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;True&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">)</span>
+        <span class="c1"># Signaling flag</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signaling</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="n">Node</span><span class="o">.</span><span class="n">PAR_SIGNALING</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;True&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">)</span>
+        <span class="c1"># Implicit withdraw flag</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">implicit_withdraw</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="n">Node</span><span class="o">.</span><span class="n">PAR_IMPLICIT_WITHDRAW</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;True&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">)</span>
+        <span class="c1"># Distributions used inside the node</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rate</span> <span class="o">=</span> <span class="n">Distribution</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="n">Node</span><span class="o">.</span><span class="n">PAR_DATARATE</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proc_time</span> <span class="o">=</span> <span class="n">Distribution</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="n">Node</span><span class="o">.</span><span class="n">PAR_PROC_TIME</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delay</span> <span class="o">=</span> <span class="n">Distribution</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="n">Node</span><span class="o">.</span><span class="n">PAR_DELAY</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">withdraw_dist</span> <span class="o">=</span> <span class="n">Distribution</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="n">Node</span><span class="o">.</span><span class="n">PAR_WITHDRAW_DIST</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reannouncement_dist</span><span class="o">=</span> <span class="n">Distribution</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="n">Node</span><span class="o">.</span><span class="n">PAR_REANNOUNCE_DIST</span><span class="p">))</span>
+        <span class="c1"># Signaling sequence</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signaling_sequence</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get_param</span><span class="p">(</span><span class="n">Node</span><span class="o">.</span><span class="n">PAR_SIGNALING_SEQUENCE</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signaling_accepted_simbols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;W&quot;</span><span class="p">]</span>
+        <span class="c1"># Resource for the acquisition of the tx channel resource</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tx_res</span> <span class="o">=</span> <span class="n">simpy</span><span class="o">.</span><span class="n">Resource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="p">,</span> <span class="n">capacity</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;_print.</span>
+<span class="sd">        Print a message from the node</span>
+<span class="sd">        evaluate the verbose level before printing a message</span>
+
+<span class="sd">        :param msg: Message that needs to be printed on sysout</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">-</span><span class="si">{}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span> <span class="o">+</span> <span class="n">msg</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Node.add_neighbor"><a class="viewcode-back" href="../node_BACKUP_26214.html#node_BACKUP_26214.Node.add_neighbor">[docs]</a>    <span class="k">def</span> <span class="nf">add_neighbor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">link</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a neighbor to the set of neighbors</span>
+<span class="sd">        If the neighbor is already in the set it throws an error</span>
+<span class="sd">        and terminate</span>
+
+<span class="sd">        :param link: link that has to be added</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Evaluate if the link is already present</span>
+        <span class="k">if</span> <span class="n">link</span><span class="o">.</span><span class="n">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neighbors</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_neighbors</span><span class="p">[</span><span class="n">link</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">link</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> - Neighbor </span><span class="si">{}</span><span class="s2"> already in the set&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span>
+                                                                <span class="n">link</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Node.evaluate_signaling_event"><a class="viewcode-back" href="../node_BACKUP_26214.html#node_BACKUP_26214.Node.evaluate_signaling_event">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_signaling_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elem</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">route</span><span class="p">:</span> <span class="n">Route</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Event</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;evaluate_signaling_event.</span>
+
+<span class="sd">        Evaluate a signaling event and returns the event associated with the</span>
+<span class="sd">        sigaling</span>
+
+<span class="sd">        :param elem: signal to manage</span>
+<span class="sd">        :type elem: str</span>
+<span class="sd">        :param route: Route to share or withdraw</span>
+<span class="sd">        :type route: Route</span>
+<span class="sd">        :rtype: Event</span>
+
+<span class="sd">        :raise ValueError: When is passed an element that is not a valid signal</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">elem</span> <span class="o">==</span> <span class="s2">&quot;A&quot;</span><span class="p">:</span>
+            <span class="n">proc_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reannouncement_dist</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
+            <span class="n">event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="n">proc_time</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">NEW_DST</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span>
+                          <span class="n">obj</span><span class="o">=</span><span class="n">route</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">elem</span> <span class="o">==</span> <span class="s2">&quot;W&quot;</span><span class="p">:</span>
+            <span class="n">withdraw_packet</span> <span class="o">=</span> <span class="n">Packet</span><span class="p">(</span><span class="n">Packet</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">,</span> <span class="n">route</span><span class="p">)</span>
+            <span class="n">withdraw_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">withdraw_dist</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
+            <span class="n">event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="n">withdraw_time</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span>
+                          <span class="n">obj</span><span class="o">=</span><span class="n">withdraw_packet</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Elem </span><span class="si">{}</span><span class="s2"> not accepted in signaling, accepted </span><span class="se">\</span>
+<span class="s2">                              simbols: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">signaling_accepted_simbols</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">event</span></div>
+
+
+<div class="viewcode-block" id="Node.force_share_dst"><a class="viewcode-back" href="../node_BACKUP_26214.html#node_BACKUP_26214.Node.force_share_dst">[docs]</a>    <span class="k">def</span> <span class="nf">force_share_dst</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;force_share_dst.</span>
+<span class="sd">        Function used as kick starter for nodes that have to share a destination</span>
+<span class="sd">        to generate the start events.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">route</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">routing_table</span><span class="p">:</span>
+            <span class="c1"># Create a new destination event for each route in the routing</span>
+            <span class="c1"># Table that needs to be shared</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">signaling</span><span class="p">:</span>
+                <span class="n">proc_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc_time</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
+                <span class="n">new_dst_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="n">proc_time</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">NEW_DST</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span>
+                                      <span class="n">route</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">event_store</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">new_dst_event</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">env_time</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">signaling_sequence</span><span class="p">:</span>
+                    <span class="n">event</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_signaling_event</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">route</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_print</span><span class="p">(</span><span class="s2">&quot;New event to signal t: </span><span class="si">{}</span><span class="s2">, delay: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                <span class="n">env_time</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">event_duration</span><span class="p">))</span>
+                    <span class="n">env_time</span> <span class="o">+=</span> <span class="n">event</span><span class="o">.</span><span class="n">event_duration</span>
+                    <span class="n">event</span><span class="o">.</span><span class="n">event_duration</span> <span class="o">=</span> <span class="n">env_time</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">event_store</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">event</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Node.new_network"><a class="viewcode-back" href="../node_BACKUP_26214.html#node_BACKUP_26214.Node.new_network">[docs]</a>    <span class="k">def</span> <span class="nf">new_network</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">route</span><span class="p">:</span> <span class="n">Route</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">,</span> <span class="n">share</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;new_network.</span>
+<span class="sd">        Function used to add a new route, it will be evaluated for the</span>
+<span class="sd">        insertion in the rib and it will be then evaluated for the Routing table</span>
+
+<span class="sd">        :param route: Route to evaluate</span>
+<span class="sd">        :type route: Route</span>
+<span class="sd">        :param event: Cause event for the evaluation</span>
+<span class="sd">        :type event: Event</span>
+<span class="sd">        :param share: The network should be shared if it&#39;s the new best? (default=True)</span>
+<span class="sd">        :rtype: None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">old_best</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rib</span><span class="p">[</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">])</span>
+        <span class="n">new_best</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rib</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">,</span> <span class="n">route</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="n">event</span><span class="p">,</span>
+                                   <span class="n">implicit_withdraw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">implicit_withdraw</span><span class="p">)</span>
+        <span class="c1"># Evaluate if the new route is the new best route for the destiantion</span>
+        <span class="k">if</span> <span class="n">new_best</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">old_best</span><span class="p">):</span>
+            <span class="c1"># If it is the new best route insert it in the routing table and</span>
+            <span class="c1"># Log the event</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">routing_table</span><span class="p">[</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">]</span> <span class="o">=</span> <span class="n">route</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_print</span><span class="p">(</span><span class="s2">&quot;New route in the routing table </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">route</span><span class="p">))</span>
+            <span class="n">rt_change_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">RT_CHANGE</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="n">route</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">log_rt_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rt_change_event</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">share</span><span class="p">:</span>
+                <span class="n">proc_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc_time</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
+                <span class="n">new_dst_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="n">proc_time</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">NEW_DST</span><span class="p">,</span>
+                                      <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="n">route</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">event_store</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">new_dst_event</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Node.add_destination"><a class="viewcode-back" href="../node_BACKUP_26214.html#node_BACKUP_26214.Node.add_destination">[docs]</a>    <span class="k">def</span> <span class="nf">add_destination</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destination</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">next_hop</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="c1"># pylint: disable=too-many-arguments</span>
+            <span class="n">policy_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">share</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;add_destination.</span>
+<span class="sd">        Function used to add a destination to the node not already in route</span>
+<span class="sd">        format</span>
+
+<span class="sd">        :param destination: destination to share</span>
+<span class="sd">        :type destination: str</span>
+<span class="sd">        :param path: List of nodes attraversed to reach the destination</span>
+<span class="sd">        :type path: list</span>
+<span class="sd">        :param next_hop: Id of the next hop node</span>
+<span class="sd">        :type next_hop: str</span>
+<span class="sd">        :param policy_value: Policy value to add to the route, defualt=0</span>
+<span class="sd">        :param share: Sharing flag, default=True, if false the route will</span>
+<span class="sd">                      be added but not shared</span>
+<span class="sd">        :rtype: None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">network</span> <span class="o">=</span> <span class="n">ipaddress</span><span class="o">.</span><span class="n">ip_network</span><span class="p">(</span><span class="n">destination</span><span class="p">)</span>
+        <span class="n">policy</span> <span class="o">=</span> <span class="n">PolicyValue</span><span class="p">(</span><span class="n">policy_value</span><span class="p">)</span>
+        <span class="n">new_route</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">next_hop</span><span class="p">,</span> <span class="n">policy_value</span><span class="o">=</span><span class="n">policy</span><span class="p">,</span> <span class="n">mine</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">intro_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">DST_ADD</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_network</span><span class="p">(</span><span class="n">new_route</span><span class="p">,</span> <span class="n">intro_event</span><span class="p">,</span> <span class="n">share</span><span class="o">=</span><span class="n">share</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Node.change_state"><a class="viewcode-back" href="../node_BACKUP_26214.html#node_BACKUP_26214.Node.change_state">[docs]</a>    <span class="k">def</span> <span class="nf">change_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waiting_time</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;change_state.</span>
+<span class="sd">            Change the state of a node, test function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">waiting_time</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">Node</span><span class="o">.</span><span class="n">STATE_CHANGING</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">log_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Node.rx_pkt"><a class="viewcode-back" href="../node_BACKUP_26214.html#node_BACKUP_26214.Node.rx_pkt">[docs]</a>    <span class="k">def</span> <span class="nf">rx_pkt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;recept.</span>
+<span class="sd">        Function to handle packet reception</span>
+
+<span class="sd">        :param event: receiving event that triggered the reception</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">packet</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">obj</span>
+        <span class="n">waiting_time</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">event_duration</span>
+        <span class="c1"># Waiting for the reception</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">waiting_time</span><span class="p">)</span>
+        <span class="c1"># Log the reception</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_print</span><span class="p">(</span><span class="s2">&quot;Packet_RX: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">packet</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">log_packet_rx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+        <span class="c1"># Get the route</span>
+        <span class="n">route</span> <span class="o">=</span> <span class="n">packet</span><span class="o">.</span><span class="n">content</span>
+        <span class="n">route</span><span class="o">.</span><span class="n">mine</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="c1"># If the packet contains an update it will be evaluated</span>
+        <span class="k">if</span> <span class="n">packet</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">==</span> <span class="n">Packet</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">new_network</span><span class="p">(</span><span class="n">route</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+        <span class="c1"># If the packet contains a withdrow it will be evaluated by the</span>
+        <span class="c1"># Withdraw handler</span>
+        <span class="k">if</span> <span class="n">packet</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">==</span> <span class="n">Packet</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">:</span>
+            <span class="c1"># self.withdraw_handler(event, packet)</span>
+            <span class="n">route</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+            <span class="n">withdraw_packet</span> <span class="o">=</span> <span class="n">Packet</span><span class="p">(</span><span class="n">Packet</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">,</span> <span class="n">route</span><span class="p">)</span>
+            <span class="n">withdraw_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">,</span>
+                                   <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="n">withdraw_packet</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">event_store</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">withdraw_event</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Node.tx_pkt"><a class="viewcode-back" href="../node_BACKUP_26214.html#node_BACKUP_26214.Node.tx_pkt">[docs]</a>    <span class="k">def</span> <span class="nf">tx_pkt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        tx_pkt.</span>
+<span class="sd">        Function that transmit the packet to a destination</span>
+<span class="sd">        :param event: Transmission event</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Reserve the transmission through a resource</span>
+        <span class="c1"># to avoid the transmission of messages in reverse order</span>
+        <span class="c1"># Evaluation of the time necessary for the transmission</span>
+        <span class="n">waiting_time</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">event_duration</span>
+        <span class="n">request</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tx_res</span><span class="o">.</span><span class="n">request</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">waiting_time</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">request</span>
+        <span class="n">dst</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">destination</span>
+        <span class="n">packet</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">obj</span>
+        <span class="c1"># Get the link that will handle the transmission</span>
+        <span class="n">link</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neighbors</span><span class="p">[</span><span class="n">dst</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_print</span><span class="p">(</span><span class="s2">&quot;Packet_TX: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">packet</span><span class="p">))</span>
+        <span class="c1"># Evaluate the delay necessary for the transfer</span>
+        <span class="k">if</span> <span class="n">link</span><span class="o">.</span><span class="n">delay</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">delay</span> <span class="o">=</span> <span class="n">link</span><span class="o">.</span><span class="n">delay</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">delay</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
+        <span class="c1"># Generate the reception event and pass it to the link</span>
+        <span class="n">evaluation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc_time</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
+        <span class="n">reception_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="n">evaluation</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">RX</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span>
+                                <span class="n">obj</span><span class="o">=</span><span class="n">packet</span><span class="p">,</span> <span class="n">sent_time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
+        <span class="n">link</span><span class="o">.</span><span class="n">tx</span><span class="p">(</span><span class="n">reception_event</span><span class="p">,</span> <span class="n">delay</span><span class="p">)</span>
+        <span class="c1"># Log the transmission</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">log_packet_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+        <span class="c1"># Release the resource</span>
+        <span class="n">wait</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc_time</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">wait</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tx_res</span><span class="o">.</span><span class="n">release</span><span class="p">(</span><span class="n">request</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Node.share_dst"><a class="viewcode-back" href="../node_BACKUP_26214.html#node_BACKUP_26214.Node.share_dst">[docs]</a>    <span class="k">def</span> <span class="nf">share_dst</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;share_dst.</span>
+<span class="sd">        Share a destiantion to all the neighbors</span>
+<span class="sd">        If the destination is originated by this node and the withdraw flag</span>
+<span class="sd">        is active a withdraw will also be triggered</span>
+
+<span class="sd">        :param event: event that triggered the sharing of the destination</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">waiting_time</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">event_duration</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">waiting_time</span><span class="p">)</span>
+        <span class="n">dst</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">obj</span>
+
+        <span class="n">route</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
+        <span class="c1"># Add the self id to the path and nh field</span>
+        <span class="n">route</span><span class="o">.</span><span class="n">add_to_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span>
+        <span class="n">route</span><span class="o">.</span><span class="n">nh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span>
+        <span class="n">packet</span> <span class="o">=</span> <span class="n">Packet</span><span class="p">(</span><span class="n">Packet</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">,</span> <span class="n">route</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send_msg_to_all</span><span class="p">(</span><span class="n">packet</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dst</span><span class="o">.</span><span class="n">mine</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">signaling</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">withdraw</span><span class="p">:</span>
+            <span class="c1"># Generate the withdraw event</span>
+            <span class="n">withdraw_packet</span> <span class="o">=</span> <span class="n">Packet</span><span class="p">(</span><span class="n">Packet</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
+            <span class="n">withdraw_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">withdraw_dist</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
+            <span class="n">withdraw_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="n">withdraw_time</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span><span class="p">,</span>
+                                   <span class="n">Events</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span>
+                                   <span class="n">obj</span><span class="o">=</span><span class="n">withdraw_packet</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">event_store</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">withdraw_event</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Node.send_msg_to_all"><a class="viewcode-back" href="../node_BACKUP_26214.html#node_BACKUP_26214.Node.send_msg_to_all">[docs]</a>    <span class="k">def</span> <span class="nf">send_msg_to_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">packet</span><span class="p">:</span> <span class="n">Packet</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;send_msg_to_all.</span>
+<span class="sd">        Function to send a packet to all the neighbours.</span>
+<span class="sd">        The packet will be sent only if the route respect the policy value</span>
+<span class="sd">        of the link and if the neighbour is not the next hop of the route</span>
+
+<span class="sd">        :param packet: Packet to send</span>
+<span class="sd">        :type packet: Packet</span>
+<span class="sd">        :param event: Cause event</span>
+<span class="sd">        :type event: Event</span>
+<span class="sd">        :rtype: None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">neigh</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neighbors</span><span class="p">:</span>
+            <span class="n">route</span> <span class="o">=</span> <span class="n">packet</span><span class="o">.</span><span class="n">content</span>
+            <span class="n">dst_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neighbors</span><span class="p">[</span><span class="n">neigh</span><span class="p">]</span><span class="o">.</span><span class="n">node</span>
+            <span class="k">if</span> <span class="n">packet</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">==</span> <span class="n">Packet</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_print</span><span class="p">(</span><span class="s2">&quot;Withdraw for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dst_node</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">packet</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">==</span> <span class="n">Packet</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_print</span><span class="p">(</span><span class="s2">&quot;Advertisement for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dst_node</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
+
+            <span class="c1"># Get the policy value that is in the routing table</span>
+            <span class="n">link</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neighbors</span><span class="p">[</span><span class="n">dst_node</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
+            <span class="c1"># Check the link export_policy if it is valid</span>
+            <span class="n">route</span><span class="o">.</span><span class="n">policy_value</span> <span class="o">=</span> <span class="n">link</span><span class="o">.</span><span class="n">test</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">policy_value</span><span class="p">)</span>
+            <span class="c1"># If it is not valid jump to the next iteration</span>
+            <span class="k">if</span> <span class="n">route</span><span class="o">.</span><span class="n">policy_value</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_print</span><span class="p">(</span><span class="s2">&quot;Packet aborted for policies&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">route</span><span class="o">.</span><span class="n">nh</span> <span class="o">==</span> <span class="n">dst_node</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_print</span><span class="p">(</span><span class="s2">&quot;Packet aborted because the neighbor is my NH </span><span class="se">\</span>
+<span class="s2">                             of the route&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="n">packet_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rate</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
+
+            <span class="n">transmission_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="n">packet_time</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span><span class="p">,</span>
+                                       <span class="n">Events</span><span class="o">.</span><span class="n">TX</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">dst_node</span><span class="p">,</span>
+                                       <span class="n">obj</span><span class="o">=</span><span class="n">packet</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">event_store</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">transmission_event</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Node.program_withdraw"><a class="viewcode-back" href="../node_BACKUP_26214.html#node_BACKUP_26214.Node.program_withdraw">[docs]</a>    <span class="k">def</span> <span class="nf">program_withdraw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;program_withdraw.</span>
+<span class="sd">        Function used to program a withdraw of a previusly</span>
+<span class="sd">        shared destination</span>
+
+<span class="sd">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>
+<span class="sd">        :param event: event that generates the withdraw, used to </span>
+<span class="sd">                      get the delay time and the route that needs to be withdrawed</span>
+<span class="sd">=======</span>
+<span class="sd">        :param event: event that generates the withdraw, used to</span>
+<span class="sd">        get the delay time and the route that needs to be withdrawed</span>
+<span class="sd">&gt;&gt;&gt;&gt;&gt;&gt;&gt; master</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Wait the time defined by the withdraw distribution</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">event_duration</span><span class="p">)</span>
+
+        <span class="c1"># Get the route</span>
+        <span class="n">packet</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">obj</span>
+        <span class="n">route</span> <span class="o">=</span> <span class="n">packet</span><span class="o">.</span><span class="n">content</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_print</span><span class="p">(</span><span class="s2">&quot;Route to withdraw: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">))</span>
+
+        <span class="c1"># Delete the route from the routing table and the rib</span>
+        <span class="n">old_best</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rib</span><span class="p">[</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rib</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">,</span> <span class="n">route</span><span class="p">):</span>
+            <span class="n">change_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">RIB_CHANGE</span><span class="p">,</span>
+                    <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">change_event</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rib</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">,</span> <span class="n">route</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="n">change_event</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_print</span><span class="p">(</span><span class="s2">&quot;Rib does not contains: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">))</span>
+            <span class="k">return</span>
+        <span class="n">new_best</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rib</span><span class="p">[</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">new_best</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">routing_table</span><span class="p">[</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">]</span>
+            <span class="n">rt_change_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">RT_CHANGE</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="n">Route</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">,</span> <span class="p">[],</span> <span class="kc">None</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">log_rt_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rt_change_event</span><span class="p">)</span>
+
+            <span class="c1"># Send a withdraw for the route</span>
+            <span class="n">route_copy</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+            <span class="n">route_copy</span><span class="o">.</span><span class="n">add_to_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span>
+            <span class="n">route_copy</span><span class="o">.</span><span class="n">nh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span>
+            <span class="n">withdraw_packet</span> <span class="o">=</span> <span class="n">Packet</span><span class="p">(</span><span class="n">Packet</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">,</span> <span class="n">route_copy</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_msg_to_all</span><span class="p">(</span><span class="n">withdraw_packet</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">new_best</span> <span class="o">!=</span> <span class="n">old_best</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">routing_table</span><span class="p">[</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_best</span>
+            <span class="n">rt_change_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">RT_CHANGE</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="n">new_best</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">log_rt_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rt_change_event</span><span class="p">)</span>
+
+            <span class="c1"># Send an update with the new best</span>
+            <span class="n">update_route</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">new_best</span><span class="p">)</span>
+            <span class="n">update_route</span><span class="o">.</span><span class="n">add_to_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span>
+            <span class="n">update_route</span><span class="o">.</span><span class="n">nh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span>
+            <span class="n">update_packet</span> <span class="o">=</span> <span class="n">Packet</span><span class="p">(</span><span class="n">Packet</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">,</span> <span class="n">update_route</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_msg_to_all</span><span class="p">(</span><span class="n">update_packet</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">new_best</span> <span class="o">==</span> <span class="n">old_best</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_print</span><span class="p">(</span><span class="s2">&quot;Best route not changed, nothing to share&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Check if it&#39;s needed a redistribution</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">signaling</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">reannounce</span> <span class="ow">and</span> <span class="n">packet</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">mine</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">reannouncement_timing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reannouncement_dist</span><span class="o">.</span><span class="n">get_value</span><span class="p">()</span>
+            <span class="n">redistribute_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="n">reannouncement_timing</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">REANNOUNCE</span><span class="p">,</span>
+                                        <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">event_store</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">redistribute_event</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Node.reannounce_handler"><a class="viewcode-back" href="../node_BACKUP_26214.html#node_BACKUP_26214.Node.reannounce_handler">[docs]</a>    <span class="k">def</span> <span class="nf">reannounce_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reannouncement function</span>
+<span class="sd">        used to redistributed a route that was withdrawed before</span>
+
+<span class="sd">        :param event: event that triggered the reannouncement</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">event_duration</span><span class="p">)</span>
+        <span class="n">net</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">obj</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_print</span><span class="p">(</span><span class="s2">&quot;I have to reintroduce </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">net</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_destination</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="p">[],</span> <span class="kc">None</span><span class="p">,</span> <span class="n">share</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Node.handle_event"><a class="viewcode-back" href="../node_BACKUP_26214.html#node_BACKUP_26214.Node.handle_event">[docs]</a>    <span class="k">def</span> <span class="nf">handle_event</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="c1"># pylint: disable=arguments-differ</span>
+        <span class="sd">&quot;&quot;&quot;handle_event.</span>
+<span class="sd">        Function to handle events from the store</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="c1"># Operate only if there is something on the queue</span>
+            <span class="c1"># Pop the event</span>
+            <span class="n">event</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_store</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+            <span class="c1"># Check if the event is known</span>
+            <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_type</span> <span class="o">==</span> <span class="n">Events</span><span class="o">.</span><span class="n">TX</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tx_pkt</span><span class="p">(</span><span class="n">event</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">event_type</span> <span class="o">==</span> <span class="n">Events</span><span class="o">.</span><span class="n">RX</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rx_pkt</span><span class="p">(</span><span class="n">event</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">event_type</span> <span class="o">==</span> <span class="n">Events</span><span class="o">.</span><span class="n">NEW_DST</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">share_dst</span><span class="p">(</span><span class="n">event</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">event_type</span> <span class="o">==</span> <span class="n">Events</span><span class="o">.</span><span class="n">WITHDRAW</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">program_withdraw</span><span class="p">(</span><span class="n">event</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">event_type</span> <span class="o">==</span> <span class="n">Events</span><span class="o">.</span><span class="n">REANNOUNCE</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reannounce_handler</span><span class="p">(</span><span class="n">event</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> is not a valid event type&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">event_type</span><span class="p">))</span>
+            <span class="c1"># Delete the processed event</span>
+            <span class="k">del</span> <span class="n">event</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;state.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="c1"># pylint: disable=invalid-name</span>
+        <span class="sd">&quot;&quot;&quot;id.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">neighbors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;neighbor.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neighbors</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the node as a human readable object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="s2">&quot;Node: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">+=</span> <span class="s2">&quot;Neighborhood: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">([</span><span class="n">n</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neighbors</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+        <span class="n">res</span> <span class="o">+=</span> <span class="s2">&quot;Destinations queue: &quot;</span>
+        <span class="n">res</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">routing_table</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rib</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">BGPFSM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mattia Milani.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

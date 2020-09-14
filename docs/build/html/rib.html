@@ -33,17 +33,21 @@
             
   <div class="section" id="module-rib">
 <span id="rib-module"></span><h1>rib module<a class="headerlink" href="#module-rib" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>Rib module<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="control-a-routing-information-base">
+<h3>Control a routing information base<a class="headerlink" href="#control-a-routing-information-base" title="Permalink to this headline">¶</a></h3>
+<p>Is possible to create and handle a routing information base using this module
+It povides an iterable rib.
+Is possible to register only routes in the rib.
+New routes will be evaluated before the insertion.
+A new route could override old routes from neighbours.</p>
 <dl class="py class">
 <dt id="rib.Rib">
 <em class="property">class </em><code class="sig-prename descclassname">rib.</code><code class="sig-name descname">Rib</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node_id</span></em>, <em class="sig-param"><span class="n">logger</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">collections.abc.MutableSequence</span></code></p>
 <p>Rib.
 Class used to handle the routing information base of a node</p>
-<dl class="py attribute">
-<dt id="rib.Rib.ROUTE_COUNTER">
-<code class="sig-name descname">ROUTE_COUNTER</code><em class="property"> = 0</em><a class="headerlink" href="#rib.Rib.ROUTE_COUNTER" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt id="rib.Rib.__init__">
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node_id</span></em>, <em class="sig-param"><span class="n">logger</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.__init__" title="Permalink to this definition">¶</a></dt>
@@ -60,25 +64,25 @@ Class used to handle the routing information base of a node</p>
 
 <dl class="py method">
 <dt id="rib.Rib.check">
-<code class="sig-name descname">check</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.check" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">check</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.check" title="Permalink to this definition">¶</a></dt>
 <dd><p>check.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>v</strong> – check the type of v</p>
+<dd class="field-odd"><p><strong>value</strong> – check the type of value</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="rib.Rib.contains">
-<code class="sig-name descname">contains</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i</span></em>, <em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.contains"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.contains" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">contains</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i</span></em>, <em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.contains"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.contains" title="Permalink to this definition">¶</a></dt>
 <dd><p>contains.
-check if the table contains the object v in the vector for the addr i</p>
+check if the table contains the object value in the vector for the addr i</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>i</strong> – addr key</p></li>
-<li><p><strong>v</strong> – route to check</p></li>
+<li><p><strong>value</strong> – route to check</p></li>
 </ul>
 </dd>
 </dl>
@@ -101,9 +105,9 @@ returns always true for now</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="rib.Rib.getKey">
-<code class="sig-name descname">getKey</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.getKey"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.getKey" title="Permalink to this definition">¶</a></dt>
-<dd><p>getKey.
+<dt id="rib.Rib.get_key">
+<code class="sig-name descname">get_key</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.get_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.get_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>get_key.
 Return the ith key</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -114,7 +118,7 @@ Return the ith key</p>
 
 <dl class="py method">
 <dt id="rib.Rib.insert">
-<code class="sig-name descname">insert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i</span></em>, <em class="sig-param"><span class="n">v</span></em>, <em class="sig-param"><span class="n">event</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.insert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.insert" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">insert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i</span></em>, <em class="sig-param"><span class="n">v</span></em>, <em class="sig-param"><span class="n">event</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">implicit_withdraw</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.insert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.insert" title="Permalink to this definition">¶</a></dt>
 <dd><p>insert.
 Function to insert an object in the rib at the addr i</p>
 <dl class="field-list simple">
@@ -145,7 +149,18 @@ remove object v from the vector of addr i if present</p>
 <dl class="py method">
 <dt id="rib.Rib.update_rib_state">
 <code class="sig-name descname">update_rib_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">route</span></em>, <em class="sig-param"><span class="n">event</span></em>, <em class="sig-param"><span class="n">insertion</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rib.html#Rib.update_rib_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rib.Rib.update_rib_state" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>update_rib_state.
+Used to update the actual state of the rib after an update</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>route</strong> – route removed or inserted</p></li>
+<li><p><strong>event</strong> – Cause event</p></li>
+<li><p><strong>insertion</strong> – (Default True) determine the type of update</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
@@ -167,6 +182,8 @@ remove object v from the vector of addr i if present</p>
 
 </dd></dl>
 
+</div>
+</div>
 </div>
 
 

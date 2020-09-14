@@ -33,14 +33,31 @@
             
   <div class="section" id="module-plotter">
 <span id="plotter-module"></span><h1>plotter module<a class="headerlink" href="#module-plotter" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>Plotter Module<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>This module is used to plot information about the data retrived by the
+analyzer.</p>
 <dl class="py class">
 <dt id="plotter.Plotter">
-<em class="property">class </em><code class="sig-prename descclassname">plotter.</code><code class="sig-name descname">Plotter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">states</span><span class="p">:</span> <span class="n">pandas.core.frame.DataFrame</span></em>, <em class="sig-param"><span class="n">transitions</span><span class="p">:</span> <span class="n">pandas.core.frame.DataFrame</span></em>, <em class="sig-param"><span class="n">route_id</span><span class="p">:</span> <span class="n">pandas.core.frame.DataFrame</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotter.html#Plotter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotter.Plotter" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">plotter.</code><code class="sig-name descname">Plotter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">states</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">transitions</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">route_id</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">signaling</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotter.html#Plotter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotter.Plotter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Plotter class
+Main class used for the plotting system.
+Initialize the DataFrame variables</p>
 <dl class="py method">
 <dt id="plotter.Plotter.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">states</span><span class="p">:</span> <span class="n">pandas.core.frame.DataFrame</span></em>, <em class="sig-param"><span class="n">transitions</span><span class="p">:</span> <span class="n">pandas.core.frame.DataFrame</span></em>, <em class="sig-param"><span class="n">route_id</span><span class="p">:</span> <span class="n">pandas.core.frame.DataFrame</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotter.html#Plotter.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotter.Plotter.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">states</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">transitions</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">route_id</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">signaling</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotter.html#Plotter.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotter.Plotter.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>__init__.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>states</strong> – States DataFrame</p></li>
+<li><p><strong>transitions</strong> – Transitions DataFrame</p></li>
+<li><p><strong>route_id</strong> – Route to id DataFrame</p></li>
+<li><p><strong>signaling</strong> – Signaling results DataFrame</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -77,12 +94,30 @@ id in the state knowledge whcich route is really know</p>
 </dd></dl>
 
 <dl class="py method">
+<dt id="plotter.Plotter.signaling_nmessage_probability">
+<code class="sig-name descname">signaling_nmessage_probability</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">output_file</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotter.html#Plotter.signaling_nmessage_probability"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotter.Plotter.signaling_nmessage_probability" title="Permalink to this definition">¶</a></dt>
+<dd><p>signaling_nmessage_probability.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>output_file</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="plotter.Plotter.states_stage_boxplot">
 <code class="sig-name descname">states_stage_boxplot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">output_file</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotter.html#Plotter.states_stage_boxplot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotter.Plotter.states_stage_boxplot" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>states_stage_boxplot.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>output_file</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
+</div>
 </div>
 
 

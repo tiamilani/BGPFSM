@@ -1,0 +1,398 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>node_BACKUP_26214 module &#8212; BGPFSM 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-node_BACKUP_26214">
+<span id="node-backup-26214-module"></span><h1>node_BACKUP_26214 module<a class="headerlink" href="#module-node_BACKUP_26214" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="node-module">
+<h2>node module<a class="headerlink" href="#node-module" title="Permalink to this headline">¶</a></h2>
+<p>Module used to represent a node in the network.
+All the node logic is inside this module</p>
+<dl class="py class">
+<dt id="node_BACKUP_26214.Node">
+<em class="property">class </em><code class="sig-prename descclassname">node_BACKUP_26214.</code><code class="sig-name descname">Node</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id_node</span></em>, <em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node_BACKUP_26214.html#Node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node_BACKUP_26214.Node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="module.html#module.Module" title="module.Module"><code class="xref py py-class docutils literal notranslate"><span class="pre">module.Module</span></code></a></p>
+<p>Node.
+Class to manage node inside the simulation</p>
+<dl class="py attribute">
+<dt id="node_BACKUP_26214.Node.IDLE">
+<code class="sig-name descname">IDLE</code><em class="property"> = 0</em><a class="headerlink" href="#node_BACKUP_26214.Node.IDLE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="node_BACKUP_26214.Node.PAR_DATARATE">
+<code class="sig-name descname">PAR_DATARATE</code><em class="property"> = 'datarate'</em><a class="headerlink" href="#node_BACKUP_26214.Node.PAR_DATARATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="node_BACKUP_26214.Node.PAR_DELAY">
+<code class="sig-name descname">PAR_DELAY</code><em class="property"> = 'delay'</em><a class="headerlink" href="#node_BACKUP_26214.Node.PAR_DELAY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="node_BACKUP_26214.Node.PAR_IMPLICIT_WITHDRAW">
+<code class="sig-name descname">PAR_IMPLICIT_WITHDRAW</code><em class="property"> = 'implicit_withdraw'</em><a class="headerlink" href="#node_BACKUP_26214.Node.PAR_IMPLICIT_WITHDRAW" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="node_BACKUP_26214.Node.PAR_PROC_TIME">
+<code class="sig-name descname">PAR_PROC_TIME</code><em class="property"> = 'processing'</em><a class="headerlink" href="#node_BACKUP_26214.Node.PAR_PROC_TIME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="node_BACKUP_26214.Node.PAR_REANNOUNCE">
+<code class="sig-name descname">PAR_REANNOUNCE</code><em class="property"> = 'reannouncement'</em><a class="headerlink" href="#node_BACKUP_26214.Node.PAR_REANNOUNCE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="node_BACKUP_26214.Node.PAR_REANNOUNCE_DIST">
+<code class="sig-name descname">PAR_REANNOUNCE_DIST</code><em class="property"> = 'reannouncement_dist'</em><a class="headerlink" href="#node_BACKUP_26214.Node.PAR_REANNOUNCE_DIST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="node_BACKUP_26214.Node.PAR_SIGNALING">
+<code class="sig-name descname">PAR_SIGNALING</code><em class="property"> = 'signaling'</em><a class="headerlink" href="#node_BACKUP_26214.Node.PAR_SIGNALING" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="node_BACKUP_26214.Node.PAR_SIGNALING_SEQUENCE">
+<code class="sig-name descname">PAR_SIGNALING_SEQUENCE</code><em class="property"> = 'signaling_sequence'</em><a class="headerlink" href="#node_BACKUP_26214.Node.PAR_SIGNALING_SEQUENCE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="node_BACKUP_26214.Node.PAR_WITHDRAW">
+<code class="sig-name descname">PAR_WITHDRAW</code><em class="property"> = 'withdraw'</em><a class="headerlink" href="#node_BACKUP_26214.Node.PAR_WITHDRAW" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="node_BACKUP_26214.Node.PAR_WITHDRAW_DIST">
+<code class="sig-name descname">PAR_WITHDRAW_DIST</code><em class="property"> = 'withdraw_dist'</em><a class="headerlink" href="#node_BACKUP_26214.Node.PAR_WITHDRAW_DIST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="node_BACKUP_26214.Node.STATE_CHANGING">
+<code class="sig-name descname">STATE_CHANGING</code><em class="property"> = 1</em><a class="headerlink" href="#node_BACKUP_26214.Node.STATE_CHANGING" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id_node</span></em>, <em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node_BACKUP_26214.html#Node.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node_BACKUP_26214.Node.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>__init__.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id_node</strong> – identifier of the node</p></li>
+<li><p><strong>config</strong> – Configuration file</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.add_destination">
+<code class="sig-name descname">add_destination</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">destination</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">path</span><span class="p">:</span> <span class="n">list</span></em>, <em class="sig-param"><span class="n">next_hop</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">policy_value</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">share</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="_modules/node_BACKUP_26214.html#Node.add_destination"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node_BACKUP_26214.Node.add_destination" title="Permalink to this definition">¶</a></dt>
+<dd><p>add_destination.
+Function used to add a destination to the node not already in route
+format</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>destination</strong> (<em>str</em>) – destination to share</p></li>
+<li><p><strong>path</strong> (<em>list</em>) – List of nodes attraversed to reach the destination</p></li>
+<li><p><strong>next_hop</strong> (<em>str</em>) – Id of the next hop node</p></li>
+<li><p><strong>policy_value</strong> – Policy value to add to the route, defualt=0</p></li>
+<li><p><strong>share</strong> – Sharing flag, default=True, if false the route will
+be added but not shared</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.add_neighbor">
+<code class="sig-name descname">add_neighbor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">link</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node_BACKUP_26214.html#Node.add_neighbor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node_BACKUP_26214.Node.add_neighbor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a neighbor to the set of neighbors
+If the neighbor is already in the set it throws an error
+and terminate</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>link</strong> – link that has to be added</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.change_state">
+<code class="sig-name descname">change_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">waiting_time</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node_BACKUP_26214.html#Node.change_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node_BACKUP_26214.Node.change_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>change_state.
+Change the state of a node, test function</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.evaluate_signaling_event">
+<code class="sig-name descname">evaluate_signaling_event</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">elem</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">route</span><span class="p">:</span> <span class="n"><a class="reference internal" href="route.html#route.Route" title="route.Route">route.Route</a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="event.html#event.Event" title="event.Event">event.Event</a><a class="reference internal" href="_modules/node_BACKUP_26214.html#Node.evaluate_signaling_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node_BACKUP_26214.Node.evaluate_signaling_event" title="Permalink to this definition">¶</a></dt>
+<dd><p>evaluate_signaling_event.</p>
+<p>Evaluate a signaling event and returns the event associated with the
+sigaling</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>elem</strong> (<em>str</em>) – signal to manage</p></li>
+<li><p><strong>route</strong> (<a class="reference internal" href="route.html#route.Route" title="route.Route"><em>Route</em></a>) – Route to share or withdraw</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="event.html#event.Event" title="event.Event">Event</a></p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – When is passed an element that is not a valid signal</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.force_share_dst">
+<code class="sig-name descname">force_share_dst</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/node_BACKUP_26214.html#Node.force_share_dst"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node_BACKUP_26214.Node.force_share_dst" title="Permalink to this definition">¶</a></dt>
+<dd><p>force_share_dst.
+Function used as kick starter for nodes that have to share a destination
+to generate the start events.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.handle_event">
+<code class="sig-name descname">handle_event</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/node_BACKUP_26214.html#Node.handle_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node_BACKUP_26214.Node.handle_event" title="Permalink to this definition">¶</a></dt>
+<dd><p>handle_event.
+Function to handle events from the store</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.id">
+<em class="property">property </em><code class="sig-name descname">id</code><a class="headerlink" href="#node_BACKUP_26214.Node.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>id.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.neighbors">
+<em class="property">property </em><code class="sig-name descname">neighbors</code><a class="headerlink" href="#node_BACKUP_26214.Node.neighbors" title="Permalink to this definition">¶</a></dt>
+<dd><p>neighbor.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.new_network">
+<code class="sig-name descname">new_network</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">route</span><span class="p">:</span> <span class="n"><a class="reference internal" href="route.html#route.Route" title="route.Route">route.Route</a></span></em>, <em class="sig-param"><span class="n">event</span><span class="p">:</span> <span class="n"><a class="reference internal" href="event.html#event.Event" title="event.Event">event.Event</a></span></em>, <em class="sig-param"><span class="n">share</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="_modules/node_BACKUP_26214.html#Node.new_network"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node_BACKUP_26214.Node.new_network" title="Permalink to this definition">¶</a></dt>
+<dd><p>new_network.
+Function used to add a new route, it will be evaluated for the
+insertion in the rib and it will be then evaluated for the Routing table</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>route</strong> (<a class="reference internal" href="route.html#route.Route" title="route.Route"><em>Route</em></a>) – Route to evaluate</p></li>
+<li><p><strong>event</strong> (<a class="reference internal" href="event.html#event.Event" title="event.Event"><em>Event</em></a>) – Cause event for the evaluation</p></li>
+<li><p><strong>share</strong> – The network should be shared if it’s the new best? (default=True)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.program_withdraw">
+<code class="sig-name descname">program_withdraw</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node_BACKUP_26214.html#Node.program_withdraw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node_BACKUP_26214.Node.program_withdraw" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>program_withdraw.</dt><dd><p>Function used to program a withdraw of a previusly
+shared destination</p>
+</dd>
+<dt>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</dt><dd><dl class="field-list simple">
+<dt class="field-odd">param event</dt>
+<dd class="field-odd"><p>event that generates the withdraw, used to 
+get the delay time and the route that needs to be withdrawed</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<blockquote>
+<div><dl class="field-list simple">
+<dt class="field-odd">param event</dt>
+<dd class="field-odd"><p>event that generates the withdraw, used to</p>
+</dd>
+</dl>
+<p>get the delay time and the route that needs to be withdrawed</p>
+</div></blockquote>
+<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; master</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.reannounce_handler">
+<code class="sig-name descname">reannounce_handler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node_BACKUP_26214.html#Node.reannounce_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node_BACKUP_26214.Node.reannounce_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reannouncement function
+used to redistributed a route that was withdrawed before</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>event</strong> – event that triggered the reannouncement</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.rx_pkt">
+<code class="sig-name descname">rx_pkt</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node_BACKUP_26214.html#Node.rx_pkt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node_BACKUP_26214.Node.rx_pkt" title="Permalink to this definition">¶</a></dt>
+<dd><p>recept.
+Function to handle packet reception</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>event</strong> – receiving event that triggered the reception</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.send_msg_to_all">
+<code class="sig-name descname">send_msg_to_all</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">packet</span><span class="p">:</span> <span class="n"><a class="reference internal" href="packet.html#packet.Packet" title="packet.Packet">packet.Packet</a></span></em>, <em class="sig-param"><span class="n">event</span><span class="p">:</span> <span class="n"><a class="reference internal" href="event.html#event.Event" title="event.Event">event.Event</a></span></em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="_modules/node_BACKUP_26214.html#Node.send_msg_to_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node_BACKUP_26214.Node.send_msg_to_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>send_msg_to_all.
+Function to send a packet to all the neighbours.
+The packet will be sent only if the route respect the policy value
+of the link and if the neighbour is not the next hop of the route</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>packet</strong> (<a class="reference internal" href="packet.html#packet.Packet" title="packet.Packet"><em>Packet</em></a>) – Packet to send</p></li>
+<li><p><strong>event</strong> (<a class="reference internal" href="event.html#event.Event" title="event.Event"><em>Event</em></a>) – Cause event</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.share_dst">
+<code class="sig-name descname">share_dst</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node_BACKUP_26214.html#Node.share_dst"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node_BACKUP_26214.Node.share_dst" title="Permalink to this definition">¶</a></dt>
+<dd><p>share_dst.
+Share a destiantion to all the neighbors
+If the destination is originated by this node and the withdraw flag
+is active a withdraw will also be triggered</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>event</strong> – event that triggered the sharing of the destination</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.state">
+<em class="property">property </em><code class="sig-name descname">state</code><a class="headerlink" href="#node_BACKUP_26214.Node.state" title="Permalink to this definition">¶</a></dt>
+<dd><p>state.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node_BACKUP_26214.Node.tx_pkt">
+<code class="sig-name descname">tx_pkt</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node_BACKUP_26214.html#Node.tx_pkt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node_BACKUP_26214.Node.tx_pkt" title="Permalink to this definition">¶</a></dt>
+<dd><p>tx_pkt.
+Function that transmit the packet to a destination
+:param event: Transmission event</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">BGPFSM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Mattia Milani.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/node_BACKUP_26214.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

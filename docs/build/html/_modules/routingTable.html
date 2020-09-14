@@ -47,7 +47,20 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright (C) 2020 Mattia Milani &lt;mattia.milani@studenti.unitn.it&gt;</span>
 
-<span class="kn">import</span> <span class="nn">ipaddress</span>
+<span class="c1"># pylint: disable=invalid-name</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">RoutingTable module</span>
+<span class="sd">===================</span>
+
+<span class="sd">Manage the routing table</span>
+<span class="sd">------------------------</span>
+
+<span class="sd">Is possible to create a routing table and manage it, it can contains</span>
+<span class="sd">only one route per address</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
 <span class="kn">import</span> <span class="nn">collections</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 
@@ -55,7 +68,7 @@
 <span class="kn">from</span> <span class="nn">route</span> <span class="kn">import</span> <span class="n">Route</span>
 
 
-<div class="viewcode-block" id="RoutingTableIterator"><a class="viewcode-back" href="../routingTable.html#routingTable.RoutingTableIterator">[docs]</a><span class="k">class</span> <span class="nc">RoutingTableIterator</span><span class="p">():</span>
+<div class="viewcode-block" id="RoutingTableIterator"><a class="viewcode-back" href="../routingTable.html#routingTable.RoutingTableIterator">[docs]</a><span class="k">class</span> <span class="nc">RoutingTableIterator</span><span class="p">():</span> <span class="c1"># pylint: disable=too-few-public-methods</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Iterator class for the routing table object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -81,7 +94,7 @@
         <span class="k">raise</span> <span class="ne">StopIteration</span></div>
 
 
-<div class="viewcode-block" id="RoutingTable"><a class="viewcode-back" href="../routingTable.html#routingTable.RoutingTable">[docs]</a><span class="k">class</span> <span class="nc">RoutingTable</span><span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">MutableSequence</span><span class="p">):</span>
+<div class="viewcode-block" id="RoutingTable"><a class="viewcode-back" href="../routingTable.html#routingTable.RoutingTable">[docs]</a><span class="k">class</span> <span class="nc">RoutingTable</span><span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">MutableSequence</span><span class="p">):</span> <span class="c1"># pylint: disable=too-many-ancestors</span>
     <span class="sd">&quot;&quot;&quot;RoutingTable.</span>
 <span class="sd">    Class used to handle the routing table of a node</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -91,29 +104,28 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_table</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">oktype</span> <span class="o">=</span> <span class="n">Route</span></div>
 
-<div class="viewcode-block" id="RoutingTable.check"><a class="viewcode-back" href="../routingTable.html#routingTable.RoutingTable.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+<div class="viewcode-block" id="RoutingTable.check"><a class="viewcode-back" href="../routingTable.html#routingTable.RoutingTable.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;check.</span>
 
-<span class="sd">        :param v: check that V is a route instance</span>
+<span class="sd">        :param value: check that V is a route instance</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">oktype</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">oktype</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> 
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;__len__.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span> 
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;__getitem__.</span>
 
 <span class="sd">        :param i: key addr</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span> 
+    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;__delitem__.</span>
 
 <span class="sd">        :param i: key addr</span>
@@ -130,15 +142,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
 
-<div class="viewcode-block" id="RoutingTable.insert"><a class="viewcode-back" href="../routingTable.html#routingTable.RoutingTable.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+<div class="viewcode-block" id="RoutingTable.insert"><a class="viewcode-back" href="../routingTable.html#routingTable.RoutingTable.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span> <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="sd">&quot;&quot;&quot;insert.</span>
+<span class="sd">        Is not possible to insert any route in the Routing Table</span>
+<span class="sd">        This method has no effects</span>
 
 <span class="sd">        :param i:</span>
 <span class="sd">        :param v:</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">pass</span></div>
+<span class="sd">        &quot;&quot;&quot;</span></div>
 
-<div class="viewcode-block" id="RoutingTable.getKey"><a class="viewcode-back" href="../routingTable.html#routingTable.RoutingTable.getKey">[docs]</a>    <span class="k">def</span> <span class="nf">getKey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+<div class="viewcode-block" id="RoutingTable.getKey"><a class="viewcode-back" href="../routingTable.html#routingTable.RoutingTable.getKey">[docs]</a>    <span class="k">def</span> <span class="nf">getKey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span> <span class="c1"># pylint: disable=invalid-name</span>
         <span class="sd">&quot;&quot;&quot;getKey.</span>
 
 <span class="sd">        :param i: index</span>
@@ -157,8 +170,8 @@
 <span class="sd">        :returns: string with all the routing information</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">res</span> <span class="o">=</span> <span class="s2">&quot;Routing Table:</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="n">rt</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">route</span> <span class="ow">in</span> <span class="n">rt</span><span class="p">:</span>
+        <span class="n">routing_table</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">route</span> <span class="ow">in</span> <span class="n">routing_table</span><span class="p">:</span>
             <span class="n">res</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">route</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
         <span class="k">return</span> <span class="n">res</span></div>
 </pre></div>

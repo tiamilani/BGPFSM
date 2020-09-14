@@ -48,10 +48,35 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright (C) 2020 Mattia Milani &lt;mattia.milani@studenti.unitn.it&gt;</span>
 
-<div class="viewcode-block" id="Transition"><a class="viewcode-back" href="../transition.html#transition.Transition">[docs]</a><span class="k">class</span> <span class="nc">Transition</span><span class="p">():</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Transition module</span>
+<span class="sd">=================</span>
 
-<div class="viewcode-block" id="Transition.__init__"><a class="viewcode-back" href="../transition.html#transition.Transition.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_state</span><span class="p">,</span> <span class="n">output_state</span><span class="p">,</span> <span class="n">trigger_input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span>
+<span class="sd">Used to handle FSM transitions</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Transition"><a class="viewcode-back" href="../transition.html#transition.Transition">[docs]</a><span class="k">class</span> <span class="nc">Transition</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Transition.</span>
+<span class="sd">    Class used to create transition objects</span>
+
+<span class="sd">    A transition object is caracterized by the initial and final state</span>
+<span class="sd">    and the input that caused the transition, plus the output.</span>
+
+<span class="sd">    It represent the edge of an FSM graph</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="Transition.__init__"><a class="viewcode-back" href="../transition.html#transition.Transition.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_state</span><span class="p">,</span> <span class="n">output_state</span><span class="p">,</span> <span class="n">trigger_input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="c1"># pylint: disable=too-many-arguments</span>
                  <span class="n">counter</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__init__.</span>
+
+<span class="sd">        :param init_state: initial state where the transition start</span>
+<span class="sd">        :param output_state: Output state of the transition</span>
+<span class="sd">        :param trigger_input: Input that caused the transition</span>
+<span class="sd">        :param output: output shared by the node during the transition</span>
+<span class="sd">        :param counter: Number of times the transition happened</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">init_state</span> <span class="o">=</span> <span class="n">init_state</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output_state</span> <span class="o">=</span> <span class="n">output_state</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="n">trigger_input</span>
@@ -64,19 +89,31 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">=</span> <span class="n">counter</span></div>
 
     <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__eq__.</span>
+
+<span class="sd">        :param obj: comparison obj</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">hash</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="fm">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__ne__.</span>
+
+<span class="sd">        :param obj:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span> <span class="o">==</span> <span class="n">obj</span>
 
-    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> 
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__hash__.</span>
+<span class="sd">        The hash doesn&#39;t take care of the counter</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">res</span> <span class="o">=</span> <span class="s2">&quot;(</span><span class="si">{}</span><span class="s2">-&gt;</span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init_state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_state</span><span class="p">,</span>
                                            <span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__str__.&quot;&quot;&quot;</span>
         <span class="n">res</span> <span class="o">=</span> <span class="s2">&quot;(</span><span class="si">{}</span><span class="s2">-&gt;</span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init_state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_state</span><span class="p">,</span>
                                            <span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">res</span></div>

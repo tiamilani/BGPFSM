@@ -32,7 +32,15 @@
           <div class="body" role="main">
             
   <h1>Source code for module</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module</span>
+<span class="sd">======</span>
+
+<span class="sd">Basic simulation modules</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;..&#39;</span><span class="p">)</span>
 <span class="kn">import</span> <span class="nn">bgp_sim</span>
 
@@ -52,7 +60,7 @@
 <span class="sd">        Constructor. Gets simulation instance for scheduling events and</span>
 <span class="sd">        automatically assigns an ID to the module</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sim</span> <span class="o">=</span> <span class="n">bgp_sim</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">Instance</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sim</span> <span class="o">=</span> <span class="n">bgp_sim</span><span class="o">.</span><span class="n">Sim</span><span class="o">.</span><span class="n">Instance</span><span class="p">()</span> <span class="c1"># pylint: disable=no-member</span>
         <span class="c1"># auto assign module id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">module_id</span> <span class="o">=</span> <span class="n">Module</span><span class="o">.</span><span class="n">__modules_count</span>
         <span class="n">Module</span><span class="o">.</span><span class="n">__modules_count</span> <span class="o">=</span> <span class="n">Module</span><span class="o">.</span><span class="n">__modules_count</span> <span class="o">+</span> <span class="mi">1</span>
@@ -61,14 +69,14 @@
         <span class="c1"># Get verbose flag from simulator</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">verbose</span></div>
 
-<div class="viewcode-block" id="Module.initialize"><a class="viewcode-back" href="../module.html#module.Module.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Module.initialize"><a class="viewcode-back" href="../module.html#module.Module.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="c1"># pylint: disable=no-self-use</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialization method called by the simulation for each newly</span>
 <span class="sd">        instantiated module</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span></div>
 
-<div class="viewcode-block" id="Module.handle_event"><a class="viewcode-back" href="../module.html#module.Module.handle_event">[docs]</a>    <span class="k">def</span> <span class="nf">handle_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+<div class="viewcode-block" id="Module.handle_event"><a class="viewcode-back" href="../module.html#module.Module.handle_event">[docs]</a>    <span class="k">def</span> <span class="nf">handle_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span> <span class="c1"># pylint: disable=unused-argument</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This function should be overridden by inheriting modules to handle</span>
 <span class="sd">        events for this module. If not overridden, this method will throw an</span>

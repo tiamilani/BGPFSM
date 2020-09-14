@@ -47,18 +47,30 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright (C) 2020 Mattia Milani &lt;mattia.milani@studenti.unitn.it&gt;</span>
 
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Route module</span>
+<span class="sd">============</span>
+
+<span class="sd">Module used to handle routes</span>
+<span class="sd">----------------------------</span>
+
+<span class="sd">Every route contains different information that can be used</span>
+<span class="sd">The route class could be used to store this information</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
 <span class="kn">import</span> <span class="nn">ipaddress</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span><span class="p">,</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">import</span> <span class="nn">ast</span>
 
 <span class="kn">from</span> <span class="nn">policies</span> <span class="kn">import</span> <span class="n">PolicyValue</span>
 
 <div class="viewcode-block" id="Route"><a class="viewcode-back" href="../route.html#route.Route">[docs]</a><span class="k">class</span> <span class="nc">Route</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;Route</span>
-<span class="sd">    Class to manage a single route</span>
+<span class="sd">    Class to manage a route objects</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="Route.__init__"><a class="viewcode-back" href="../route.html#route.Route.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">nh</span><span class="p">,</span> <span class="n">policy_value</span><span class="o">=</span><span class="n">PolicyValue</span><span class="p">(</span><span class="mi">0</span><span class="p">)):</span>
+<div class="viewcode-block" id="Route.__init__"><a class="viewcode-back" href="../route.html#route.Route.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">nh</span><span class="p">,</span> <span class="n">mine</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">policy_value</span><span class="o">=</span><span class="n">PolicyValue</span><span class="p">(</span><span class="mi">0</span><span class="p">)):</span> <span class="c1"># pylint: disable=too-many-arguments</span>
         <span class="sd">&quot;&quot;&quot;__init__.</span>
 
 <span class="sd">        :param addr: addr of the route</span>
@@ -72,17 +84,24 @@
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_nh</span> <span class="o">=</span> <span class="n">nh</span>
-        
+
         <span class="c1"># Check that the policy value is an object of class PolicyValue</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">policy_value</span><span class="p">,</span> <span class="n">PolicyValue</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">policy_value</span><span class="p">)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mine</span> <span class="o">=</span> <span class="n">mine</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_policy_value</span> <span class="o">=</span> <span class="n">policy_value</span></div>
 
 <div class="viewcode-block" id="Route.fromString"><a class="viewcode-back" href="../route.html#route.Route.fromString">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">fromString</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">fromString</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span> <span class="c1"># pylint: disable=invalid-name</span>
+        <span class="sd">&quot;&quot;&quot;fromString.</span>
+<span class="sd">        Method to get a route object from the string representation</span>
+
+<span class="sd">        :param string: String representation of the route</span>
+<span class="sd">        :type string: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">res</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">literal_eval</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">ipaddress</span><span class="o">.</span><span class="n">ip_network</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="s2">&quot;addr&quot;</span><span class="p">]),</span> 
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">ipaddress</span><span class="o">.</span><span class="n">ip_network</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="s2">&quot;addr&quot;</span><span class="p">]),</span>
                    <span class="n">res</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">],</span> <span class="n">res</span><span class="p">[</span><span class="s2">&quot;nh&quot;</span><span class="p">],</span>
                    <span class="n">policy_value</span> <span class="o">=</span> <span class="n">PolicyValue</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="s2">&quot;policy_value&quot;</span><span class="p">]))</span></div>
 
@@ -113,12 +132,12 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">nh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">nh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="c1"># pylint: disable=invalid-name</span>
         <span class="sd">&quot;&quot;&quot;nh.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nh</span>
 
     <span class="nd">@nh</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">nh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">nh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span> <span class="c1"># pylint: disable=invalid-name</span>
         <span class="sd">&quot;&quot;&quot;nh.</span>
 
 <span class="sd">        :param value: set the Nh</span>
@@ -141,6 +160,17 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_policy_value</span> <span class="o">=</span> <span class="n">value</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">mine</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;mine.</span>
+<span class="sd">        Property that returns the mine object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mine</span>
+
+    <span class="nd">@mine</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">mine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mine</span> <span class="o">=</span> <span class="n">value</span>
+
     <span class="k">def</span> <span class="fm">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">route</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;__lt__.</span>
 
@@ -152,11 +182,11 @@
         <span class="c1"># Check the path len</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">True</span>
-        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="p">):</span>
             <span class="c1"># Check the nh id</span>
             <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nh</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">nh</span><span class="p">):</span>
                 <span class="k">return</span> <span class="kc">True</span>
-            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">nh</span> <span class="o">==</span> <span class="n">route</span><span class="o">.</span><span class="n">nh</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nh</span> <span class="o">==</span> <span class="n">route</span><span class="o">.</span><span class="n">nh</span><span class="p">:</span>
                 <span class="c1"># check the path without the first as</span>
                 <span class="n">actual</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
                 <span class="n">new</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">,</span> <span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
@@ -175,12 +205,12 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="n">route</span><span class="o">.</span><span class="n">path</span> <span class="ow">and</span> \
             <span class="bp">self</span><span class="o">.</span><span class="n">nh</span> <span class="o">==</span> <span class="n">route</span><span class="o">.</span><span class="n">nh</span> <span class="ow">and</span> \
             <span class="bp">self</span><span class="o">.</span><span class="n">policy_value</span> <span class="o">==</span> <span class="n">route</span><span class="o">.</span><span class="n">policy_value</span><span class="p">:</span>
-                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;__copy__.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nh</span><span class="p">,</span> 
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nh</span><span class="p">,</span>
                           <span class="n">policy_value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">policy_value</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">):</span>
@@ -195,18 +225,19 @@
                 <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="p">,</span> <span class="n">memo</span><span class="p">),</span>
                 <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">memo</span><span class="p">),</span>
                 <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nh</span><span class="p">,</span> <span class="n">memo</span><span class="p">),</span>
-                <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">policy_value</span><span class="p">,</span> <span class="n">memo</span><span class="p">))</span>
+                <span class="n">policy_value</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">policy_value</span><span class="p">,</span> <span class="n">memo</span><span class="p">),</span>
+                <span class="n">mine</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mine</span><span class="p">,</span> <span class="n">memo</span><span class="p">))</span>
             <span class="n">memo</span><span class="p">[</span><span class="n">id_self</span><span class="p">]</span> <span class="o">=</span> <span class="n">_copy</span>
         <span class="k">return</span> <span class="n">_copy</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;__str__.&quot;&quot;&quot;</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;addr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="p">)</span>
-        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;nh&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nh</span>
-        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
-        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;policy_value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">policy_value</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)</span></div>
+        <span class="n">dictionary_route</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">dictionary_route</span><span class="p">[</span><span class="s2">&quot;addr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="p">)</span>
+        <span class="n">dictionary_route</span><span class="p">[</span><span class="s2">&quot;nh&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nh</span>
+        <span class="n">dictionary_route</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
+        <span class="n">dictionary_route</span><span class="p">[</span><span class="s2">&quot;policy_value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">policy_value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">dictionary_route</span><span class="p">)</span></div>
 </pre></div>
 
           </div>

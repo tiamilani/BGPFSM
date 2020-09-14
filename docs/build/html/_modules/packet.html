@@ -47,6 +47,20 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright (C) 2016 Michele Segata &lt;segata@ccs-labs.org&gt;</span>
 
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Packet module</span>
+<span class="sd">=============</span>
+
+<span class="sd">Packet controller system</span>
+<span class="sd">------------------------</span>
+
+<span class="sd">In this module is possible to define different packets that will be used</span>
+<span class="sd">during the simulation</span>
+
+<span class="sd">For now a general packet could be an update ora withdraw</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
 <span class="kn">import</span> <span class="nn">ast</span>
 
 <div class="viewcode-block" id="Packet"><a class="viewcode-back" href="../packet.html#packet.Packet">[docs]</a><span class="k">class</span> <span class="nc">Packet</span><span class="p">:</span>
@@ -61,27 +75,33 @@
     <span class="n">UPDATE</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">WITHDRAW</span> <span class="o">=</span> <span class="mi">1</span>
 
-<div class="viewcode-block" id="Packet.__init__"><a class="viewcode-back" href="../packet.html#packet.Packet.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">packet_type</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Packet.__init__"><a class="viewcode-back" href="../packet.html#packet.Packet.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">packet_type</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">id_packet</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Creates a packet automatically assigning a unique ID to it</span>
-<span class="sd">        :param packet_type: type of the packet </span>
-<span class="sd">        :param content: content of the packet </span>
+<span class="sd">        :param packet_type: type of the packet</span>
+<span class="sd">        :param content: content of the packet</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">id</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">id_packet</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_id</span> <span class="o">=</span> <span class="n">Packet</span><span class="o">.</span><span class="n">__packets_count</span>
             <span class="n">Packet</span><span class="o">.</span><span class="n">__packets_count</span> <span class="o">=</span> <span class="n">Packet</span><span class="o">.</span><span class="n">__packets_count</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_id</span> <span class="o">=</span> <span class="nb">id</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_id</span> <span class="o">=</span> <span class="n">id_packet</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_packet_type</span> <span class="o">=</span> <span class="n">packet_type</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_content</span> <span class="o">=</span> <span class="n">content</span> </div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_content</span> <span class="o">=</span> <span class="n">content</span></div>
 
 <div class="viewcode-block" id="Packet.fromString"><a class="viewcode-back" href="../packet.html#packet.Packet.fromString">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">fromString</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">fromString</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span> <span class="c1"># pylint: disable=invalid-name</span>
+        <span class="sd">&quot;&quot;&quot;fromString.</span>
+<span class="sd">        Function to get the packet object from a string representation</span>
+
+<span class="sd">        :param string: string to transform in a packet</span>
+<span class="sd">        :rtype: Packet</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">res</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">literal_eval</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span> <span class="n">res</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">],</span> <span class="nb">id</span><span class="o">=</span><span class="n">res</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span></div>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span> <span class="n">res</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">],</span> <span class="n">id_packet</span><span class="o">=</span><span class="n">res</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span></div>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="c1"># pylint: disable=invalid-name</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns packet id</span>
 <span class="sd">        :returns: id of the packet</span>
@@ -112,11 +132,11 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Prints the packet in a human readable format</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span>
-        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">packet_type</span>
-        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
-        <span class="n">res</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> 
+        <span class="n">string_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">string_dict</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span>
+        <span class="n">string_dict</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">packet_type</span>
+        <span class="n">string_dict</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">string_dict</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">res</span></div>
 </pre></div>
 

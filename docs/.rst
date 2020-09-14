@@ -1,7 +1,7 @@
-rib module
-==========
+ module
+=======
 
-.. automodule:: rib
+.. automodule:: 
    :members:
    :undoc-members:
    :show-inheritance:

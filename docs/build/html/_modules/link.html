@@ -45,19 +45,33 @@
 <span class="c1"># You should have received a copy of the GNU General Public License</span>
 <span class="c1"># along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
 <span class="c1">#</span>
-<span class="c1"># Copyright (C) 2016 Michele Segata &lt;segata@ccs-labs.org&gt;</span>
+<span class="c1"># Copyright (C) 2020 Mattia Milani &lt;mattia.milani@studenti.unitn.it&gt;</span>
 
-<span class="kn">from</span> <span class="nn">distribution</span> <span class="kn">import</span> <span class="n">Distribution</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">link module</span>
+<span class="sd">===========</span>
+
+<span class="sd">Module to handle links</span>
+<span class="sd">----------------------</span>
+
+<span class="sd">The goal of this module is to handle the links objects</span>
+<span class="sd">The class link is able to transmit messages emulating delays</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
 <span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">simpy</span>
+<span class="kn">from</span> <span class="nn">distribution</span> <span class="kn">import</span> <span class="n">Distribution</span>
 
-<span class="kn">from</span> <span class="nn">policies</span> <span class="kn">import</span> <span class="n">PolicyFunction</span>
+<span class="kn">from</span> <span class="nn">policies</span> <span class="kn">import</span> <span class="n">PolicyValue</span><span class="p">,</span> <span class="n">PolicyFunction</span>
 
 <div class="viewcode-block" id="Link"><a class="viewcode-back" href="../link.html#link.Link">[docs]</a><span class="k">class</span> <span class="nc">Link</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Class defining a link between nodes</span>
 <span class="sd">    this class contains properties for the link</span>
-<span class="sd">    like delay or preference</span>
+<span class="sd">    like delay or preference and link policy functions</span>
+<span class="sd">    Every link have a unique id</span>
+<span class="sd">    A single link can have a specific id</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">__link_counter</span> <span class="o">=</span> <span class="mi">0</span>
@@ -68,12 +82,16 @@
 
 <div class="viewcode-block" id="Link.__init__"><a class="viewcode-back" href="../link.html#link.Link.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">resource</span><span class="p">,</span> <span class="n">properties</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Creates a link automatically assign a uniqueid to the link</span>
+<span class="sd">        Creates a link and automatically assign a uniqueid to the link</span>
+<span class="sd">        It requires a simpy environment where to operate.</span>
+<span class="sd">        It also require a simpy resource to operate correctly and</span>
+<span class="sd">        reserve the channel for a message.</span>
+
 <span class="sd">        :param env: Simpy environment</span>
 <span class="sd">        :param node: Node which the link is refered to</span>
 <span class="sd">        :param resource: unitary resource used to lock the link</span>
 <span class="sd">        :param properties: properties of the link in the graphml that</span>
-<span class="sd">        needs to be evaluated</span>
+<span class="sd">            needs to be evaluated</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_id</span> <span class="o">=</span> <span class="n">Link</span><span class="o">.</span><span class="n">__link_counter</span>
         <span class="n">Link</span><span class="o">.</span><span class="n">__link_counter</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -84,30 +102,36 @@
         <span class="k">if</span> <span class="n">Link</span><span class="o">.</span><span class="n">DELAY</span> <span class="ow">in</span> <span class="n">properties</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_delay</span> <span class="o">=</span> <span class="n">Distribution</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">properties</span><span class="p">[</span><span class="n">Link</span><span class="o">.</span><span class="n">DELAY</span><span class="p">]))</span>
         <span class="k">if</span> <span class="n">Link</span><span class="o">.</span><span class="n">POLICY_FUNCTION</span> <span class="ow">in</span> <span class="n">properties</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_policy_function</span> <span class="o">=</span> <span class="n">PolicyFunction</span><span class="p">(</span><span class="n">properties</span><span class="p">[</span><span class="n">Link</span><span class="o">.</span><span class="n">POLICY_FUNCTION</span><span class="p">])</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_policy_function</span> <span class="o">=</span> <span class="n">PolicyFunction</span><span class="p">(</span><span class="n">properties</span><span class="p">[</span><span class="n">Link</span><span class="o">.</span><span class="n">POLICY_FUNCTION</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_policy_function</span> <span class="o">=</span> <span class="n">PolicyFunction</span><span class="p">(</span><span class="n">PolicyFunction</span><span class="o">.</span><span class="n">PASS_EVERYTHING</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Link.transmit"><a class="viewcode-back" href="../link.html#link.Link.transmit">[docs]</a>    <span class="k">def</span> <span class="nf">transmit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">delay</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">-</span><span class="si">{}</span><span class="s2">--&gt;</span><span class="si">{}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="o">.</span><span class="n">id</span><span class="p">)</span> <span class="o">+</span> <span class="n">msg</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Link.transmit"><a class="viewcode-back" href="../link.html#link.Link.transmit">[docs]</a>    <span class="k">def</span> <span class="nf">transmit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">delay</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Actual transmitting function</span>
+
 <span class="sd">        :param msg: message that needs to be trasfered</span>
 <span class="sd">        :param delay: time that needs to be waited before the message arrives</span>
-<span class="sd">        to the destination</span>
+<span class="sd">            to the destination</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Request of the unique resource, if the resource is available</span>
         <span class="c1"># it means the message is the first in the sequence of messages</span>
         <span class="c1"># that needs to be transfered</span>
         <span class="c1"># link:[----msg2----msg1+res---&gt;dst]</span>
-        <span class="c1"># Once a node have the resource and has waited for delay time it </span>
+        <span class="c1"># Once a node have the resource and has waited for delay time it</span>
         <span class="c1"># can be delivered</span>
         <span class="n">request</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_res</span><span class="o">.</span><span class="n">request</span><span class="p">()</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">request</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="o">.</span><span class="n">_print</span><span class="p">(</span><span class="s2">&quot;resource obtained, inserting msg: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">obj</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_print</span><span class="p">(</span><span class="s2">&quot;Transmitting msg: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">obj</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="o">.</span><span class="n">event_store</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__waiter</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_node</span><span class="o">.</span><span class="n">_print</span><span class="p">(</span><span class="s2">&quot;resource releasing&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_res</span><span class="o">.</span><span class="n">release</span><span class="p">(</span><span class="n">request</span><span class="p">)</span></div>
-        
-<div class="viewcode-block" id="Link.tx"><a class="viewcode-back" href="../link.html#link.Link.tx">[docs]</a>    <span class="k">def</span> <span class="nf">tx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">delay</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Link.tx"><a class="viewcode-back" href="../link.html#link.Link.tx">[docs]</a>    <span class="k">def</span> <span class="nf">tx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">delay</span><span class="p">):</span> <span class="c1"># pylint: disable=invalid-name</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Transmission function fot the node</span>
 <span class="sd">        use this function to trigger a simpy process</span>
@@ -116,11 +140,18 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transmit</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">delay</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="Link.test"><a class="viewcode-back" href="../link.html#link.Link.test">[docs]</a>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pl</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_policy_function</span><span class="p">[</span><span class="n">pl</span><span class="p">]</span></div>
+<div class="viewcode-block" id="Link.test"><a class="viewcode-back" href="../link.html#link.Link.test">[docs]</a>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">policy_value</span><span class="p">:</span> <span class="n">PolicyValue</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PolicyValue</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;test.</span>
+<span class="sd">        Test if a policy value is applicable to the policy function of the link</span>
+
+<span class="sd">        :param policy_value: policy value to test</span>
+<span class="sd">        :type policy_value: PolicyValue</span>
+<span class="sd">        :rtype: PolicyValue</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_policy_function</span><span class="p">[</span><span class="n">policy_value</span><span class="p">]</span></div>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="c1"># pylint: disable=invalid-name</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns the link id</span>
 <span class="sd">        :returns: id of the link</span>

@@ -33,18 +33,38 @@
             
   <div class="section" id="module-transition">
 <span id="transition-module"></span><h1>transition module<a class="headerlink" href="#module-transition" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>Transition module<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>Used to handle FSM transitions</p>
 <dl class="py class">
 <dt id="transition.Transition">
 <em class="property">class </em><code class="sig-prename descclassname">transition.</code><code class="sig-name descname">Transition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">init_state</span></em>, <em class="sig-param"><span class="n">output_state</span></em>, <em class="sig-param"><span class="n">trigger_input</span></em>, <em class="sig-param"><span class="n">output</span></em>, <em class="sig-param"><span class="n">counter</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/transition.html#Transition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#transition.Transition" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Transition.
+Class used to create transition objects</p>
+<p>A transition object is caracterized by the initial and final state
+and the input that caused the transition, plus the output.</p>
+<p>It represent the edge of an FSM graph</p>
 <dl class="py method">
 <dt id="transition.Transition.__init__">
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">init_state</span></em>, <em class="sig-param"><span class="n">output_state</span></em>, <em class="sig-param"><span class="n">trigger_input</span></em>, <em class="sig-param"><span class="n">output</span></em>, <em class="sig-param"><span class="n">counter</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/transition.html#Transition.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#transition.Transition.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<dd><p>__init__.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>init_state</strong> – initial state where the transition start</p></li>
+<li><p><strong>output_state</strong> – Output state of the transition</p></li>
+<li><p><strong>trigger_input</strong> – Input that caused the transition</p></li>
+<li><p><strong>output</strong> – output shared by the node during the transition</p></li>
+<li><p><strong>counter</strong> – Number of times the transition happened</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
+</div>
 </div>
 
 

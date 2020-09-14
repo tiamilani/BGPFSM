@@ -47,8 +47,19 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright (C) 2016 Michele Segata &lt;segata@ccs-labs.org&gt;</span>
 
-<span class="kn">from</span> <span class="nn">events</span> <span class="kn">import</span> <span class="n">Events</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">event module</span>
+<span class="sd">============</span>
 
+<span class="sd">Module that handle events</span>
+<span class="sd">-------------------------</span>
+
+<span class="sd">This module is used to handle different elements</span>
+<span class="sd">It is possible to create, modify and use events</span>
+
+<span class="sd">Events types must be defined in the Events module</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="Event"><a class="viewcode-back" href="../event.html#event.Event">[docs]</a><span class="k">class</span> <span class="nc">Event</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -57,7 +68,7 @@
     <span class="c1"># counter used for assigning unique IDs to events</span>
     <span class="n">event_counter</span> <span class="o">=</span> <span class="mi">0</span>
 
-<div class="viewcode-block" id="Event.__init__"><a class="viewcode-back" href="../event.html#event.Event.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_duration</span><span class="p">,</span> <span class="n">event_cause</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> 
+<div class="viewcode-block" id="Event.__init__"><a class="viewcode-back" href="../event.html#event.Event.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_duration</span><span class="p">,</span> <span class="n">event_cause</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="c1"># pylint: disable=too-many-arguments</span>
                 <span class="n">destination</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sent_time</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Creates an event.</span>
@@ -81,13 +92,13 @@
     <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Event</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">False</span>
-        <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">event_id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_id</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="fm">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="c1"># if the event is the same, it is not lower than itself</span>
-        <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">event_id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_id</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_duration</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">event_duration</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
@@ -95,17 +106,17 @@
             <span class="k">return</span> <span class="kc">False</span>
         <span class="c1"># if the time is exactly the same, the one with the lower id is the</span>
         <span class="c1"># lowest of the two</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_id</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">event_id</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">id</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="c1"># pylint: disable=invalid-name</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns the event id</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_id</span>
 
     <span class="nd">@id</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span> <span class="c1"># pylint: disable=invalid-name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_event_id</span> <span class="o">=</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
@@ -114,6 +125,15 @@
 <span class="sd">        Returns event time</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_duration</span>
+
+    <span class="nd">@event_duration</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">event_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_duration</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the event duration</span>
+
+<span class="sd">        :param event_duration: Duration of the event</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_event_duration</span> <span class="o">=</span> <span class="n">event_duration</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">event_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -161,13 +181,10 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Prints the event in a human readable format</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">res</span> <span class="o">=</span> <span class="s2">&quot;Event time: </span><span class="si">%f</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_duration</span>
-        <span class="n">t</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_type</span> <span class="o">==</span> <span class="n">Events</span><span class="o">.</span><span class="n">STATE_CHANGE</span><span class="p">:</span>
-            <span class="n">t</span> <span class="o">=</span> <span class="s2">&quot;STATE_CHANGE&quot;</span>
-        <span class="n">res</span> <span class="o">+=</span> <span class="s2">&quot;Event type: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">t</span>
-        <span class="n">res</span> <span class="o">+=</span> <span class="s2">&quot;Source node: </span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">id</span>
-        <span class="n">res</span> <span class="o">+=</span> <span class="s2">&quot;Destination node: </span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">destination</span><span class="o">.</span><span class="n">id</span>
+        <span class="n">res</span> <span class="o">=</span>  <span class="s2">&quot;Event time: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">event_duration</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">+=</span> <span class="s2">&quot;Event type: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">event_type</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">+=</span> <span class="s2">&quot;Source node: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">+=</span> <span class="s2">&quot;Destination node: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">destination</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">res</span></div>
 </pre></div>
 

@@ -32,9 +32,7 @@
           <div class="body" role="main">
             
   <h1>Source code for policies</h1><div class="highlight"><pre>
-<span></span><span class="c1"># This program is free software: you can redistribute it and/or modify</span>
-<span class="c1"># it under the terms of the GNU General Public License as published by</span>
-<span class="c1"># the Free Software Foundation, either version 3 of the License, or</span>
+<span></span><span class="c1"># the Free Software Foundation, either version 3 of the License, or</span>
 <span class="c1"># (at your option) any later version.</span>
 <span class="c1">#</span>
 <span class="c1"># This program is distributed in the hope that it will be useful,</span>
@@ -47,7 +45,41 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright (C) 2020 Mattia Milani &lt;mattia.milani@studenti.unitn.it&gt;</span>
 
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span><span class="p">,</span> <span class="n">deepcopy</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Policies module</span>
+<span class="sd">===============</span>
+
+<span class="sd">Module used to handle policies and filters</span>
+<span class="sd">------------------------------------------</span>
+
+<span class="sd">The goal of this module is to make the use of policies easier</span>
+<span class="sd">it is possible to use policy values and policy functions.</span>
+<span class="sd">Values will be used inside policy functions.</span>
+
+<span class="sd">A policy function detemines when a message will be transfered and</span>
+<span class="sd">with which policy value associated</span>
+
+<span class="sd">Example of policy function</span>
+<span class="sd">&gt;&gt;&gt; &lt;0, inf, inf&gt;</span>
+
+<span class="sd">This policy function is used between clients and providers.</span>
+<span class="sd">The function result is given by the position required.</span>
+<span class="sd">For example</span>
+
+<span class="sd">&gt;&gt;&gt; f(0)=0</span>
+<span class="sd">&gt;&gt;&gt; f(1)=inf</span>
+<span class="sd">&gt;&gt;&gt; f(5)=inf</span>
+<span class="sd">&gt;&gt;&gt; f(inf)=inf</span>
+
+<span class="sd">The input of the policy function is a policy value and the output of it</span>
+<span class="sd">is a policy value itself.</span>
+
+<span class="sd">Other than numbers the only value accepted by policy values is &quot;inf&quot;</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">import</span> <span class="nn">collections</span>
 <span class="kn">import</span> <span class="nn">math</span>
 
@@ -65,14 +97,15 @@
         <span class="c1"># Check that value is an integer and that is higher than 0</span>
         <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">!=</span> <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span> \
                 <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;The policy value should be integer or </span><span class="se">\</span>
+<span class="s2">                            infinite, </span><span class="si">{}</span><span class="s2"> given&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The policy value must be higher than 0, </span><span class="se">\</span>
 <span class="s2">                              </span><span class="si">{}</span><span class="s2"> &lt; 0&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">value</span></div>
 
 <div class="viewcode-block" id="PolicyValue.fromString"><a class="viewcode-back" href="../policies.html#policies.PolicyValue.fromString">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">fromString</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">fromString</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span> <span class="c1"># pylint: disable=invalid-name</span>
         <span class="sd">&quot;&quot;&quot;fromString.</span>
 
 <span class="sd">        :param string: String to transform in a policy value</span>
@@ -166,10 +199,12 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="PolicyFunction"><a class="viewcode-back" href="../policies.html#policies.PolicyFunction">[docs]</a><span class="k">class</span> <span class="nc">PolicyFunction</span><span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">MutableSequence</span><span class="p">):</span>
+<div class="viewcode-block" id="PolicyFunction"><a class="viewcode-back" href="../policies.html#policies.PolicyFunction">[docs]</a><span class="k">class</span> <span class="nc">PolicyFunction</span><span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">MutableSequence</span><span class="p">):</span> <span class="c1"># pylint: disable=too-many-ancestors</span>
     <span class="sd">&quot;&quot;&quot;PolicyFunction.</span>
 <span class="sd">    Class to handle policy functions</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">PASS_EVERYTHING</span> <span class="o">=</span> <span class="s2">&quot;pass-everything&quot;</span>
 
 <div class="viewcode-block" id="PolicyFunction.__init__"><a class="viewcode-back" href="../policies.html#policies.PolicyFunction.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;__init__.</span>
@@ -186,21 +221,24 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">string</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> is empty&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">string</span><span class="p">))</span>
 
-        <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">):</span>
-            <span class="n">elem</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PolicyValue</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="n">elem</span><span class="p">))</span></div>
+        <span class="k">if</span> <span class="n">string</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">PASS_EVERYTHING</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PASS_EVERYTHING</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">):</span>
+                <span class="n">elem</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PolicyValue</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="n">elem</span><span class="p">))</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;values.</span>
-<span class="sd">        </span>
+
 <span class="sd">        :return: the actual list of policy values that is composed the function</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_values</span>
 
     <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;__len__.</span>
-<span class="sd">        </span>
+
 <span class="sd">        :return: the len of the policy function</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
@@ -211,6 +249,8 @@
 <span class="sd">        :param i: PolicyValue you would like to apply to the function</span>
 <span class="sd">                  the function would return the policy value of f(i)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">PASS_EVERYTHING</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PolicyValue</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">PolicyValue</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;It is possible to get an item only with policy values </span><span class="se">\</span>
 <span class="s2">                             </span><span class="si">{}</span><span class="s2"> is not a policy value&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
@@ -222,7 +262,6 @@
 <span class="sd">        :param i:</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># An element of a policy function can&#39;t be deleted</span>
-        <span class="k">pass</span>
 
     <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;__setitem__.</span>
@@ -231,15 +270,13 @@
 <span class="sd">        :param v:</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># The policy function can&#39;t be modified</span>
-        <span class="k">pass</span>
 
-<div class="viewcode-block" id="PolicyFunction.insert"><a class="viewcode-back" href="../policies.html#policies.PolicyFunction.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+<div class="viewcode-block" id="PolicyFunction.insert"><a class="viewcode-back" href="../policies.html#policies.PolicyFunction.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span> <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="sd">&quot;&quot;&quot;insert.</span>
 <span class="sd">        This function has no effects</span>
 <span class="sd">        :param i:</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
         <span class="c1"># The policy function can&#39;t be amplified</span>
-        <span class="k">pass</span></div>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;__str__.</span>

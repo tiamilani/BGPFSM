@@ -33,13 +33,21 @@
             
   <div class="section" id="module-link">
 <span id="link-module"></span><h1>link module<a class="headerlink" href="#module-link" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>link module<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-to-handle-links">
+<h3>Module to handle links<a class="headerlink" href="#module-to-handle-links" title="Permalink to this headline">¶</a></h3>
+<p>The goal of this module is to handle the links objects
+The class link is able to transmit messages emulating delays</p>
 <dl class="py class">
 <dt id="link.Link">
 <em class="property">class </em><code class="sig-prename descclassname">link.</code><code class="sig-name descname">Link</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">env</span></em>, <em class="sig-param"><span class="n">node</span></em>, <em class="sig-param"><span class="n">resource</span></em>, <em class="sig-param"><span class="n">properties</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/link.html#Link"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#link.Link" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class defining a link between nodes
 this class contains properties for the link
-like delay or preference</p>
+like delay or preference and link policy functions
+Every link have a unique id
+A single link can have a specific id</p>
 <dl class="py attribute">
 <dt id="link.Link.DELAY">
 <code class="sig-name descname">DELAY</code><em class="property"> = 'delay'</em><a class="headerlink" href="#link.Link.DELAY" title="Permalink to this definition">¶</a></dt>
@@ -53,12 +61,21 @@ like delay or preference</p>
 <dl class="py method">
 <dt id="link.Link.__init__">
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">env</span></em>, <em class="sig-param"><span class="n">node</span></em>, <em class="sig-param"><span class="n">resource</span></em>, <em class="sig-param"><span class="n">properties</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/link.html#Link.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#link.Link.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a link automatically assign a uniqueid to the link
-:param env: Simpy environment
-:param node: Node which the link is refered to
-:param resource: unitary resource used to lock the link
-:param properties: properties of the link in the graphml that
-needs to be evaluated</p>
+<dd><p>Creates a link and automatically assign a uniqueid to the link
+It requires a simpy environment where to operate.
+It also require a simpy resource to operate correctly and
+reserve the channel for a message.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>env</strong> – Simpy environment</p></li>
+<li><p><strong>node</strong> – Node which the link is refered to</p></li>
+<li><p><strong>resource</strong> – unitary resource used to lock the link</p></li>
+<li><p><strong>properties</strong> – properties of the link in the graphml that
+needs to be evaluated</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -85,16 +102,32 @@ for the link
 
 <dl class="py method">
 <dt id="link.Link.test">
-<code class="sig-name descname">test</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pl</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/link.html#Link.test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#link.Link.test" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname">test</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">policy_value</span><span class="p">:</span> <span class="n"><a class="reference internal" href="policies.html#policies.PolicyValue" title="policies.PolicyValue">policies.PolicyValue</a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="policies.html#policies.PolicyValue" title="policies.PolicyValue">policies.PolicyValue</a><a class="reference internal" href="_modules/link.html#Link.test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#link.Link.test" title="Permalink to this definition">¶</a></dt>
+<dd><p>test.
+Test if a policy value is applicable to the policy function of the link</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>policy_value</strong> (<a class="reference internal" href="policies.html#policies.PolicyValue" title="policies.PolicyValue"><em>PolicyValue</em></a>) – policy value to test</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="policies.html#policies.PolicyValue" title="policies.PolicyValue">PolicyValue</a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="link.Link.transmit">
-<code class="sig-name descname">transmit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em>, <em class="sig-param"><span class="n">delay</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/link.html#Link.transmit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#link.Link.transmit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Actual transmitting function
-:param msg: message that needs to be trasfered
-:param delay: time that needs to be waited before the message arrives
-to the destination</p>
+<code class="sig-name descname">transmit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span><span class="p">:</span> <span class="n">Any</span></em>, <em class="sig-param"><span class="n">delay</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="_modules/link.html#Link.transmit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#link.Link.transmit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Actual transmitting function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>msg</strong> – message that needs to be trasfered</p></li>
+<li><p><strong>delay</strong> – time that needs to be waited before the message arrives
+to the destination</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -108,6 +141,8 @@ use this function to trigger a simpy process
 
 </dd></dl>
 
+</div>
+</div>
 </div>
 
 

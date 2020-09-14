@@ -50,11 +50,21 @@
 <span class="c1"># Modified by Mattia Milani</span>
 <span class="c1"># Copyright (C) 2020 Mattia Milani &lt;mattia.milani@studenti.unitn.it&gt;</span>
 
-<span class="kn">import</span> <span class="nn">sys</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Log module</span>
+<span class="sd">==========</span>
 
-<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;..&#39;</span><span class="p">)</span>
-<span class="kn">import</span> <span class="nn">bgp_sim</span>
+<span class="sd">Used to log information in csv format</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="n">myPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">myPath</span> <span class="o">+</span> <span class="s1">&#39;/../&#39;</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">events</span> <span class="kn">import</span> <span class="n">Events</span>
+<span class="kn">import</span> <span class="nn">bgp_sim</span>
 
 
 <div class="viewcode-block" id="Log"><a class="viewcode-back" href="../log.html#log.Log">[docs]</a><span class="k">class</span> <span class="nc">Log</span><span class="p">:</span>
@@ -62,7 +72,7 @@
 <span class="sd">    Defines data logging utilities</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="Log.__init__"><a class="viewcode-back" href="../log.html#log.Log.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">log_routing_change</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">log_rib_change</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<div class="viewcode-block" id="Log.__init__"><a class="viewcode-back" href="../log.html#log.Log.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">log_routing_change</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">log_rib_change</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="c1"># pylint: disable=too-many-arguments</span>
             <span class="n">log_packets</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">log_paths</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">log_states</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Constructor.</span>
@@ -73,7 +83,7 @@
 <span class="sd">        :param log_paths: enable/disable logging of new paths</span>
 <span class="sd">        :param log_states: enable/disable logging of the state of nodes</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sim</span> <span class="o">=</span> <span class="n">bgp_sim</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">Instance</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sim</span> <span class="o">=</span> <span class="n">bgp_sim</span><span class="o">.</span><span class="n">Sim</span><span class="o">.</span><span class="n">Instance</span><span class="p">()</span> <span class="c1"># pylint: disable=no-member</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;event_id|event_cause|event|time|node|value</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log_packets</span> <span class="o">=</span> <span class="n">log_packets</span>
@@ -92,8 +102,9 @@
 <span class="sd">        :param route: the new route in the routing table</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_routing_change</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> 
-                                            <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                                            <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> \
+                                                    <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
                                             <span class="n">Events</span><span class="o">.</span><span class="n">RT_CHANGE</span><span class="p">,</span>
                                             <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
                                             <span class="n">event</span><span class="o">.</span><span class="n">obj</span><span class="p">))</span></div>
@@ -107,7 +118,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_rib</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-                                            <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">RIB_CHANGE</span><span class="p">,</span>
+                                            <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> \
+                                                    <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                            <span class="n">Events</span><span class="o">.</span><span class="n">RIB_CHANGE</span><span class="p">,</span>
                                             <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">obj</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Log.log_packet_tx"><a class="viewcode-back" href="../log.html#log.Log.log_packet_tx">[docs]</a>    <span class="k">def</span> <span class="nf">log_packet_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
@@ -118,12 +131,13 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_packets</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-                                                <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                                <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> \
+                                                        <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
                                                 <span class="n">Events</span><span class="o">.</span><span class="n">TX</span><span class="p">,</span>
-                                                <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> 
-                                                <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> 
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span>
+                                                <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
                                                 <span class="n">event</span><span class="o">.</span><span class="n">obj</span><span class="p">))</span></div>
-    
+
 <div class="viewcode-block" id="Log.log_packet_rx"><a class="viewcode-back" href="../log.html#log.Log.log_packet_rx">[docs]</a>    <span class="k">def</span> <span class="nf">log_packet_rx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Logs a packet rx.</span>
@@ -132,10 +146,11 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_packets</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-                                                <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                                <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> \
+                                                        <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
                                                 <span class="n">Events</span><span class="o">.</span><span class="n">RX</span><span class="p">,</span>
-                                                <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> 
-                                                <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> 
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span>
+                                                <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
                                                 <span class="n">event</span><span class="o">.</span><span class="n">obj</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Log.log_path"><a class="viewcode-back" href="../log.html#log.Log.log_path">[docs]</a>    <span class="k">def</span> <span class="nf">log_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
@@ -146,10 +161,11 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_paths</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-                                                <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                                <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">event_cause</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> \
+                                                        <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
                                                 <span class="n">Events</span><span class="o">.</span><span class="n">NEW_PATH</span><span class="p">,</span>
-                                                <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> 
-                                                <span class="n">node_id</span><span class="p">,</span> 
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span>
+                                                <span class="n">node_id</span><span class="p">,</span>
                                                 <span class="n">event</span><span class="o">.</span><span class="n">obj</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Log.log_state"><a class="viewcode-back" href="../log.html#log.Log.log_state">[docs]</a>    <span class="k">def</span> <span class="nf">log_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
@@ -160,7 +176,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_states</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="s2">|</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">Events</span><span class="o">.</span><span class="n">STATE_CHANGE</span><span class="p">,</span>
-                                                    <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span> 
+                                                    <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">,</span>
                                                     <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">state</span><span class="p">))</span></div></div>
 </pre></div>
 

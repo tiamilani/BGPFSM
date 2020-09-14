@@ -33,9 +33,13 @@
             
   <div class="section" id="module-node">
 <span id="node-module"></span><h1>node module<a class="headerlink" href="#module-node" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>node module<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>Module used to represent a node in the network.
+All the node logic is inside this module</p>
 <dl class="py class">
 <dt id="node.Node">
-<em class="property">class </em><code class="sig-prename descclassname">node.</code><code class="sig-name descname">Node</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id</span></em>, <em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node.html#Node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node.Node" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">node.</code><code class="sig-name descname">Node</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id_node</span></em>, <em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node.html#Node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node.Node" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="module.html#module.Module" title="module.Module"><code class="xref py py-class docutils literal notranslate"><span class="pre">module.Module</span></code></a></p>
 <p>Node.
 Class to manage node inside the simulation</p>
@@ -55,6 +59,11 @@ Class to manage node inside the simulation</p>
 <dd></dd></dl>
 
 <dl class="py attribute">
+<dt id="node.Node.PAR_IMPLICIT_WITHDRAW">
+<code class="sig-name descname">PAR_IMPLICIT_WITHDRAW</code><em class="property"> = 'implicit_withdraw'</em><a class="headerlink" href="#node.Node.PAR_IMPLICIT_WITHDRAW" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt id="node.Node.PAR_PROC_TIME">
 <code class="sig-name descname">PAR_PROC_TIME</code><em class="property"> = 'processing'</em><a class="headerlink" href="#node.Node.PAR_PROC_TIME" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -67,6 +76,16 @@ Class to manage node inside the simulation</p>
 <dl class="py attribute">
 <dt id="node.Node.PAR_REANNOUNCE_DIST">
 <code class="sig-name descname">PAR_REANNOUNCE_DIST</code><em class="property"> = 'reannouncement_dist'</em><a class="headerlink" href="#node.Node.PAR_REANNOUNCE_DIST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="node.Node.PAR_SIGNALING">
+<code class="sig-name descname">PAR_SIGNALING</code><em class="property"> = 'signaling'</em><a class="headerlink" href="#node.Node.PAR_SIGNALING" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="node.Node.PAR_SIGNALING_SEQUENCE">
+<code class="sig-name descname">PAR_SIGNALING_SEQUENCE</code><em class="property"> = 'signaling_sequence'</em><a class="headerlink" href="#node.Node.PAR_SIGNALING_SEQUENCE" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -86,12 +105,12 @@ Class to manage node inside the simulation</p>
 
 <dl class="py method">
 <dt id="node.Node.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id</span></em>, <em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node.html#Node.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node.Node.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id_node</span></em>, <em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node.html#Node.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node.Node.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>__init__.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> – identifier of the node</p></li>
+<li><p><strong>id_node</strong> – identifier of the node</p></li>
 <li><p><strong>config</strong> – Configuration file</p></li>
 </ul>
 </dd>
@@ -100,16 +119,23 @@ Class to manage node inside the simulation</p>
 
 <dl class="py method">
 <dt id="node.Node.add_destination">
-<code class="sig-name descname">add_destination</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">destination</span></em>, <em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">nh</span></em>, <em class="sig-param"><span class="n">event</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">policy_value</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node.html#Node.add_destination"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node.Node.add_destination" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function that adds a destination to the data structure
-that manage destinations that needs to be shared inside the node</p>
+<code class="sig-name descname">add_destination</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">destination</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">path</span><span class="p">:</span> <span class="n">list</span></em>, <em class="sig-param"><span class="n">next_hop</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">policy_value</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">share</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="_modules/node.html#Node.add_destination"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node.Node.add_destination" title="Permalink to this definition">¶</a></dt>
+<dd><p>add_destination.
+Function used to add a destination to the node not already in route
+format</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>destination</strong> – destination that is originated by the node</p></li>
-<li><p><strong>path</strong> – path to the destination</p></li>
-<li><p><strong>nh</strong> – nh for the route</p></li>
+<li><p><strong>destination</strong> (<em>str</em>) – destination to share</p></li>
+<li><p><strong>path</strong> (<em>list</em>) – List of nodes attraversed to reach the destination</p></li>
+<li><p><strong>next_hop</strong> (<em>str</em>) – Id of the next hop node</p></li>
+<li><p><strong>policy_value</strong> – Policy value to add to the route, defualt=0</p></li>
+<li><p><strong>share</strong> – Sharing flag, default=True, if false the route will
+be added but not shared</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -118,7 +144,7 @@ that manage destinations that needs to be shared inside the node</p>
 <dt id="node.Node.add_neighbor">
 <code class="sig-name descname">add_neighbor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">link</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node.html#Node.add_neighbor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node.Node.add_neighbor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a neighbor to the set of neighbors
-If the neighbor is already in the set it throws an error 
+If the neighbor is already in the set it throws an error
 and terminate</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -132,6 +158,36 @@ and terminate</p>
 <code class="sig-name descname">change_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">waiting_time</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node.html#Node.change_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node.Node.change_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>change_state.
 Change the state of a node, test function</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node.Node.evaluate_signaling_event">
+<code class="sig-name descname">evaluate_signaling_event</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">elem</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">route</span><span class="p">:</span> <span class="n"><a class="reference internal" href="route.html#route.Route" title="route.Route">route.Route</a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="event.html#event.Event" title="event.Event">event.Event</a><a class="reference internal" href="_modules/node.html#Node.evaluate_signaling_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node.Node.evaluate_signaling_event" title="Permalink to this definition">¶</a></dt>
+<dd><p>evaluate_signaling_event.</p>
+<p>Evaluate a signaling event and returns the event associated with the
+sigaling</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>elem</strong> (<em>str</em>) – signal to manage</p></li>
+<li><p><strong>route</strong> (<a class="reference internal" href="route.html#route.Route" title="route.Route"><em>Route</em></a>) – Route to share or withdraw</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="event.html#event.Event" title="event.Event">Event</a></p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – When is passed an element that is not a valid signal</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="node.Node.force_share_dst">
+<code class="sig-name descname">force_share_dst</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/node.html#Node.force_share_dst"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node.Node.force_share_dst" title="Permalink to this definition">¶</a></dt>
+<dd><p>force_share_dst.
+Function used as kick starter for nodes that have to share a destination
+to generate the start events.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -154,14 +210,34 @@ Function to handle events from the store</p>
 </dd></dl>
 
 <dl class="py method">
+<dt id="node.Node.new_network">
+<code class="sig-name descname">new_network</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">route</span><span class="p">:</span> <span class="n"><a class="reference internal" href="route.html#route.Route" title="route.Route">route.Route</a></span></em>, <em class="sig-param"><span class="n">event</span><span class="p">:</span> <span class="n"><a class="reference internal" href="event.html#event.Event" title="event.Event">event.Event</a></span></em>, <em class="sig-param"><span class="n">share</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="_modules/node.html#Node.new_network"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node.Node.new_network" title="Permalink to this definition">¶</a></dt>
+<dd><p>new_network.
+Function used to add a new route, it will be evaluated for the
+insertion in the rib and it will be then evaluated for the Routing table</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>route</strong> (<a class="reference internal" href="route.html#route.Route" title="route.Route"><em>Route</em></a>) – Route to evaluate</p></li>
+<li><p><strong>event</strong> (<a class="reference internal" href="event.html#event.Event" title="event.Event"><em>Event</em></a>) – Cause event for the evaluation</p></li>
+<li><p><strong>share</strong> – The network should be shared if it’s the new best? (default=True)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="node.Node.program_withdraw">
 <code class="sig-name descname">program_withdraw</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node.html#Node.program_withdraw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node.Node.program_withdraw" title="Permalink to this definition">¶</a></dt>
 <dd><p>program_withdraw.
-Function used to program a withdraw of a previusly 
+Function used to program a withdraw of a previusly
 shared destination</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>event</strong> – event that generates the withdraw, used to 
+<dd class="field-odd"><p><strong>event</strong> – event that generates the withdraw, used to
 get the delay time and the route that needs to be withdrawed</p>
 </dd>
 </dl>
@@ -192,13 +268,35 @@ Function to handle packet reception</p>
 </dd></dl>
 
 <dl class="py method">
+<dt id="node.Node.send_msg_to_all">
+<code class="sig-name descname">send_msg_to_all</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">packet</span><span class="p">:</span> <span class="n"><a class="reference internal" href="packet.html#packet.Packet" title="packet.Packet">packet.Packet</a></span></em>, <em class="sig-param"><span class="n">event</span><span class="p">:</span> <span class="n"><a class="reference internal" href="event.html#event.Event" title="event.Event">event.Event</a></span></em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="_modules/node.html#Node.send_msg_to_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node.Node.send_msg_to_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>send_msg_to_all.
+Function to send a packet to all the neighbours.
+The packet will be sent only if the route respect the policy value
+of the link and if the neighbour is not the next hop of the route</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>packet</strong> (<a class="reference internal" href="packet.html#packet.Packet" title="packet.Packet"><em>Packet</em></a>) – Packet to send</p></li>
+<li><p><strong>event</strong> (<a class="reference internal" href="event.html#event.Event" title="event.Event"><em>Event</em></a>) – Cause event</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="node.Node.share_dst">
 <code class="sig-name descname">share_dst</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/node.html#Node.share_dst"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#node.Node.share_dst" title="Permalink to this definition">¶</a></dt>
 <dd><p>share_dst.
-Share a destiantion to all the neighbors that are in destination queue</p>
+Share a destiantion to all the neighbors
+If the destination is originated by this node and the withdraw flag
+is active a withdraw will also be triggered</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>event</strong> – event that trigger the sharing of the destination</p>
+<dd class="field-odd"><p><strong>event</strong> – event that triggered the sharing of the destination</p>
 </dd>
 </dl>
 </dd></dl>
@@ -219,6 +317,7 @@ Function that transmit the packet to a destination
 
 </dd></dl>
 
+</div>
 </div>
 
 

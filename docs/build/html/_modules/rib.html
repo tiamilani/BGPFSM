@@ -47,7 +47,21 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright (C) 2020 Mattia Milani &lt;mattia.milani@studenti.unitn.it&gt;</span>
 
-<span class="kn">import</span> <span class="nn">ipaddress</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Rib module</span>
+<span class="sd">==========</span>
+
+<span class="sd">Control a routing information base</span>
+<span class="sd">----------------------------------</span>
+
+<span class="sd">Is possible to create and handle a routing information base using this module</span>
+<span class="sd">It povides an iterable rib.</span>
+<span class="sd">Is possible to register only routes in the rib.</span>
+<span class="sd">New routes will be evaluated before the insertion.</span>
+<span class="sd">A new route could override old routes from neighbours.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
 <span class="kn">import</span> <span class="nn">collections</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 
@@ -57,7 +71,7 @@
 <span class="kn">from</span> <span class="nn">event</span> <span class="kn">import</span> <span class="n">Event</span>
 
 
-<div class="viewcode-block" id="RibIterator"><a class="viewcode-back" href="../rib.html#rib.RibIterator">[docs]</a><span class="k">class</span> <span class="nc">RibIterator</span><span class="p">():</span>
+<div class="viewcode-block" id="RibIterator"><a class="viewcode-back" href="../rib.html#rib.RibIterator">[docs]</a><span class="k">class</span> <span class="nc">RibIterator</span><span class="p">():</span> <span class="c1"># pylint: disable=too-few-public-methods</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Iterator class for the RIB table object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -75,7 +89,7 @@
 <span class="sd">        Returns the next object for the RIB table</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rt</span><span class="p">):</span>
-            <span class="n">key_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rt</span><span class="o">.</span><span class="n">getKey</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_idx</span><span class="p">)</span>
+            <span class="n">key_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rt</span><span class="o">.</span><span class="n">get_key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_idx</span><span class="p">)</span>
             <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rt</span><span class="p">[</span><span class="n">key_result</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_idx</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">return</span> <span class="n">result</span>
@@ -83,12 +97,12 @@
         <span class="k">raise</span> <span class="ne">StopIteration</span></div>
 
 
-<div class="viewcode-block" id="Rib"><a class="viewcode-back" href="../rib.html#rib.Rib">[docs]</a><span class="k">class</span> <span class="nc">Rib</span><span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">MutableSequence</span><span class="p">):</span>
+<div class="viewcode-block" id="Rib"><a class="viewcode-back" href="../rib.html#rib.Rib">[docs]</a><span class="k">class</span> <span class="nc">Rib</span><span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">MutableSequence</span><span class="p">):</span> <span class="c1"># pylint: disable=too-many-ancestors</span>
     <span class="sd">&quot;&quot;&quot;Rib.</span>
 <span class="sd">    Class used to handle the routing information base of a node</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">ROUTE_COUNTER</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">__ROUTE_COUNTER</span> <span class="o">=</span> <span class="mi">0</span>
 
 <div class="viewcode-block" id="Rib.__init__"><a class="viewcode-back" href="../rib.html#rib.Rib.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">logger</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;__init__.</span>
@@ -98,24 +112,24 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_table</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">oktype</span> <span class="o">=</span> <span class="n">Route</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">node_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">node_id</span> <span class="c1"># pylint: disable=invalid-name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logger</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_support_route_identifier</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">actual_state</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="Rib.check"><a class="viewcode-back" href="../rib.html#rib.Rib.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+<div class="viewcode-block" id="Rib.check"><a class="viewcode-back" href="../rib.html#rib.Rib.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;check.</span>
 
-<span class="sd">        :param v: check the type of v</span>
+<span class="sd">        :param value: check the type of value</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">oktype</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">oktype</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> 
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;__len__.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span> 
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;__getitem__.</span>
 
 <span class="sd">        :param i: key addr</span>
@@ -127,7 +141,7 @@
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span> 
+    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;__delitem__.</span>
 <span class="sd">        delete the first element in the list in the i reference of the table</span>
 
@@ -135,7 +149,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span> <span class="c1"># pylint: disable=unexpected-special-method-signature</span>
         <span class="sd">&quot;&quot;&quot;__setitem__.</span>
 
 <span class="sd">        :param i: table addres key</span>
@@ -147,20 +161,27 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
 
 <div class="viewcode-block" id="Rib.update_rib_state"><a class="viewcode-back" href="../rib.html#rib.Rib.update_rib_state">[docs]</a>    <span class="k">def</span> <span class="nf">update_rib_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">route</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">insertion</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;update_rib_state.</span>
+<span class="sd">        Used to update the actual state of the rib after an update</span>
+
+<span class="sd">        :param route: route removed or inserted</span>
+<span class="sd">        :param event: Cause event</span>
+<span class="sd">        :param insertion: (Default True) determine the type of update</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Concatenation of all route ids</span>
         <span class="k">if</span> <span class="n">insertion</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_support_route_identifier</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_support_route_identifier</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ROUTE_COUNTER</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">ROUTE_COUNTER</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_support_route_identifier</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__ROUTE_COUNTER</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__ROUTE_COUNTER</span> <span class="o">+=</span> <span class="mi">1</span> <span class="c1"># pylint: disable=invalid-name</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_support_route_identifier</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actual_state</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">actual_state</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_support_route_identifier</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)])</span>
                 <span class="k">if</span> <span class="n">event</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">rib_change_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">RIB_CHANGE</span><span class="p">,</span> 
+                    <span class="n">rib_change_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">RIB_CHANGE</span><span class="p">,</span>
                                              <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">actual_state</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">rib_change_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">RIB_CHANGE</span><span class="p">,</span> 
+                    <span class="n">rib_change_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">RIB_CHANGE</span><span class="p">,</span>
                                              <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">actual_state</span><span class="p">)</span>
-                    
+
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">log_rib_change</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">rib_change_event</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">insertion</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">actual_state</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_support_route_identifier</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="p">)])</span>
@@ -169,23 +190,23 @@
                 <span class="n">rib_change_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">RIB_CHANGE</span><span class="p">,</span>
                                          <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">actual_state</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">rib_change_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">RIB_CHANGE</span><span class="p">,</span> 
+                <span class="n">rib_change_event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">Events</span><span class="o">.</span><span class="n">RIB_CHANGE</span><span class="p">,</span>
                                          <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">actual_state</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">log_rib_change</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">rib_change_event</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Rib.contains"><a class="viewcode-back" href="../rib.html#rib.Rib.contains">[docs]</a>    <span class="k">def</span> <span class="nf">contains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+<div class="viewcode-block" id="Rib.contains"><a class="viewcode-back" href="../rib.html#rib.Rib.contains">[docs]</a>    <span class="k">def</span> <span class="nf">contains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;contains.</span>
-<span class="sd">        check if the table contains the object v in the vector for the addr i</span>
+<span class="sd">        check if the table contains the object value in the vector for the addr i</span>
 
 <span class="sd">        :param i: addr key</span>
-<span class="sd">        :param v: route to check</span>
+<span class="sd">        :param value: route to check</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
                 <span class="k">return</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="kc">False</span></div>
 
-<div class="viewcode-block" id="Rib.remove"><a class="viewcode-back" href="../rib.html#rib.Rib.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Rib.remove"><a class="viewcode-back" href="../rib.html#rib.Rib.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span> <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="sd">&quot;&quot;&quot;remove.</span>
 <span class="sd">        remove object v from the vector of addr i if present</span>
 
@@ -216,7 +237,7 @@
             <span class="k">return</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="kc">True</span></div>
 
-<div class="viewcode-block" id="Rib.insert"><a class="viewcode-back" href="../rib.html#rib.Rib.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Rib.insert"><a class="viewcode-back" href="../rib.html#rib.Rib.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">implicit_withdraw</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span> <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="sd">&quot;&quot;&quot;insert.</span>
 <span class="sd">        Function to insert an object in the rib at the addr i</span>
 
@@ -231,6 +252,12 @@
             <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="p">]</span>
             <span class="k">elif</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">implicit_withdraw</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">net</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                        <span class="k">if</span> <span class="n">net</span><span class="o">.</span><span class="n">nh</span> <span class="o">==</span> <span class="n">v</span><span class="o">.</span><span class="n">nh</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: Removing </span><span class="si">{}</span><span class="s2"> from rib&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">net</span><span class="p">))</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">actual_state</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_support_route_identifier</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">net</span><span class="p">)])</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">net</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
                 <span class="c1"># Sort the list for importance of the routes</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
@@ -248,8 +275,8 @@
         <span class="c1"># If it was not possible to enter the path then return None</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
-<div class="viewcode-block" id="Rib.getKey"><a class="viewcode-back" href="../rib.html#rib.Rib.getKey">[docs]</a>    <span class="k">def</span> <span class="nf">getKey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;getKey.</span>
+<div class="viewcode-block" id="Rib.get_key"><a class="viewcode-back" href="../rib.html#rib.Rib.get_key">[docs]</a>    <span class="k">def</span> <span class="nf">get_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get_key.</span>
 <span class="sd">        Return the ith key</span>
 
 <span class="sd">        :param i: index</span>
@@ -268,8 +295,8 @@
 <span class="sd">        :returns: string with all the routing information</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">res</span> <span class="o">=</span> <span class="s2">&quot;RIB:</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="n">rt</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">route</span> <span class="ow">in</span> <span class="n">rt</span><span class="p">:</span>
+        <span class="n">rib_table</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">route</span> <span class="ow">in</span> <span class="n">rib_table</span><span class="p">:</span>
             <span class="n">res</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">[</span><span class="n">route</span><span class="p">]])</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
         <span class="k">return</span> <span class="n">res</span></div>
 </pre></div>

@@ -33,6 +33,12 @@
             
   <div class="section" id="module-routingTable">
 <span id="routingtable-module"></span><h1>routingTable module<a class="headerlink" href="#module-routingTable" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>RoutingTable module<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="manage-the-routing-table">
+<h3>Manage the routing table<a class="headerlink" href="#manage-the-routing-table" title="Permalink to this headline">¶</a></h3>
+<p>Is possible to create a routing table and manage it, it can contains
+only one route per address</p>
 <dl class="py class">
 <dt id="routingTable.RoutingTable">
 <em class="property">class </em><code class="sig-prename descclassname">routingTable.</code><code class="sig-name descname">RoutingTable</code><a class="reference internal" href="_modules/routingTable.html#RoutingTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#routingTable.RoutingTable" title="Permalink to this definition">¶</a></dt>
@@ -47,11 +53,11 @@ Class used to handle the routing table of a node</p>
 
 <dl class="py method">
 <dt id="routingTable.RoutingTable.check">
-<code class="sig-name descname">check</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/routingTable.html#RoutingTable.check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#routingTable.RoutingTable.check" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">check</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/routingTable.html#RoutingTable.check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#routingTable.RoutingTable.check" title="Permalink to this definition">¶</a></dt>
 <dd><p>check.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>v</strong> – check that V is a route instance</p>
+<dd class="field-odd"><p><strong>value</strong> – check that V is a route instance</p>
 </dd>
 </dl>
 </dd></dl>
@@ -70,7 +76,9 @@ Class used to handle the routing table of a node</p>
 <dl class="py method">
 <dt id="routingTable.RoutingTable.insert">
 <code class="sig-name descname">insert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">i</span></em>, <em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/routingTable.html#RoutingTable.insert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#routingTable.RoutingTable.insert" title="Permalink to this definition">¶</a></dt>
-<dd><p>insert.</p>
+<dd><p>insert.
+Is not possible to insert any route in the Routing Table
+This method has no effects</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -101,6 +109,8 @@ Class used to handle the routing table of a node</p>
 
 </dd></dl>
 
+</div>
+</div>
 </div>
 
 

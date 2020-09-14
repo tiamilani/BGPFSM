@@ -33,9 +33,16 @@
             
   <div class="section" id="module-packet">
 <span id="packet-module"></span><h1>packet module<a class="headerlink" href="#module-packet" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>Packet module<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="packet-controller-system">
+<h3>Packet controller system<a class="headerlink" href="#packet-controller-system" title="Permalink to this headline">¶</a></h3>
+<p>In this module is possible to define different packets that will be used
+during the simulation</p>
+<p>For now a general packet could be an update ora withdraw</p>
 <dl class="py class">
 <dt id="packet.Packet">
-<em class="property">class </em><code class="sig-prename descclassname">packet.</code><code class="sig-name descname">Packet</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">packet_type</span></em>, <em class="sig-param"><span class="n">content</span></em>, <em class="sig-param"><span class="n">id</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/packet.html#Packet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#packet.Packet" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">packet.</code><code class="sig-name descname">Packet</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">packet_type</span></em>, <em class="sig-param"><span class="n">content</span></em>, <em class="sig-param"><span class="n">id_packet</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/packet.html#Packet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#packet.Packet" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class defining a packet to be associated with a transmission event</p>
 <dl class="py attribute">
@@ -50,9 +57,9 @@
 
 <dl class="py method">
 <dt id="packet.Packet.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">packet_type</span></em>, <em class="sig-param"><span class="n">content</span></em>, <em class="sig-param"><span class="n">id</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/packet.html#Packet.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#packet.Packet.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">packet_type</span></em>, <em class="sig-param"><span class="n">content</span></em>, <em class="sig-param"><span class="n">id_packet</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/packet.html#Packet.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#packet.Packet.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a packet automatically assigning a unique ID to it
-:param packet_type: type of the packet 
+:param packet_type: type of the packet
 :param content: content of the packet</p>
 </dd></dl>
 
@@ -65,8 +72,18 @@
 
 <dl class="py method">
 <dt id="packet.Packet.fromString">
-<em class="property">classmethod </em><code class="sig-name descname">fromString</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/packet.html#Packet.fromString"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#packet.Packet.fromString" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property">classmethod </em><code class="sig-name descname">fromString</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/packet.html#Packet.fromString"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#packet.Packet.fromString" title="Permalink to this definition">¶</a></dt>
+<dd><p>fromString.
+Function to get the packet object from a string representation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>string</strong> – string to transform in a packet</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#packet.Packet" title="packet.Packet">Packet</a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="packet.Packet.id">
@@ -84,6 +101,8 @@
 
 </dd></dl>
 
+</div>
+</div>
 </div>
 
 

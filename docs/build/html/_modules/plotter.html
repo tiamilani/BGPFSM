@@ -48,29 +48,59 @@
 <span class="c1">#</span>
 <span class="c1"># Copyright (C) 2020 Mattia Milani &lt;mattia.milani@studenti.unitn.it&gt;</span>
 
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Plotter Module</span>
+<span class="sd">==============</span>
+
+<span class="sd">This module is used to plot information about the data retrived by the</span>
+<span class="sd">analyzer.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">ast</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">transition</span> <span class="kn">import</span> <span class="n">Transition</span>
 <span class="kn">from</span> <span class="nn">graphviz</span> <span class="kn">import</span> <span class="n">Digraph</span>
-<span class="kn">import</span> <span class="nn">ast</span>
 <span class="kn">from</span> <span class="nn">route</span> <span class="kn">import</span> <span class="n">Route</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib.ticker</span> <span class="kn">import</span> <span class="n">MaxNLocator</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <div class="viewcode-block" id="Plotter"><a class="viewcode-back" href="../plotter.html#plotter.Plotter">[docs]</a><span class="k">class</span> <span class="nc">Plotter</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plotter class</span>
+<span class="sd">    Main class used for the plotting system.</span>
+<span class="sd">    Initialize the DataFrame variables</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="Plotter.__init__"><a class="viewcode-back" href="../plotter.html#plotter.Plotter.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">states</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">transitions</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> 
-                   <span class="n">route_id</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">states_df</span> <span class="o">=</span> <span class="n">states</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">states</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;index&#39;</span><span class="p">)</span>    
-        <span class="bp">self</span><span class="o">.</span><span class="n">states</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;state&#39;</span><span class="p">]:</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;counter&#39;</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transitions_df</span> <span class="o">=</span> <span class="n">transitions</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span> <span class="o">=</span> <span class="n">transitions</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;index&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">Transition</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;start_node&#39;</span><span class="p">],</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;end_node&#39;</span><span class="p">],</span> 
-                            <span class="n">v</span><span class="p">[</span><span class="s1">&#39;cause&#39;</span><span class="p">],</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;response&#39;</span><span class="p">],</span> <span class="n">counter</span><span class="o">=</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;counter&#39;</span><span class="p">])</span> \
-                            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">route_identifier_df</span> <span class="o">=</span> <span class="n">route_id</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">route_identifier</span> <span class="o">=</span> <span class="n">route_id</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;index&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">route_identifier</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">Route</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">])</span> \
-                                 <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">route_identifier</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
+
+<div class="viewcode-block" id="Plotter.__init__"><a class="viewcode-back" href="../plotter.html#plotter.Plotter.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">states</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transitions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">route_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">signaling</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__init__.</span>
+
+<span class="sd">        :param states: States DataFrame</span>
+<span class="sd">        :param transitions: Transitions DataFrame</span>
+<span class="sd">        :param route_id: Route to id DataFrame</span>
+<span class="sd">        :param signaling: Signaling results DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">NoneType</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">states_df</span> <span class="o">=</span> <span class="n">states</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">states</span> <span class="o">=</span> <span class="n">states</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;index&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">states</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;state&#39;</span><span class="p">]:</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;counter&#39;</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transitions</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transitions_df</span> <span class="o">=</span> <span class="n">transitions</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span> <span class="o">=</span> <span class="n">transitions</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;index&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">Transition</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;start_node&#39;</span><span class="p">],</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;end_node&#39;</span><span class="p">],</span>
+                                <span class="n">v</span><span class="p">[</span><span class="s1">&#39;cause&#39;</span><span class="p">],</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;response&#39;</span><span class="p">],</span> <span class="n">counter</span><span class="o">=</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;counter&#39;</span><span class="p">])</span> \
+                                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">route_id</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">route_identifier_df</span> <span class="o">=</span> <span class="n">route_id</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">route_identifier</span> <span class="o">=</span> <span class="n">route_id</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;index&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">route_identifier</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">Route</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">])</span> \
+                                     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">route_identifier</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">signaling</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">signaling_df</span> <span class="o">=</span> <span class="n">signaling</span></div>
 
 <div class="viewcode-block" id="Plotter.get_fsm_graphviz"><a class="viewcode-back" href="../plotter.html#plotter.Plotter.get_fsm_graphviz">[docs]</a>    <span class="k">def</span> <span class="nf">get_fsm_graphviz</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dot</span><span class="p">:</span> <span class="n">Digraph</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Digraph</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;get_fsm_graphviz.</span>
@@ -93,7 +123,7 @@
                         <span class="n">best_id</span> <span class="o">=</span> <span class="n">new_elem</span>
                 <span class="n">res</span> <span class="o">=</span> <span class="s2">&quot;&lt;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&gt;&quot;</span>
                 <span class="n">res</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">best_id</span><span class="p">),</span> <span class="s2">&quot;&lt;B&gt;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">best_id</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&lt;/B&gt;&quot;</span><span class="p">)</span>
-                <span class="n">dot</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="n">res</span><span class="p">)</span> 
+                <span class="n">dot</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="n">res</span><span class="p">)</span>
         <span class="c1"># Insert every transition like edge</span>
         <span class="k">for</span> <span class="n">trans</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">inp</span> <span class="o">=</span> <span class="n">trans</span><span class="o">.</span><span class="n">init_state</span> <span class="k">if</span> <span class="n">trans</span><span class="o">.</span><span class="n">init_state</span> <span class="o">!=</span> <span class="s2">&quot;set()&quot;</span> <span class="k">else</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">&quot;</span>
@@ -105,7 +135,8 @@
             <span class="n">dot</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot; </span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="n">trans_output</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">dot</span></div>
 
-    <span class="k">def</span> <span class="nf">__route_to_table_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id_r</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">route</span><span class="p">:</span> <span class="n">Route</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> 
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__route_to_table_content</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">id_r</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">route</span><span class="p">:</span> <span class="n">Route</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;__route_to_table_content.</span>
 <span class="sd">        Given a route it returns the tabular expression of it in graphvizc</span>
 
@@ -114,7 +145,7 @@
 <span class="sd">        :returns: string format in graphviz of the route</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">res</span> <span class="o">=</span> <span class="s1">&#39;|{&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">id_r</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;|&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">addr</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;|&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">nh</span><span class="p">)</span> <span class="o">+</span>\
-               <span class="s1">&#39;|&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;}&#39;</span> 
+               <span class="s1">&#39;|&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;}&#39;</span>
         <span class="k">return</span> <span class="n">res</span>
 
     <span class="k">def</span> <span class="nf">__message_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">:</span> <span class="n">Digraph</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Digraph</span><span class="p">:</span>
@@ -126,12 +157,16 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">res</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;{{Messages Table}|{id|addr|nh|path}&#39;</span>
         <span class="k">for</span> <span class="n">_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">route_identifier</span><span class="p">:</span>
-            <span class="n">res</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__route_to_table_content</span><span class="p">(</span><span class="n">_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">route_identifier</span><span class="p">[</span><span class="n">_id</span><span class="p">])</span>
+            <span class="n">res</span> <span class="o">+=</span> <span class="n">Plotter</span><span class="o">.</span><span class="n">__route_to_table_content</span><span class="p">(</span><span class="n">_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">route_identifier</span><span class="p">[</span><span class="n">_id</span><span class="p">])</span>
         <span class="n">res</span> <span class="o">+=</span> <span class="s1">&#39;}&#39;</span>
         <span class="n">table</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="s1">&#39;route_table&#39;</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">table</span>
 
     <span class="k">def</span> <span class="nf">__get_single_states_ids_set</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;__get_single_states_ids_set.</span>
+
+<span class="sd">        :rtype: set</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">res</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">state_set</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="n">state_set</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">literal_eval</span><span class="p">(</span><span class="n">state_set</span><span class="p">)</span> <span class="k">if</span> <span class="n">state_set</span> <span class="o">!=</span> <span class="s2">&quot;set()&quot;</span> <span class="k">else</span> <span class="nb">set</span><span class="p">()</span>
@@ -175,9 +210,13 @@
         <span class="k">with</span> <span class="n">graph</span><span class="o">.</span><span class="n">subgraph</span><span class="p">(</span><span class="n">node_attr</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="s1">&#39;record&#39;</span><span class="p">})</span> <span class="k">as</span> <span class="n">table</span><span class="p">:</span>
             <span class="n">table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__states_table</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">graph</span> </div>
-    
+        <span class="k">return</span> <span class="n">graph</span></div>
+
 <div class="viewcode-block" id="Plotter.states_stage_boxplot"><a class="viewcode-back" href="../plotter.html#plotter.Plotter.states_stage_boxplot">[docs]</a>    <span class="k">def</span> <span class="nf">states_stage_boxplot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_file</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;states_stage_boxplot.</span>
+
+<span class="sd">        :param output_file:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">states_df</span><span class="p">[</span><span class="s1">&#39;level&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">states_df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">))</span> \
                 <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">state</span> <span class="o">!=</span> <span class="s2">&quot;set()&quot;</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">grouped_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">states_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;level&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
@@ -185,12 +224,63 @@
         <span class="n">grouped_states</span> <span class="o">=</span> <span class="n">grouped_states</span><span class="o">.</span><span class="n">T</span>
         <span class="c1"># print(self.states_df.sort_values(by=[&#39;counter&#39;], ascending=False))</span>
         <span class="c1"># print(grouped_states)</span>
-        <span class="n">box_plot</span> <span class="o">=</span> <span class="n">grouped_states</span><span class="o">.</span><span class="n">boxplot</span><span class="p">()</span>
+        <span class="n">grouped_states</span><span class="o">.</span><span class="n">boxplot</span><span class="p">()</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">)</span></div>
         <span class="c1"># print(grouped_states)</span>
         <span class="c1"># print(self.states_df)</span>
 
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Plotter.signaling_nmessage_probability"><a class="viewcode-back" href="../plotter.html#plotter.Plotter.signaling_nmessage_probability">[docs]</a>    <span class="k">def</span> <span class="nf">signaling_nmessage_probability</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_file</span><span class="p">):</span> <span class="c1"># pylint: disable=too-many-locals</span>
+        <span class="sd">&quot;&quot;&quot;signaling_nmessage_probability.</span>
+
+<span class="sd">        :param output_file:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">experiments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">signaling_df</span><span class="o">.</span><span class="n">counter</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">advertisement</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="n">withdraw</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+        <span class="n">advertisement</span><span class="p">[</span><span class="s1">&#39;probability&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">signaling_df</span><span class="o">.</span><span class="n">counter</span><span class="o">.</span><span class="n">values</span> <span class="o">/</span> <span class="n">experiments</span>
+        <span class="n">withdraw</span><span class="p">[</span><span class="s1">&#39;probability&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="n">advertisement</span><span class="p">[</span><span class="s1">&#39;probability&#39;</span><span class="p">]</span>
+        <span class="n">total</span><span class="p">[</span><span class="s1">&#39;probability&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="n">advertisement</span><span class="p">[</span><span class="s1">&#39;probability&#39;</span><span class="p">]</span>
+        <span class="n">advertisement</span><span class="p">[</span><span class="s1">&#39;messages&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> \
+                                              <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">signaling_df</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">values</span><span class="p">])</span>
+        <span class="n">withdraw</span><span class="p">[</span><span class="s1">&#39;messages&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39;W&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> \
+                                        <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">signaling_df</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">values</span><span class="p">])</span>
+        <span class="n">total</span><span class="p">[</span><span class="s1">&#39;messages&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">advertisement</span><span class="p">[</span><span class="s1">&#39;messages&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">withdraw</span><span class="p">[</span><span class="s1">&#39;messages&#39;</span><span class="p">]</span>
+
+        <span class="n">advertisement</span> <span class="o">=</span> <span class="n">advertisement</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;messages&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="n">withdraw</span> <span class="o">=</span> <span class="n">withdraw</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;messages&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="n">total_gr</span> <span class="o">=</span> <span class="n">total</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;messages&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="n">total_size</span> <span class="o">=</span> <span class="n">total</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;messages&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="c1"># print(advertisement, &quot;\n&quot;, withdraw, &quot;\n&quot;, total)</span>
+
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span> <span class="c1"># pylint: disable=invalid-name</span>
+        <span class="n">ax2</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">twinx</span><span class="p">()</span>
+
+        <span class="n">legend1</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">advertisement</span><span class="p">[</span><span class="s1">&#39;messages&#39;</span><span class="p">],</span> <span class="n">advertisement</span><span class="p">[</span><span class="s1">&#39;probability&#39;</span><span class="p">],</span>
+                      <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Advertisement messages&quot;</span><span class="p">)</span>
+        <span class="n">legend2</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">withdraw</span><span class="p">[</span><span class="s1">&#39;messages&#39;</span><span class="p">],</span> <span class="n">withdraw</span><span class="p">[</span><span class="s1">&#39;probability&#39;</span><span class="p">],</span>
+                      <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Withdraw messages&quot;</span><span class="p">)</span>
+        <span class="n">legend3</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">total_gr</span><span class="p">[</span><span class="s1">&#39;messages&#39;</span><span class="p">],</span> <span class="n">total_gr</span><span class="p">[</span><span class="s1">&#39;probability&#39;</span><span class="p">],</span>
+                      <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Total messages&quot;</span><span class="p">)</span>
+        <span class="n">legend4</span> <span class="o">=</span> <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">total_size</span><span class="p">[</span><span class="s1">&#39;messages&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">total_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                      <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;# possible outputs&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+        <span class="c1"># plt.xticks(np.arange(total.messages.max()+1), np.arange(total.messages.max()+1))</span>
+        <span class="n">lns</span> <span class="o">=</span> <span class="n">legend1</span><span class="o">+</span><span class="n">legend2</span><span class="o">+</span><span class="n">legend3</span><span class="o">+</span><span class="n">legend4</span>
+        <span class="n">labs</span> <span class="o">=</span> <span class="p">[</span><span class="n">l</span><span class="o">.</span><span class="n">get_label</span><span class="p">()</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lns</span><span class="p">]</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">lns</span><span class="p">,</span> <span class="n">labs</span><span class="p">)</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">MaxNLocator</span><span class="p">(</span><span class="n">integer</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;# Of messages&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Probability [0-1]&quot;</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;# Of Outputs&quot;</span><span class="p">)</span>
+
+        <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="c1"># pylint: disable=no-self-use</span>
+        <span class="sd">&quot;&quot;&quot;__str__.&quot;&quot;&quot;</span>
         <span class="n">res</span> <span class="o">=</span> <span class="s2">&quot;States: </span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">)</span> <span class="o">+</span> \
               <span class="s2">&quot;Transitions: </span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">)</span> <span class="o">+</span> \
               <span class="s2">&quot;Route identifier: </span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">route_identifier</span><span class="p">)</span>
