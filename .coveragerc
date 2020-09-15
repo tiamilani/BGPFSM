@@ -5,7 +5,6 @@ omit =
 		tests/*
 		src/env/*
 		ignored/*
-		src/util/test.py
 source=
 		src/
 		src/util

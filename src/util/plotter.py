@@ -24,6 +24,7 @@ analyzer.
 """
 
 import ast
+import re
 import pandas as pd
 from transition import Transition
 from graphviz import Digraph
@@ -76,24 +77,27 @@ class Plotter():
         """
         # Insert all states like nodes
         for state in self.states.keys():
+            state_hashed = hash(state)
             state = ast.literal_eval(state) if state != "set()" else set()
             if len(state) == 0:
-                dot.node("{}")
+                dot.node(str(state_hashed), label="{}")
             else:
                 # Find the best known route and put it in bold in the graph
-                knowledge = state.copy()
-                best_id = knowledge.pop()
-                while len(knowledge) > 0:
-                    new_elem = knowledge.pop()
+                best_id = state.pop()
+                res = "<{" + str(best_id)
+                while len(state) > 0:
+                    new_elem = state.pop()
                     if self.route_identifier[new_elem] < self.route_identifier[best_id]:
                         best_id = new_elem
-                res = "<" + str(state) + ">"
-                res = res.replace(str(best_id), "<B>" + str(best_id) + "</B>")
-                dot.node(str(state), label=res)
+                    res += ", " + str(new_elem)
+                res += "}>"
+                regex = "\\b" + str(best_id) + "\\b"
+                res = re.sub(regex, "<B>" + str(best_id) + "</B>", res)
+                dot.node(str(state_hashed), label=res)
         # Insert every transition like edge
         for trans in self.transitions.values():
-            inp = trans.init_state if trans.init_state != "set()" else "{}"
-            out = trans.output_state if trans.output_state != "set()" else "{}"
+            inp = str(hash(trans.init_state))
+            out = str(hash(trans.output_state))
             # If the output of the transition is empty (No messages sent)
             # use an empty string to represent it
             trans_output = trans.output if trans.output != "None" else ""

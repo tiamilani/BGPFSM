@@ -22,6 +22,8 @@ All the node logic is inside this module
 
 """
 
+# pylint: disable=cyclic-import
+
 import sys
 import ipaddress
 import math

@@ -36,7 +36,7 @@ class TestPacket():
     ])
     def test_packet_init(self, type_p, content, id_p, id_present, expected_id):
         if id_present:
-            p = Packet(type_p, content, id=id_p)
+            p = Packet(type_p, content, id_packet=id_p)
         else:
             p = Packet(type_p, content)
         
@@ -55,7 +55,7 @@ class TestPacket():
         (Packet.WITHDRAW, 27, 25, "{'id': 25, 'type': 1, 'content': 27}")
     ])
     def test_packet_fromstr(self, type_p, content, id_p, str_version):
-        p = Packet(type_p, content, id=id_p)
+        p = Packet(type_p, content, id_packet=id_p)
         p2 = Packet.fromString(str_version)
 
         assert p.packet_type == p2.packet_type
@@ -73,7 +73,7 @@ class TestPacket():
         (Packet.WITHDRAW, 27, 25)
     ])
     def test_packet_setContent(self, type_p, content, id_p):
-        p = Packet(type_p, content, id=id_p)
+        p = Packet(type_p, content, id_packet=id_p)
         ip_addr = ipaddress.ip_network("10.0.0.0/24")
         r = Route(ip_addr, [], "5")
         p.content = r
@@ -92,7 +92,7 @@ class TestPacket():
     ])
     def test_packet_str(self, type_p, content, id_p, id_present, expected_id):
         if id_present:
-            p = Packet(type_p, content, id=id_p)
+            p = Packet(type_p, content, id_packet=id_p)
         else:
             p = Packet(type_p, content)
         

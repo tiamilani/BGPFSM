@@ -40,6 +40,7 @@ class SingleFileAnalysis():
                  'time': float,
                  'node': str,
                  'value': str}
+    TEST=0
 
     def __init__(self, inputFile: str, route_df=None, states_routes=None):
         """__init__.
@@ -53,12 +54,12 @@ class SingleFileAnalysis():
         # Set of states
         self.states = {}
         # Last state of the node during the evolution
-        self.actualState = set() 
+        self.actualState = set()
         self.experiment_actualState = set()
         # Set of transitions
         self.transitions = {}
-        
-        if isinstance(route_df, self.NoneType): 
+
+        if isinstance(route_df, self.NoneType):
             # Routes associated with the id
             self.route_to_id = {}
             # Id associated with the route
@@ -132,7 +133,7 @@ class SingleFileAnalysis():
 
     def __evaluate_tx(self, row_value: str) -> str:
         """__evaluate_tx.
-        This function is used to evaluate a transmitted message and get 
+        This function is used to evaluate a transmitted message and get
         the comphressed version, for now is equal to __evaluate_rx
 
         :param row_value: row value to evaluate
@@ -142,7 +143,7 @@ class SingleFileAnalysis():
 
     def __evaluate_rx(self, row_value: str) -> str:
         """__evaluate_rx.
-        This function is used to evaluate a received message and get 
+        This function is used to evaluate a received message and get
         the comphressed version, for now is equal to __evaluate_tx
 
         :param row_value: row_value to evaluate
@@ -174,9 +175,9 @@ class SingleFileAnalysis():
             return
         events_in_between = self.df.loc[[rx_event_id], : ]
 
-        # Keep a tmp variable with the state that can have been changed 
+        # Keep a tmp variable with the state that can have been changed
         # thanks to this reception
-        new_state = self.actualState 
+        new_state = self.actualState
 
         # Keep a set of transmitted routes, set because we are interested
         # uniquelly in which route has been transmitted and not to who
@@ -189,7 +190,7 @@ class SingleFileAnalysis():
         print(events_in_between)"""
 
         # Check each row of the events caused by the reception
-        for row_event, row_value in zip(events_in_between['event'], 
+        for row_event, row_value in zip(events_in_between['event'],
                                         events_in_between['value']):
             # If the event is a change in the state, I update the local
             # variable that keeps the state
@@ -200,7 +201,7 @@ class SingleFileAnalysis():
                 elem = self.__evaluate_tx(row_value)
                 if elem not in transmitted_routes:
                     transmitted_routes.append(elem)
-    
+
         # Evaluate the reception event
         inp = self.__evaluate_rx(rx_value)
 
@@ -222,25 +223,25 @@ class SingleFileAnalysis():
             # resulting_elem = self.__evalaute_state_difference(new_state).pop()
             pkt = Packet.fromString(rx_value)
             route = Route.fromString(pkt.content)
-            route.policy_value = PolicyValue(0) 
+            route.policy_value = PolicyValue(0)
             if abs(len(self.experiment_actualState)-len(new_state)) == 1:
-                if pkt.packet_type == Packet.UPDATE:  
+                if pkt.packet_type == Packet.UPDATE:
                     if str(route) not in self.states_routes.keys():
                         self.states_routes[str(route)] = self.route_to_id[str(route)]
                     self.experiment_actualState = new_state.copy()
                     new_state = self.actualState.copy()
-                    new_state.add(self.states_routes[str(route)])    
+                    new_state.add(self.states_routes[str(route)])
                 elif pkt.packet_type == Packet.WITHDRAW:
                     self.experiment_actualState = new_state.copy()
                     new_state = self.actualState.copy()
-                    new_state.remove(self.states_routes[str(route)])   
+                    new_state.remove(self.states_routes[str(route)])
             else:
                 self.experiment_actualState = new_state.copy()
                 new_state = self.actualState.copy()
                 for elem in self.route_to_id:
                     old_rt = Route.fromString(elem)
                     if old_rt.nh == route.nh:
-                        if self.route_to_id[elem] in new_state: 
+                        if self.route_to_id[elem] in new_state:
                             new_state.remove(self.route_to_id[elem])
                 if str(route) not in self.states_routes.keys():
                     self.states_routes[str(route)] = self.route_to_id[str(route)]
@@ -267,7 +268,7 @@ class SingleFileAnalysis():
         if hash(transition) not in self.transitions.keys():
             self.transitions[hash(transition)] = transition
         else:
-            # The transition is already in the dictionary, increase the 
+            # The transition is already in the dictionary, increase the
             self.transitions[hash(transition)].counter += 1
 
     def keep_only_fsm_events(self) -> pd.DataFrame:
@@ -288,7 +289,7 @@ class SingleFileAnalysis():
             Function that evaluate the current dataframe objects to obatin
             states and transitions
         """
-        
+
         tmp_rx = self.df[(self.df.event == Events.RX)]
 
         # To activate a useful O(LogN) index search the datafram must be sorted
@@ -296,13 +297,13 @@ class SingleFileAnalysis():
         # RX events in time order
         self.df.sort_index(inplace=True)
 
-        tmp_rx.apply(lambda row: self.__evaluate_event_rx(row.event_id, 
+        tmp_rx.apply(lambda row: self.__evaluate_event_rx(row.event_id,
                                                            row.value), axis=1)
         return (self.states, self.transitions)
 
     def get_out_signal(self, values):
         values = values.apply(self.__evaluate_tx)
-        return ''.join(list(OrderedDict.fromkeys(values.values))) 
+        return ''.join(list(OrderedDict.fromkeys(values.values)))
 
     # @profile
     def evaluate_signaling(self, order_by_time=False):
@@ -344,10 +345,10 @@ class SingleFileAnalysis():
     def dump_df(cls, output_file: str, df: pd.DataFrame):
         df.to_csv(output_file, '|')
 
-    def dump_states(self, output_file: str, states=None): 
+    def dump_states(self, output_file: str, states=None):
         """dump_states.
         Write on a file all the states information in csv format
-    
+
         :param output_file: output file
         :type output_file: str
         :param states: optional param, dataframe of states
@@ -356,13 +357,13 @@ class SingleFileAnalysis():
             states = self.get_states_as_df()
         states.to_csv(output_file, sep='|')
 
-    def dump_transitions(self, output_file: str, transitions=None): 
+    def dump_transitions(self, output_file: str, transitions=None):
         """dump_states.
         Write on a file all the transitions information in csv format
-    
+
         :param output_file: output file
         :type output_file: str
-        :param  transitions: optional param, DataFrame of transitions 
+        :param  transitions: optional param, DataFrame of transitions
         """
         if transitions == None:
             transitions = self.get_transitions_as_df()

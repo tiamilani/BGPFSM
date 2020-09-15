@@ -14,7 +14,7 @@
 #
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
-import argparse 
+import argparse
 from graphviz import Digraph
 import os.path
 import sys
@@ -40,7 +40,7 @@ parser.add_argument("-n", "--node", dest="node", default=0, type=str,
                     action="store", help="Node that the user want to see the FSM")
 parser.add_argument("-o", "--output", dest="outputFile", default="output_fsm",
                     action="store", help="Output file containing the FSM representation")
-parser.add_argument("-r", "--render", dest="render", default=False, 
+parser.add_argument("-r", "--render", dest="render", default=False,
                     action='store_true', help="Render the graph on a pdf file in \
                     the same output directory of the gv file")
 parser.add_argument("-d", "--display", dest="display", default=False,
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     if os.path.isfile(outputFile_path) and options.security:
         print("output file {} already exists".format(outputFile_path))
         exit(1)
-    
+
     NoneType = type(None)
     states_df = None
     transitions_df = None
@@ -102,7 +102,7 @@ if __name__ == "__main__":
             states_route = pickle.load(open(outputFile_path + "_states_id.pkl", "rb"))
             signaling_df = pickle.load(open(outputFile_path + "_signaling_out.pkl", "rb"))
 
-    # If states is not none means that pickles has been loaded and it is not 
+    # If states is not none means that pickles has been loaded and it is not
     # necessary to parse the files
     if isinstance(states_df, NoneType):
         pbar = tqdm(options.inputFile) if options.progress else options.inputFile
@@ -116,7 +116,7 @@ if __name__ == "__main__":
                 # doesn't exist
                 print("Input file {} not found".format(inputFile_path))
                 raise FileNotFoundError
-        
+
             # Get the dataframe rep of the input file
             if options.time:
                 starttime = timeit.default_timer()
@@ -160,18 +160,18 @@ if __name__ == "__main__":
                 signaling_list = sf.evaluate_signaling(order_by_time=True)
                 if hash(signaling_list) not in signaling_df.index:
                     # print("Ehi a new sequence: {}".format(signaling_list))
-                    new_row = pd.Series(data={'output': signaling_list, 'counter': 1}, 
+                    new_row = pd.Series(data={'output': signaling_list, 'counter': 1},
                                         name=hash(signaling_list))
                     signaling_df = signaling_df.append(new_row, ignore_index=False)
                 else:
                     signaling_df.loc[hash(signaling_list), 'counter'] += 1
-            
+
             if options.time:
                 print("The evaluate time has been:", timeit.default_timer() - evaluate_time)
                 print("The total time required by the evaluation has been:", timeit.default_timer() - starttime)
             if options.verbose:
                 print("Evaluation of fsm components done")
-            
+
             sr_df = sf.get_states_as_df()
             if isinstance(states_df, NoneType):
                 states_df = sr_df
@@ -187,7 +187,7 @@ if __name__ == "__main__":
                 states_df = pd.concat([states_df, sr_df], axis=1)
                 states_df = states_df.fillna(0)
                 states_df['counter'] = states_df['counter'] + states_df[str(i)]
-            
+
             states_df['counter'] = states_df['counter'].astype(int)
             for j in range(0,i):
                 states_df[str(j)] = states_df[str(j)].astype(int)
@@ -210,7 +210,7 @@ if __name__ == "__main__":
             for j in range(0,i):
                 transitions_df[str(j)] = transitions_df[str(j)].astype(int)
             transitions_df['counter'] = transitions_df['counter'].astype(int)
-            
+
             route_to_id = sf.get_route_df()
             states_route = sf.get_states_route_df()
 
@@ -232,9 +232,9 @@ if __name__ == "__main__":
         pickle.dump(route_to_id, open(outputFile_path + "_route_id.pkl", "wb"))
         pickle.dump(states_route, open(outputFile_path + "_states_id.pkl", "wb"))
         pickle.dump(signaling_df, open(outputFile_path + "_signaling_out.pkl", "wb"))
-    
+
     #Generate the graph
-    plt = Plotter(states=states_df, transitions=transitions_df, 
+    plt = Plotter(states=states_df, transitions=transitions_df,
                   route_id=route_to_id, signaling=signaling_df)
     plt.signaling_nmessage_probability(outputFile_path + "_signaling_nmessage_prob.pdf")
     # plt.states_stage_boxplot(outputFile_path + "_states_boxplot.pdf")
@@ -243,12 +243,12 @@ if __name__ == "__main__":
     if options.verbose:
         print("Detailed FSM graph produced")
 
-    graph.save(outputFile_path.split('/')[-1] + ".gv", 
+    graph.save(outputFile_path.split('/')[-1] + ".gv",
                '/'.join(outputFile_path.split('/')[:-1]))
     if options.verbose:
         print("Graph saved in the output file")
     if options.render:
-        graph.render(outputFile_path.split('/')[-1], format="pdf", cleanup=True, 
+        graph.render(outputFile_path.split('/')[-1], format="pdf", cleanup=True,
                      view=options.display)
         if options.verbose:
             print("Graph rendering produced")
