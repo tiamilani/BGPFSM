@@ -14,17 +14,51 @@
 #
 # Copyright (C) 2020 Mattia Milani <mattia.milani@studenti.unitn.it>
 
+"""
+Analyzer module
+===============
+
+This module is used to analyze the results of the Discrete event simulator
+All the events are saved in a csv format that will be loaded and used by
+the analyzer.
+
+The analyzer have a lot of different options.
+
+`-f` Used to pass a single file or a list of files to the analyzer
+`-n` Used to define the node that we want to study
+`-o` Defines where the output of the anlyzer will be save, the last part
+of this arguments also define the first part of the name of all the output files
+`-r` when this option is used the graph file of the FSM of the node will be renderd
+`-d` Display the FSM graph at the end of the analysis
+`-S` Security option, if enable will avoid the overwrite of other output files
+`-t` will show the time required by each operation of the analyzer
+`-v` This will activate the verbose mode
+`-p` this option can be used to disabel the use of the progress bar
+`-pi` The pickle option, if active the pickle fille will be loaded if present
+or saved at the end of the analysis if them does not exists
+`-s` option to study a signaling experiment
+
+All this options can be combined in different commands for example:
+
+>>> python3 analyzer.py -f results/fabrikant/output_file -n 1 -o results/fabrikant/out_n1 -s -r -d -pi # pylint: disable=line-too-long
+
+This is a common use of the anlyzer to study a single experiment but is possible to study more
+experiments just using the `*` operator
+
+>>> python3 analyzer.py -f results/fabrikant/output_* -n 9 -o results/fabrikant/out_n9 -s -r -d -pi
+
+"""
+
 import argparse
-from graphviz import Digraph
 import os.path
 import sys
 import timeit
-from glob import glob
-import pandas as pd
 import pickle
+import pandas as pd
+from graphviz import Digraph
 
 sys.path.insert(1, 'util')
-from analysis import SingleFileAnalysis
+from analysis import SingleFileAnalysis, FileAnalyzer, NodeAnalyzer
 from plotter import Plotter
 from tqdm import tqdm
 
@@ -36,8 +70,9 @@ parser = argparse.ArgumentParser(usage="python3 analyzer.py [options]",
                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-f", "--file", dest="inputFile", default="output_0.csv",
                     nargs='*', action="store", help="File to analize")
-parser.add_argument("-n", "--node", dest="node", default=0, type=str,
-                    action="store", help="Node that the user want to see the FSM")
+parser.add_argument("-n", "--node", nargs='+', dest="node", default=0, 
+                    type=str, action="store", 
+                    help="Node that the user want to see the FSM")
 parser.add_argument("-o", "--output", dest="outputFile", default="output_fsm",
                     action="store", help="Output file containing the FSM representation")
 parser.add_argument("-r", "--render", dest="render", default=False,
@@ -66,189 +101,110 @@ parser.add_argument("-s", "--signaling", dest="signaling", default=False,
                             signaling experiment use this option to have a csv \
                             of the output signals")
 
-if __name__ == "__main__":
+def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-many-statements
     # Parse the arguments
     options = parser.parse_args()
 
-    # Obtain variables
-    node = options.node
-    outputFile_path = options.outputFile
+    output_file_path = options.outputFile
 
     # Check that the output file does not exists
-    if os.path.isfile(outputFile_path) and options.security:
-        print("output file {} already exists".format(outputFile_path))
-        exit(1)
+    if os.path.isfile(output_file_path) and options.security:
+        print("output file {} already exists".format(output_file_path))
+        sys.exit(1)
 
-    NoneType = type(None)
-    states_df = None
-    transitions_df = None
-    route_to_id = None
-    states_route = None
-    signaling_df = pd.DataFrame(columns=['id', 'output', 'counter']).set_index('id')
-    i = 0
-
-    # Check if it is possible to load pickles files
-    if options.pickle:
-        # Check that all pickle files exists
-        if os.path.isfile(outputFile_path + "_states.pkl") and \
-           os.path.isfile(outputFile_path + "_transitions.pkl") and \
-           os.path.isfile(outputFile_path + "_route_id.pkl") and \
-           os.path.isfile(outputFile_path + "_states_id.pkl") and \
-           os.path.isfile(outputFile_path + "_signaling_out.pkl"):
-            # Load pickles files
-            states_df = pickle.load(open(outputFile_path + "_states.pkl", "rb"))
-            transitions_df = pickle.load(open(outputFile_path + "_transitions.pkl", "rb"))
-            route_to_id = pickle.load(open(outputFile_path + "_route_id.pkl", "rb"))
-            states_route = pickle.load(open(outputFile_path + "_states_id.pkl", "rb"))
-            signaling_df = pickle.load(open(outputFile_path + "_signaling_out.pkl", "rb"))
+    # Obtain variables
+    nodes = options.node
+    node_analyzers = {}
+    pickle_loading = options.pickle
+    for node in nodes:
+        node_analyzers[node] = NodeAnalyzer()
+        if options.pickle and pickle_loading:
+            res = node_analyzers[node].load_pickle(output_file_path + \
+                    "_" + str(node) + "_")
+            # Something went wrong with the pickle load
+            if not res:
+                del node_analyzers[node]
+                pickle_loading = False
+                node_analyzers[node] = NodeAnalyzer()
 
     # If states is not none means that pickles has been loaded and it is not
     # necessary to parse the files
-    if isinstance(states_df, NoneType):
+    if not pickle_loading:
         pbar = tqdm(options.inputFile) if options.progress else options.inputFile
-        for inputFile_path in pbar:
+        for input_file_path in pbar:
             if options.progress:
-                pbar.set_description("Processing {}".format(inputFile_path))
+                pbar.set_description("Processing {}".format(input_file_path))
             else:
-                print("Processing {}".format(inputFile_path))
+                print("Processing {}".format(input_file_path))
             # Check that the input file exists
-            if not os.path.isfile(inputFile_path):
+            if not os.path.isfile(input_file_path):
                 # doesn't exist
-                print("Input file {} not found".format(inputFile_path))
+                print("Input file {} not found".format(input_file_path))
                 raise FileNotFoundError
 
             # Get the dataframe rep of the input file
             if options.time:
                 starttime = timeit.default_timer()
                 init_time= timeit.default_timer()
-
-            sf = SingleFileAnalysis(inputFile_path, route_df=route_to_id,
-                                    states_routes=states_route)
-
+            
+            file_analyzer = FileAnalyzer(input_file_path, node_analyzers)
+            
             if options.time:
                 print("The init time has been:", timeit.default_timer() - init_time)
             if options.verbose:
                 print("Initialization done, csv file loaded")
 
-            if options.time:
-                select_node_time = timeit.default_timer()
-
-            # Node selection
-            sf.df = sf.selectNode(node)
-
-            if options.time:
-                print("The select node time has been:", timeit.default_timer() - select_node_time)
-            if options.verbose:
-                print("Node selection done, dataframe updated")
-
-            if options.time:
-                keep_events_time = timeit.default_timer()
-
-            # Keep only fsm reliable events
-            sf.df = sf.keep_only_fsm_events()
-
-            if options.time:
-                print("The keep fsm events time has been :", timeit.default_timer() - keep_events_time)
-            if options.verbose:
-                print("Node fsm reliable events parsing done, dataframe updated")
-
-            if options.time:
-                evaluate_time= timeit.default_timer()
-
-            sf.evaluate_fsm()
             if options.signaling:
-                signaling_list = sf.evaluate_signaling(order_by_time=True)
-                if hash(signaling_list) not in signaling_df.index:
-                    # print("Ehi a new sequence: {}".format(signaling_list))
-                    new_row = pd.Series(data={'output': signaling_list, 'counter': 1},
-                                        name=hash(signaling_list))
-                    signaling_df = signaling_df.append(new_row, ignore_index=False)
-                else:
-                    signaling_df.loc[hash(signaling_list), 'counter'] += 1
+                if options.time:
+                    signaling_time = timeit.default_timer()
+
+                file_analyzer.study_signaling(nodes)
+
+                if options.time:
+                    print("The signaling study time has been:", timeit.default_timer() - \
+                                                                signaling_time)
+                if options.verbose:
+                    print("Signaling study done")
+
+            
+            if options.time:
+                fsm_study = timeit.default_timer()
+
+            file_analyzer.study_fsm(nodes)
 
             if options.time:
-                print("The evaluate time has been:", timeit.default_timer() - evaluate_time)
-                print("The total time required by the evaluation has been:", timeit.default_timer() - starttime)
+                print("The fsm study time has been:", timeit.default_timer() - \
+                                                      fsm_study)
             if options.verbose:
-                print("Evaluation of fsm components done")
-
-            sr_df = sf.get_states_as_df()
-            if isinstance(states_df, NoneType):
-                states_df = sr_df
-                states_df[str(i)] = sr_df['counter']
-            else:
-                sr_df[str(i)] = sr_df['counter']
-                sr_df = sr_df.drop(['counter'], axis=1)
-                sr_df_states = sr_df.drop([str(i)], axis=1)
-                states_df = pd.concat([states_df, sr_df_states])
-                states_df = states_df[~states_df.index.duplicated(keep='first')]
-                states_df = states_df.fillna(0)
-                sr_df = sr_df.drop(['state'], axis=1)
-                states_df = pd.concat([states_df, sr_df], axis=1)
-                states_df = states_df.fillna(0)
-                states_df['counter'] = states_df['counter'] + states_df[str(i)]
-
-            states_df['counter'] = states_df['counter'].astype(int)
-            for j in range(0,i):
-                states_df[str(j)] = states_df[str(j)].astype(int)
-
-            tr_df = sf.get_transitions_as_df()
-            if isinstance(transitions_df, NoneType):
-                transitions_df = tr_df
-                transitions_df[str(i)] = tr_df['counter']
-            else:
-                tr_df[str(i)] = tr_df['counter']
-                tr_df = tr_df.drop(['counter'], axis=1)
-                tr_df_states = tr_df.drop([str(i)], axis=1)
-                transitions_df = pd.concat([transitions_df, tr_df_states])
-                transitions_df = transitions_df[~transitions_df.index.duplicated(keep='first')]
-                transitions_df = transitions_df.fillna(0)
-                tr_df = tr_df.drop(['start_node', 'end_node', 'cause', 'response'], axis=1)
-                transitions_df = pd.concat([transitions_df, tr_df], axis=1)
-                transitions_df = transitions_df.fillna(0)
-                transitions_df['counter'] = transitions_df['counter'] + transitions_df[str(i)]
-            for j in range(0,i):
-                transitions_df[str(j)] = transitions_df[str(j)].astype(int)
-            transitions_df['counter'] = transitions_df['counter'].astype(int)
-
-            route_to_id = sf.get_route_df()
-            states_route = sf.get_states_route_df()
-
-            del sf
-            i += 1
+                print("fsm study done")
+            
+            del file_analyzer
 
     # Save results
-    SingleFileAnalysis.dump_df(outputFile_path + "_states.csv", states_df)
-    SingleFileAnalysis.dump_df(outputFile_path + "_transitions.csv", transitions_df)
-    SingleFileAnalysis.dump_df(outputFile_path + "_route_id.csv", route_to_id)
-    SingleFileAnalysis.dump_df(outputFile_path + "_states_id.csv", states_route)
-    if options.signaling:
-        SingleFileAnalysis.dump_df(outputFile_path + "_signaling_out.csv", signaling_df)
-
-    # Save results as pickle
-    if options.pickle:
-        pickle.dump(states_df, open(outputFile_path + "_states.pkl", "wb"))
-        pickle.dump(transitions_df, open(outputFile_path + "_transitions.pkl", "wb"))
-        pickle.dump(route_to_id, open(outputFile_path + "_route_id.pkl", "wb"))
-        pickle.dump(states_route, open(outputFile_path + "_states_id.pkl", "wb"))
-        pickle.dump(signaling_df, open(outputFile_path + "_signaling_out.pkl", "wb"))
+    for node in node_analyzers:
+        node_analyzers[node].save_df(output_file_path + "_" + str(node) + "_", 
+                                     pickling=options.pickle)
 
     #Generate the graph
-    plt = Plotter(states=states_df, transitions=transitions_df,
-                  route_id=route_to_id, signaling=signaling_df)
-    plt.signaling_nmessage_probability(outputFile_path + "_signaling_nmessage_prob.pdf")
-    # plt.states_stage_boxplot(outputFile_path + "_states_boxplot.pdf")
-    dot = Digraph(comment='Node Graph')
-    graph = plt.get_detailed_fsm_graphviz(dot)
-    if options.verbose:
-        print("Detailed FSM graph produced")
-
-    graph.save(outputFile_path.split('/')[-1] + ".gv",
-               '/'.join(outputFile_path.split('/')[:-1]))
-    if options.verbose:
-        print("Graph saved in the output file")
-    if options.render:
-        graph.render(outputFile_path.split('/')[-1], format="pdf", cleanup=True,
-                     view=options.display)
+    for node in node_analyzers:
+        plt = Plotter(node_analyzers[node])
+        out_file = output_file_path + "_" + str(node)
+        plt.signaling_nmessage_probability(out_file + "_signaling_nmessage_prob.pdf")
+        # plt.states_stage_boxplot(output_file_path + "_states_boxplot.pdf")
+        dot = Digraph(comment='Node Graph')
+        graph = plt.get_detailed_fsm_graphviz(dot)
         if options.verbose:
-            print("Graph rendering produced")
+            print("Detailed FSM graph produced")
+
+        graph.save(out_file.split('/')[-1] + ".gv",
+                   '/'.join(output_file_path.split('/')[:-1]))
+        if options.verbose:
+            print("Graph saved in the output file")
+        if options.render:
+            graph.render(out_file.split('/')[-1], format="pdf", cleanup=True,
+                         view=options.display)
+            if options.verbose:
+                print("Graph rendering produced")
+
+if __name__ == "__main__":
+    main()

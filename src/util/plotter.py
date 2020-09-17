@@ -24,6 +24,7 @@ analyzer.
 """
 
 import ast
+import ipaddress
 import re
 import pandas as pd
 from transition import Transition
@@ -32,6 +33,8 @@ from route import Route
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
+from analysis import NodeAnalyzer
+from policies import PolicyValue
 
 class Plotter():
     """
@@ -41,33 +44,11 @@ class Plotter():
     """
 
 
-    def __init__(self, states=None, transitions=None, route_id=None,
-                 signaling=None):
+    def __init__(self, node: NodeAnalyzer):
         """__init__.
 
-        :param states: States DataFrame
-        :param transitions: Transitions DataFrame
-        :param route_id: Route to id DataFrame
-        :param signaling: Signaling results DataFrame
         """
-        NoneType = type(None)
-        if not isinstance(states, NoneType):
-            self.states_df = states
-            self.states = states.to_dict('index')
-            self.states = {v['state']: int(v['counter']) for k, v in self.states.items()}
-        if not isinstance(transitions, NoneType):
-            self.transitions_df = transitions
-            self.transitions = transitions.to_dict('index')
-            self.transitions = {k: Transition(v['start_node'], v['end_node'],
-                                v['cause'], v['response'], counter=v['counter']) \
-                                for k, v in self.transitions.items()}
-        if not isinstance(route_id, NoneType):
-            self.route_identifier_df = route_id
-            self.route_identifier = route_id.to_dict('index')
-            self.route_identifier = {int(k): Route.fromString(v['value']) \
-                                     for k, v in self.route_identifier.items()}
-        if not isinstance(signaling, NoneType):
-            self.signaling_df = signaling
+        self.node = node
 
     def get_fsm_graphviz(self, dot: Digraph) -> Digraph:
         """get_fsm_graphviz.
@@ -76,33 +57,56 @@ class Plotter():
         :returns: the dot object modified
         """
         # Insert all states like nodes
-        for state in self.states.keys():
-            state_hashed = hash(state)
-            state = ast.literal_eval(state) if state != "set()" else set()
+        for state_hash, state_str in zip(self.node.states.index.tolist(),
+                                         self.node.states[NodeAnalyzer.STATES_COLUMNS[1]]):
+            state = ast.literal_eval(state_str) if state_str != "set()" else set()
+            state_hash = hash(state_str)
             if len(state) == 0:
-                dot.node(str(state_hashed), label="{}")
+                dot.node(str(hash("set()")), label="{}")
             else:
                 # Find the best known route and put it in bold in the graph
                 best_id = state.pop()
                 res = "<{" + str(best_id)
+                best_route_row = self.node.routes[self.node.routes.value == best_id]
+                network = ipaddress.ip_network(best_route_row.addr.values[0])
+                path = ast.literal_eval(best_route_row.path.values[0])
+                policy_value = PolicyValue(int(best_route_row.policy_value.values[0]))
+                best_route = Route(network, path, best_route_row.nh.values[0], 
+                                  policy_value=policy_value)
                 while len(state) > 0:
                     new_elem = state.pop()
-                    if self.route_identifier[new_elem] < self.route_identifier[best_id]:
+                    new_route_row = self.node.routes[self.node.routes.value == new_elem]
+                    network = ipaddress.ip_network(new_route_row.addr.values[0])
+                    path = ast.literal_eval(new_route_row.path.values[0])
+                    policy_value = PolicyValue(int(new_route_row.policy_value.values[0]))
+                    new_route = Route(network, path, new_route_row.nh.values[0], 
+                                      policy_value=policy_value)
+
+                    if new_route < best_route:
                         best_id = new_elem
+                        best_route = new_route
                     res += ", " + str(new_elem)
                 res += "}>"
                 regex = "\\b" + str(best_id) + "\\b"
                 res = re.sub(regex, "<B>" + str(best_id) + "</B>", res)
-                dot.node(str(state_hashed), label=res)
+                dot.node(str(state_hash), label=res)
         # Insert every transition like edge
-        for trans in self.transitions.values():
-            inp = str(hash(trans.init_state))
-            out = str(hash(trans.output_state))
+        for input_state, output_state, cause, response in \
+                zip(self.node.transitions[NodeAnalyzer.TRANSITIONS_COLUMNS[1]],
+                    self.node.transitions[NodeAnalyzer.TRANSITIONS_COLUMNS[2]],
+                    self.node.transitions[NodeAnalyzer.TRANSITIONS_COLUMNS[3]],
+                    self.node.transitions[NodeAnalyzer.TRANSITIONS_COLUMNS[4]],):
+            input_state_hash = hash(input_state) if input_state != "{}" else hash("set()")
+            output_state_hash = hash(output_state) if output_state != "{}" else hash("set()")
+            inp = str(input_state_hash)
+            out = str(output_state_hash)
             # If the output of the transition is empty (No messages sent)
             # use an empty string to represent it
-            trans_output = trans.output if trans.output != "None" else ""
+            trans_output = ""
+            if response != None:
+                trans_output = response
             # Insert the edge
-            dot.edge(inp, out, label=" {}:{} ".format(trans.input, trans_output))
+            dot.edge(inp, out, label=" {}:{} ".format(cause, trans_output))
         return dot
 
     @classmethod
@@ -115,7 +119,7 @@ class Plotter():
         :returns: string format in graphviz of the route
         """
         res = '|{' + str(id_r) + '|' + str(route.addr) + '|' + str(route.nh) +\
-               '|' + str(route.path) + '}'
+               '|' + str(route.path) + '|' + str(route.policy_value.value) + '}'
         return res
 
     def __message_table(self, table: Digraph) -> Digraph:
@@ -125,36 +129,20 @@ class Plotter():
         :param table: table object where to define the nodes
         :returns: table graphviz object modified
         """
-        res = r'{{Messages Table}|{id|addr|nh|path}'
-        for _id in self.route_identifier:
-            res += Plotter.__route_to_table_content(_id, self.route_identifier[_id])
+        res = r'{{Messages Table}|{id|addr|nh|path|policy_value}'
+        for _id, addr, nh, path, policy_value in \
+                zip(self.node.routes[NodeAnalyzer.ROUTES_COLUMNS[1]],
+                    self.node.routes[NodeAnalyzer.ROUTES_COLUMNS[2]],
+                    self.node.routes[NodeAnalyzer.ROUTES_COLUMNS[3]],
+                    self.node.routes[NodeAnalyzer.ROUTES_COLUMNS[4]],
+                    self.node.routes[NodeAnalyzer.ROUTES_COLUMNS[5]],):
+            network = ipaddress.ip_network(addr)
+            path = ast.literal_eval(path)
+            policy_value = PolicyValue(int(policy_value))
+            route = Route(network, path, nh, policy_value=policy_value)
+            res += Plotter.__route_to_table_content(_id, route)
         res += '}'
         table.node('route_table', res)
-        return table
-
-    def __get_single_states_ids_set(self) -> set:
-        """__get_single_states_ids_set.
-
-        :rtype: set
-        """
-        res = set()
-        for state_set in self.states.keys():
-            state_set = ast.literal_eval(state_set) if state_set != "set()" else set()
-            res |= state_set
-        return res
-
-    def __states_table(self, table: Digraph) -> Digraph:
-        """__states_table.
-        Generates the states table
-
-        :param table: table object where to define the nodes
-        :returns: table graphviz object modified
-        """
-        res = r'{{States Table}|{id|addr|nh|path}'
-        for _id in self.__get_single_states_ids_set():
-            res += self.__route_to_table_content(_id, self.route_identifier[_id])
-        res += '}'
-        table.node('states_table', res)
         return table
 
     def get_detailed_fsm_graphviz(self, graph: Digraph) -> Digraph:
@@ -175,10 +163,6 @@ class Plotter():
         # Create the message table
         with graph.subgraph(node_attr={'shape': 'record'}) as table:
             table = self.__message_table(table)
-
-        # Create the states knowledge table
-        with graph.subgraph(node_attr={'shape': 'record'}) as table:
-            table = self.__states_table(table)
 
         return graph
 
@@ -204,25 +188,22 @@ class Plotter():
 
         :param output_file:
         """
-        experiments = self.signaling_df.counter.sum()
+        experiments = self.node.signaling.counter.sum()
         advertisement = pd.DataFrame()
         withdraw = pd.DataFrame()
         total = pd.DataFrame()
 
-        advertisement['probability'] = self.signaling_df.counter.values / experiments
+        advertisement['probability'] = self.node.signaling.counter.values / experiments
         withdraw['probability'] =  advertisement['probability']
         total['probability'] =  advertisement['probability']
-        advertisement['messages'] = np.array([x.count('A') for x \
-                                              in self.signaling_df.output.values])
-        withdraw['messages'] = np.array([x.count('W') for x \
-                                        in self.signaling_df.output.values])
-        total['messages'] = advertisement['messages'] + withdraw['messages']
+        advertisement['messages'] = self.node.signaling.advertisements.values
+        withdraw['messages'] = self.node.signaling.withdraws.values
+        total['messages'] = self.node.signaling.total_messages.values
 
         advertisement = advertisement.groupby(by=['messages']).sum().reset_index()
         withdraw = withdraw.groupby(by=['messages']).sum().reset_index()
         total_gr = total.groupby(by=['messages']).sum().reset_index()
         total_size = total.groupby(by=['messages']).size().reset_index()
-        # print(advertisement, "\n", withdraw, "\n", total)
 
         fig, ax = plt.subplots() # pylint: disable=invalid-name
         ax2 = ax.twinx()

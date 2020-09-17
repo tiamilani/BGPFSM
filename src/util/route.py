@@ -196,6 +196,10 @@ class Route():
             memo[id_self] = _copy
         return _copy
 
+    def __hash__(self):
+        """__hash__."""
+        return hash(str(self))
+
     def __str__(self):
         """__str__."""
         dictionary_route = dict()
