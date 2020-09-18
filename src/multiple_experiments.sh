@@ -20,15 +20,19 @@ usage () {
 }
 
 SECTION='simulation'
+CONFFILE='json/config.json'
 J=1
 nflag=false
 outdir='./'
 
-while getopts ":n:s:j:o:" o; do
+while getopts ":n:c:s:j:o:" o; do
 	case "${o}" in
 		n)
 			nflag=true
 			N=${OPTARG}
+			;;
+		c)
+			CONFFILE=${OPTARG}
 			;;
 		s)
 			SECTION=${OPTARG}
@@ -60,6 +64,6 @@ if [ ! -d "${outdir}" ]; then
 	mkdir "${outdir}"
 fi
 
-seq 0 ${N} | parallel -i% -j ${J} --bar python3 fsm.py -c json/config.json -s ${SECTION} -r % ">" ${outdir}out_%.log
+seq 0 ${N} | parallel -i% -j ${J} --bar python3 fsm.py -c ${CONFFILE} -s ${SECTION} -r % ">" ${outdir}out_%.log
 
 echo "Experiments done"
