@@ -53,12 +53,10 @@ import argparse
 import os.path
 import sys
 import timeit
-import pickle
-import pandas as pd
 from graphviz import Digraph
 
 sys.path.insert(1, 'util')
-from analysis import SingleFileAnalysis, FileAnalyzer, NodeAnalyzer
+from analysis import FileAnalyzer, NodeAnalyzer
 from plotter import Plotter
 from tqdm import tqdm
 
@@ -70,8 +68,8 @@ parser = argparse.ArgumentParser(usage="python3 analyzer.py [options]",
                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-f", "--file", dest="inputFile", default="output_0.csv",
                     nargs='*', action="store", help="File to analize")
-parser.add_argument("-n", "--node", nargs='+', dest="node", default=0, 
-                    type=str, action="store", 
+parser.add_argument("-n", "--node", nargs='+', dest="node", default=0,
+                    type=str, action="store",
                     help="Node that the user want to see the FSM")
 parser.add_argument("-o", "--output", dest="outputFile", default="output_fsm",
                     action="store", help="Output file containing the FSM representation")
@@ -146,9 +144,9 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
             if options.time:
                 starttime = timeit.default_timer()
                 init_time= timeit.default_timer()
-            
+
             file_analyzer = FileAnalyzer(input_file_path, node_analyzers)
-            
+
             if options.time:
                 print("The init time has been:", timeit.default_timer() - init_time)
             if options.verbose:
@@ -166,7 +164,7 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
                 if options.verbose:
                     print("Signaling study done")
 
-            
+
             if options.time:
                 fsm_study = timeit.default_timer()
 
@@ -177,12 +175,18 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
                                                       fsm_study)
             if options.verbose:
                 print("fsm study done")
-            
+
+            if options.time:
+                print("The total study time has been:", timeit.default_timer() - \
+                                                        starttime)
+            if options.verbose:
+                print("Compleate study done")
+
             del file_analyzer
 
     # Save results
     for node in node_analyzers:
-        node_analyzers[node].save_df(output_file_path + "_" + str(node) + "_", 
+        node_analyzers[node].save_df(output_file_path + "_" + str(node) + "_",
                                      pickling=options.pickle)
 
     #Generate the graph
