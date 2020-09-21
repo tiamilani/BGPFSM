@@ -29,6 +29,7 @@ from pathlib import Path
 import os
 import simpy
 import networkx as nx
+import matplotlib.pyplot as plt
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + '/util/')
@@ -190,6 +191,34 @@ class Sim:
         print("Total simulation time: %d hours, %d minutes, %d seconds" %
               (total_time // 3600, total_time % 3600 // 60,
                total_time % 3600 % 60))
+
+    def plot_graph(self) -> None:
+        """
+        plot_grpah
+        Used to save a figure of the graph as pdf in the output folder
+
+        :rtype: None
+        """
+        plt.figure(figsize=(18,14))
+        # Get the graph file
+        graph_file = self._config.get_param(self.PAR_graphRAPH)
+        # Create the networkx graph object
+        graph = nx.read_graphml(graph_file)
+        # Get a layout
+        pos = nx.spring_layout(graph, k=0.7, seed=5)
+        # Draw the network
+        nx.draw_networkx(graph, pos=pos, arrows=True,
+                         with_labels=True,
+                         node_size=450, node_color="#ffffff",
+                         edgecolors="#000000", font_size=10)
+        # Add edge labels
+        edge_labels = nx.get_edge_attributes(graph,'policy')
+        nx.draw_networkx_edge_labels(graph, pos, edge_labels = edge_labels)
+        # Moidfy the output file name
+        name = '/'.join(self._config.get_output_file().split('/')[:-1]) + "/graph.pdf"
+        # Save only if it is not present
+        if not os.path.isfile(name):
+            plt.savefig(name)
 
     @property
     def env(self):

@@ -59,6 +59,9 @@ parser.add_argument("-c", "--config", dest="config", default="config.json",
                   action="store", help="simulation config file")
 parser.add_argument("-s", "--section", dest="section", default="simulation",
                   action="store", help="section inside configuration file")
+parser.add_argument("-g", "--graph", dest="graph", default="True",
+                    action="store_false", help="Render the graph pdf of the \
+                    graphml file with the policies")
 
 if __name__ == "__main__":
     # Parse the arguments
@@ -89,3 +92,6 @@ if __name__ == "__main__":
     simulation.initialize(options.run)
     # Run the simulation
     simulation.run()
+    # Draw the graph
+    if options.graph:
+        simulation.plot_graph()
