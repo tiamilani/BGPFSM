@@ -5,7 +5,7 @@
 		// duration of each simulation in seconds
 		"duration" : 3600,
 		// Graph file to simulate
-		"graph": "graphs/fabrikant.graphml",
+		"graph": "graphs/fabrikant-2.graphml",
 		// log file name using configuration parameters, use {seed} or {date-time}
 		"output" : "results/fabrikant/output_{seed}_{withdraw_dist.min}_{reannouncement_dist.min}_{delay.max}.csv",
 		// Verbose value

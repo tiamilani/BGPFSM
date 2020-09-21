@@ -150,7 +150,7 @@ class Route():
             return True
         if len(self.path) == len(route.path):
             # Check the nh id
-            if int(self.nh) < int(route.nh):
+            if str(self.nh).lower() < str(route.nh).lower():
                 return True
             if self.nh == route.nh:
                 # check the path without the first as
