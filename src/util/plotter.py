@@ -195,14 +195,23 @@ class Plotter():
                       'r', label="# possible outputs")
         ax.grid()
         ax2.grid()
-        # plt.xticks(np.arange(total.messages.max()+1), np.arange(total.messages.max()+1))
         lns = legend1+legend2+legend3+legend4
         labs = [l.get_label() for l in lns]
-        ax2.legend(lns, labs)
+        # Shrink current axis's height by 10% on the bottom
+        box = ax2.get_position()
+        ax2.set_position([box.x0, box.y0 + box.height * 0.15,
+                         box.width, box.height * 0.9])
+        ax.set_position([box.x0, box.y0 + box.height * 0.15,
+                         box.width, box.height * 0.9])
+        
+        # Put a legend below current axis
+        ax2.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                  fancybox=True, ncol=2)
 
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
         ax.set_xlabel("# Of messages")
         ax.set_ylabel("Probability [0-1]")
         ax2.set_ylabel("# Of Outputs")
+        ax.set_title("Out signaling")
 
         fig.savefig(output_file, format="pdf")
