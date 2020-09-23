@@ -14,6 +14,8 @@
 		"signaling": "True",
 		// Signaling sequence, ignored if signaling false
 		"signaling_sequence": "AWA",
+		// Implicit withdraw of routes
+		"implicit_withdraw": "True",
 		// Withdraw signaling 
 		"withdraw": "True",
 		// Reannouncement of a destination after a withdraw

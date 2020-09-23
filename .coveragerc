@@ -10,7 +10,7 @@ source=
 		src/util
 
 [tool:pytest]
-addopts = --cov=src/ --cov-report term-missing
+addopts = --cov=src/ --cov-report term-missing --rng-salt "v0.1.0"
 
 [report]
 show_missing=True

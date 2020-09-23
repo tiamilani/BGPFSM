@@ -49,3 +49,11 @@ class Events: # pylint: disable=too-few-public-methods
     RIB_CHANGE = 8
     # Introduction of a new Network
     DST_ADD = 9
+    # Run the UPDATE_SEND_PROCESS
+    UPDATE_SEND_PROCESS = 10
+    # Share node destinations
+    INTRODUCE_NETWORKS = 11
+    # Retrieve node destinations
+    REMOVE_NETWORKS = 12
+    # MRAI timer events
+    MRAI = 13

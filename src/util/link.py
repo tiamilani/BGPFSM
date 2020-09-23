@@ -45,6 +45,7 @@ class Link:
 
     DELAY = "delay"
     POLICY_FUNCTION = "policy"
+    MRAI = "mrai"
 
     def __init__(self, env, node, resource, properties):
         """
@@ -71,6 +72,11 @@ class Link:
             self._policy_function = PolicyFunction(properties[Link.POLICY_FUNCTION])
         else:
             self._policy_function = PolicyFunction(PolicyFunction.PASS_EVERYTHING)
+        self._mrai = 30
+        if Link.MRAI in properties:
+            self._mrai = properties[Link.MRAI]
+        self._mrai_active = False
+        self._jitter = Distribution(json.loads('{"distribution": "unif", "min": 0, "max": ' + str(self._mrai*0.25)  + ', "int": 0.01}'))
 
     def _print(self, msg: str) -> None:
         if self._node.verbose:
@@ -140,6 +146,21 @@ class Link:
         :returns: link delay distribution
         """
         return self._delay
+
+    @property
+    def mrai(self):
+        if not self.mrai_state:
+            self._mrai_active = True
+            return 0
+        jitter = self._jitter.get_value()
+        return self._mrai - jitter
+
+    @property
+    def mrai_state(self):
+        return self._mrai_active
+    
+    def mrai_not_active(self):
+        self._mrai_active = False
 
     def __str__(self):
         """
