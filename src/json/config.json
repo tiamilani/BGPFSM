@@ -13,7 +13,7 @@
 		// Signaling flag
 		"signaling": "True",
 		// Signaling sequence, ignored if signaling false
-		"signaling_sequence": "AWA",
+		"signaling_sequence": "A",
 		// Implicit withdraw of routes
 		"implicit_withdraw": "True",
 		// Withdraw signaling 

@@ -462,6 +462,86 @@ class NodeAnalyzer():
             # The transition is already in the dictionary, increase the
             self.transitions.at[hash(transition), NodeAnalyzer.TRANSITIONS_COLUMNS[5]] += 1
 
+    def __evaluate_event_mrai(self, mrai_event_time: float, mrai_id: int,
+                            data_frame: pd.DataFrame):
+        # Events before the MRAI timeout
+        events_before = data_frame[data_frame.time < mrai_event_time]
+        print(events_before)
+        # Find events caused by the MRAI
+        events_after = data_frame.loc[[mrai_id], :]
+        print(events_after)
+        """# Find events caused by the rx
+        if rx_event_id not in data_frame.index:
+            return
+        events_in_between = data_frame.loc[[rx_event_id], : ]
+
+        # Keep a tmp variable with the state that can have been changed
+        # thanks to this reception
+        new_state = set()
+
+        # Keep a list of transmitted routes
+        transmitted_routes = []
+
+        # Check each row of the events caused by the reception
+        for row_event, row_value in zip(events_in_between[NodeAnalyzer.EVALUATION_COLUMNS[2]],
+                                        events_in_between[NodeAnalyzer.EVALUATION_COLUMNS[5]]):
+            # If the event is a change in the state, I update the local
+            # variable that keeps the state
+            if row_event == Events.RIB_CHANGE:
+                new_state = NodeAnalyzer.__evaluate_rib_change(row_value)
+            # If the event is a TX i update the corresponding sets
+            if row_event == Events.TX:
+                elem = self.__evaluate_tx(row_value)
+                if elem not in transmitted_routes:
+                    transmitted_routes.append(elem)
+
+        # Evaluate the reception event
+        received_route = self.__evaluate_rx(rx_value)
+
+        transmitted_routes = None if len(transmitted_routes) == 0 else \
+                             sorted(transmitted_routes)
+
+        # The state is changed thanks to this reception message
+        if len(self.experiment_actual_state ^ new_state) > 0:
+            # If the deifference is larger than 1 then there is a problem
+            if abs(len(self.experiment_actual_state)-len(new_state)) > 1:
+                print("something really bad happened")
+                sys.exit(2)
+
+            if abs(len(self.experiment_actual_state)-len(new_state)) == 1:
+                new_state = self.__statate_incremental_variation(rx_value, new_state)
+            else:
+                new_state = self.__statate_swap_variation(rx_value, new_state)
+
+            # Check if the state has already been known
+            state_hash = NodeAnalyzer.hash_state_set(new_state)
+            if state_hash not in self.states.index:
+                # Add the state to the states dictionary
+                self.states.loc[state_hash] = [str(new_state), 1]
+            else:
+                # The state is already in the dictionary, increase the counter
+                self.states.at[state_hash, NodeAnalyzer.STATES_COLUMNS[2]] += 1
+
+        # Create the new transition
+        input_state = NodeAnalyzer.hash_state_set(self.actual_state)
+        output_state = NodeAnalyzer.hash_state_set(new_state)
+        transition = Transition(input_state, output_state,
+                                received_route, transmitted_routes)
+
+        # Change the state
+        self.actual_state = new_state
+        # Check if the transition has already been known
+        if hash(transition) not in self.transitions.index:
+            self.transitions.loc[hash(transition)] = [transition.init_state,
+                                                      transition.output_state,
+                                                      transition.input,
+                                                      transition.output,
+                                                      transition.counter]
+        else:
+            # The transition is already in the dictionary, increase the
+            self.transitions.at[hash(transition), NodeAnalyzer.TRANSITIONS_COLUMNS[5]] += 1
+        """
+
     # @profile
     def evaluate_fsm(self, data_frame: pd.DataFrame) -> None:
         """evaluate_fsm.
@@ -476,15 +556,17 @@ class NodeAnalyzer():
         self.actual_state = set()
         self.experiment_actual_state = set()
 
-        tmp_rx = data_frame[(data_frame.event == Events.RX)]
+        print(data_frame)
+        tmp_mrai = data_frame[(data_frame.event == Events.MRAI)]
+        print(tmp_mrai)
 
         # To activate a useful O(LogN) index search the datafram must be sorted
         # This will break the event time order, but we already extrapolated
         # RX events in time order
-        data_frame = data_frame.sort_index()
+        # data_frame = data_frame.sort_index()
 
-        tmp_rx.apply(lambda row: self.__evaluate_event_rx(row.event_id,
-                                                          row.value,
+        tmp_mrai.apply(lambda row: self.__evaluate_event_mrai(row.time,
+                                                          row.event_id,
                                                           data_frame), axis=1)
 
     def __delitem__(self, value):
@@ -592,6 +674,7 @@ class FileAnalyzer():
                 raise KeyError("{} Not found in the nodes dictionary")
 
             node_df = self.__select_node(node)
-            node_filtered_df = self.__filter_events([Events.TX, Events.RX, Events.RIB_CHANGE],
+            node_filtered_df = self.__filter_events([Events.TX, Events.RX, Events.RIB_CHANGE,
+                                                     Events.MRAI],
                                                     dataframe=node_df)
             self.nodes[node].evaluate_fsm(node_filtered_df)

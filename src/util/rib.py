@@ -582,8 +582,6 @@ class BGP_RIB_handler():
         # for each route insert the best in the loc_rib
         for destination in self.adj_rib_in:
             best_route = destination[0]
-            print(best_route)
-            print(self.loc_rib)
             # if there as been a change insert the new route in the adj-rib-out
             if self.loc_rib.insert(best_route) != None:
                 for neigh in self.nodes_rib_out:

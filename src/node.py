@@ -242,6 +242,7 @@ class Node(Module):
         decision_process = Event(proc_time, event.id, Events.UPDATE_SEND_PROCESS,
                               self, self, obj=None)
         self.event_store.put(decision_process)
+
         if not self.signaling and self.withdraw:
             withdraw_time = self.withdraw_dist.get_value()
             withdraw_event = Event(withdraw_time, None, Events.REMOVE_NETWORKS,
@@ -415,20 +416,27 @@ class Node(Module):
     def mrai_waiting(self, event):
         waiting_time = event.event_duration
         yield self._env.timeout(waiting_time)
+        self.logger.mrai_cicle(self, event)
+        self._print("MRAI cicle ended, now is time to check")
         node_id = event.obj
         link = self._neighbors[node_id]
         # Look if there is something to propagate
-        self._print("Required decision process")
-        self.rib_handler.decision_process()
-        self.evaluate_routing_table()
+        self._print("Required decision process, event cause: {}".format(event.event_cause))
+        # self.rib_handler.decision_process()
+        # self.evaluate_routing_table()
         a_result = self.evaluate_advertisement_rib_out(event)
         w_result = self.evaluate_withdraw_rib_out(event)
         # If nothing has been shared reset the flag
         # Otherwise wait for another timer cicle
         if a_result or w_result:
             mrai_time = link.mrai
+            # If the next mrai is 0 just return becase nothing can be happened
+            # in a delta of 0
+            if mrai_time == 0:
+                link.mrai_not_active()
+                return
             self._print("I sent something, so I set another MRAI to {}".format(mrai_time))
-            mrai_event = Event(mrai_time, event.id, Events.MRAI, self, self,
+            mrai_event = Event(mrai_time, event.event_cause, Events.MRAI, self, self,
                                obj=node_id)
             self.event_store.put(mrai_event)
         else:
@@ -438,14 +446,18 @@ class Node(Module):
     def update_send_process(self, event):
         waiting_time = event.event_duration
         yield self._env.timeout(waiting_time)
-        self._print("update send process")
+        self._print("update send process, event cause: {}".format(event.event_cause))
         # propagation that thakes into account MRAI
+        # if len(self._neighbors) == 0:
+        self.rib_handler.decision_process()
+        self.evaluate_routing_table()
+        # else:
         for neigh in self._neighbors:
             link = self._neighbors[neigh]
             if not link.mrai_state:
                 mrai_time = link.mrai
                 self._print("Mrai not active, mrai time: {}".format(mrai_time))
-                mrai_event = Event(mrai_time, event.id, Events.MRAI, self, self,
+                mrai_event = Event(mrai_time, event.event_cause, Events.MRAI, self, self,
                                    obj=neigh)
                 self.event_store.put(mrai_event)
 
@@ -502,7 +514,7 @@ class Node(Module):
 
         packet_time = self.rate.get_value()
 
-        transmission_event = Event(packet_time, event.event_cause,
+        transmission_event = Event(packet_time, event.id,
                                    Events.TX, self, dst_node,
                                    obj=packet)
         self.event_store.put(transmission_event)

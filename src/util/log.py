@@ -39,7 +39,7 @@ class Log:
     """
 
     def __init__(self, output_file, log_routing_change=True, log_rib_change=True, # pylint: disable=too-many-arguments
-            log_packets=False, log_paths=False, log_states=False):
+            log_packets=False, log_paths=False, log_states=False, log_mrai=True):
         """
         Constructor.
         :param output_file: output file name. will be overwritten if already
@@ -72,6 +72,17 @@ class Log:
                                             event.event_cause if event.event_cause is not None \
                                                     else -1,
                                             Events.RT_CHANGE,
+                                            self.sim.env.now, node.id,
+                                            event.obj))
+
+    def mrai_cicle(self, node, event):
+        """
+        """
+        if self.log_routing_change:
+            self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id,
+                                            event.event_cause if event.event_cause is not None \
+                                                    else -1,
+                                            Events.MRAI,
                                             self.sim.env.now, node.id,
                                             event.obj))
 
