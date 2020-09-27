@@ -13,7 +13,7 @@
 		// Signaling flag
 		"signaling": "True",
 		// Signaling sequence, ignored if signaling false
-		"signaling_sequence": "A",
+		"signaling_sequence": "AWA",
 		// Implicit withdraw of routes
 		"implicit_withdraw": "True",
 		// Withdraw signaling 
@@ -21,10 +21,10 @@
 		// Reannouncement of a destination after a withdraw
 		"reannouncement": "True",
 		// Withdraw interval distribution from the announcement
-		"withdraw_dist": [{"distribution": "unif", "min": 5, "max": 10, "int": 0.1},
+		"withdraw_dist": [{"distribution": "unif", "min": 20, "max": 30, "int": 0.1},
 						  {"distribution": "unif", "min": 2, "max": 3, "int": 0.1}],
 		// announcement interval distribution from the withdraw 
-		"reannouncement_dist": [{"distribution": "unif", "min": 5, "max": 10, "int": 0.1},
+		"reannouncement_dist": [{"distribution": "unif", "min": 20, "max": 40, "int": 0.1},
 							    {"distribution": "unif", "min": 1, "max": 3, "int": 0.1}],
 		// Transmission time required to start the actual message transmission 
 		"datarate": [{"distribution": "exp", "lambda" : 100},

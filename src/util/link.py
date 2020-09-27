@@ -76,11 +76,21 @@ class Link:
         if Link.MRAI in properties:
             self._mrai = properties[Link.MRAI]
         self._mrai_active = False
-        self._jitter = Distribution(json.loads('{"distribution": "unif", "min": 0, "max": ' + str(self._mrai*0.25)  + ', "int": 0.01}'))
+        self._jitter = Distribution(json.loads('{"distribution": "unif", \
+                       "min": 0, "max": ' + str(self._mrai*0.25)  + ', "int": 0.01}'))
 
     def _print(self, msg: str) -> None:
+        """_print.
+        Print helper function for the Link
+        All messages will be preceded by the time, the link id and the neighbour
+        connected
+
+        :param msg: The message that needs to be printed by the link
+        :type msg: str
+        :rtype: None
+        """
         if self._node.verbose:
-            print("{}-{}-->{} ".format(self._env.now, self._id, self._node.id) + msg)
+            print("{}-Lid:{} to {} ".format(self._env.now, self._id, self._node.id) + msg)
 
     def transmit(self, msg: Any, delay: float) -> None:
         """
@@ -148,7 +158,16 @@ class Link:
         return self._delay
 
     @property
-    def mrai(self):
+    def mrai(self) -> float:
+        """mrai.
+        Function to get an MRAI value from the distribution
+        If the MRAI is not active will be returned 0 and the MRAI will
+        be activated
+        For all the other iteration the MRAI will return a value equal
+        to the value given minus the jitter
+
+        :rtype: float
+        """
         if not self.mrai_state:
             self._mrai_active = True
             return 0
@@ -156,10 +175,21 @@ class Link:
         return self._mrai - jitter
 
     @property
-    def mrai_state(self):
+    def mrai_state(self) -> bool:
+        """mrai_state.
+        Get the MRAI state value
+
+        :rtype: bool
+        """
         return self._mrai_active
-    
-    def mrai_not_active(self):
+
+    def mrai_not_active(self) -> None:
+        """mrai_not_active.
+        Disable the current MRAI
+        if the MRAI was already disable this will have no effects
+
+        :rtype: None
+        """
         self._mrai_active = False
 
     def __str__(self):

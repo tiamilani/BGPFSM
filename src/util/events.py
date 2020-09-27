@@ -35,25 +35,21 @@ class Events: # pylint: disable=too-few-public-methods
     TX = 1
     # Reception event
     RX = 2
-    # New destination event
-    NEW_DST = 3
     # Routing table change event
-    RT_CHANGE = 4
+    RT_CHANGE = 3
     # New path for a destination event
-    NEW_PATH = 5
-    # Withdraw event
-    WITHDRAW = 6
+    NEW_PATH = 4
     # Reannouncement event
-    REANNOUNCE = 7
+    REANNOUNCE = 5
     # Rib state change event
-    RIB_CHANGE = 8
+    RIB_CHANGE = 6
     # Introduction of a new Network
-    DST_ADD = 9
+    DST_ADD = 7
     # Run the UPDATE_SEND_PROCESS
-    UPDATE_SEND_PROCESS = 10
+    UPDATE_SEND_PROCESS = 8
     # Share node destinations
-    INTRODUCE_NETWORKS = 11
+    INTRODUCE_NETWORKS = 9
     # Retrieve node destinations
-    REMOVE_NETWORKS = 12
+    REMOVE_NETWORKS = 10
     # MRAI timer events
-    MRAI = 13
+    MRAI = 11

@@ -35,10 +35,11 @@ from module import Module
 from event import Event
 from events import Events
 from packet import Packet
+from link import Link
 from routingTable import RoutingTable
 from route import Route
 from distribution import Distribution
-from rib import Rib, BGP_RIB_handler
+from rib import BGP_RIB_handler
 from policies import PolicyValue
 
 import bgp_sim
@@ -94,7 +95,6 @@ class Node(Module):
         self.routing_table = RoutingTable()
         # Rib table, this table represent all the routing knowledge
         # present in the node, plus routes that are not the best
-        self.rib = Rib(self._id, self.logger)
         self.rib_handler = BGP_RIB_handler(self._id, self.logger)
         # Event handler of a node
         self.reception = self._env.process(self.handle_event())
@@ -122,27 +122,32 @@ class Node(Module):
         # Resource for the acquisition of the tx channel resource
         self.tx_res = simpy.Resource(self._env, capacity=1)
 
-    def _print(self, msg):
+    def _print(self, msg: str) -> None:
         """_print.
         Print a message from the node
         evaluate the verbose level before printing a message
 
         :param msg: Message that needs to be printed on sysout
+        :type msg: str
+        :rtype: None
         """
         if self.verbose:
             print("{}-{} ".format(self._env.now, self._id) + msg)
 
-    def add_neighbor(self, link):
+    def add_neighbor(self, link: Link) -> None:
         """
         Add a neighbor to the set of neighbors
         If the neighbor is already in the set it throws an error
         and terminate
 
         :param link: link that has to be added
+        :type link: Link
+        :rtype: None
         """
         # Evaluate if the link is already present
         if link.id not in self._neighbors:
             self._neighbors[link.node.id] = link
+            # Add the neighbour to the list in the rib
             self.rib_handler.add_neighbor(link.node.id)
 
         else:
@@ -158,16 +163,16 @@ class Node(Module):
 
         :param elem: signal to manage
         :type elem: str
-        :param route: Route to share or withdraw
-        :type route: Route
         :rtype: Event
 
         :raise ValueError: When is passed an element that is not a valid signal
         """
+        # Evaluate if the element is an advertisement
         if elem == "A":
             proc_time = self.reannouncement_dist.get_value()
             event = Event(proc_time, None, Events.INTRODUCE_NETWORKS, self, self,
                           obj=None)
+        # Evaluate if the element is a withdraw
         elif elem == "W":
             withdraw_time = self.withdraw_dist.get_value()
             event = Event(withdraw_time, None, Events.REMOVE_NETWORKS, self, self,
@@ -184,8 +189,6 @@ class Node(Module):
         Function used as kick starter for nodes that have to share a destination
         to generate the start events.
         """
-        # self.rib_handler.decision_process()
-        # self.evaluate_routing_table()
         if len(self._destinations) > 0:
             if not self.signaling:
                 proc_time = self.proc_time.get_value()
@@ -202,7 +205,7 @@ class Node(Module):
                     event.event_duration = env_time
                     self.event_store.put(event)
 
-    def new_network(self, route: Route, event: Event, share=True) -> None:
+    def new_network(self, route: Route, event: Event) -> None:
         """new_network.
         Function used to add a new route, it will be evaluated for the
         insertion in the rib and it will be then evaluated for the Routing table
@@ -211,12 +214,11 @@ class Node(Module):
         :type route: Route
         :param event: Cause event for the evaluation
         :type event: Event
-        :param share: The network should be shared if it's the new best? (default=True)
         :rtype: None
         """
         self.rib_handler.receive_advertisement(route, event)
 
-    def remove_network(self, route: Route, event: Event, share=True) -> None:
+    def remove_network(self, route: Route, event: Event) -> None:
         """remove_network.
         Function used to add a new route, it will be evaluated for the
         insertion in the rib and it will be then evaluated for the Routing table
@@ -225,43 +227,70 @@ class Node(Module):
         :type route: Route
         :param event: Cause event for the evaluation
         :type event: Event
-        :param share: The network should be shared if it's the new best? (default=True)
         :rtype: None
         """
         self.rib_handler.receive_withdraw(route, event)
 
-    def share_destinations(self, event):
+    def share_destinations(self, event: Event) -> None:
+        """share_destinations.
+        Function used to shares all the local destinations
+        All the destinations will be introduced in the ADJ-RIB-in and then
+        evaluated.
+        Will be then required a processing event to evaluate and send
+        UPDATE messages if required
+        If the signaling option is not active and the withdraw action
+        is active will be scheduled a network removement
+
+        :param event: Event that produced the sharing of local destination
+        :type event: Event
+        :rtype: None
+        """
         waiting_time = event.event_duration
         # Waiting for the reception
         yield self._env.timeout(waiting_time)
-        
-        for network, event in self._destinations:
-            self.new_network(network, event)
 
+        # Reintroduce each network
+        for network, dst_event in self._destinations:
+            self.new_network(network, dst_event)
+
+        # Evaluate the networks
         proc_time = self.proc_time.get_value()
         decision_process = Event(proc_time, event.id, Events.UPDATE_SEND_PROCESS,
                               self, self, obj=None)
         self.event_store.put(decision_process)
 
+        # If the configuration permits it then schedule the withdraw of the routes
         if not self.signaling and self.withdraw:
             withdraw_time = self.withdraw_dist.get_value()
             withdraw_event = Event(withdraw_time, None, Events.REMOVE_NETWORKS,
                                    self, self, obj=None)
             self.event_store.put(withdraw_event)
 
-    def remove_destinations(self, event):
+    def remove_destinations(self, event: Event) -> None:
+        """remove_destinations.
+        Remove all the local destinations of the node and then evaluate
+        the changes to the ADJ-RIB-out
+        If configured to do so it will schedule a reintroduction
+
+        :param event: Event that generates the destination removement
+        :type event: Event
+        :rtype: None
+        """
         waiting_time = event.event_duration
         # Waiting for the reception
         yield self._env.timeout(waiting_time)
-        
-        for network, event in self._destinations:
-            self.remove_network(network, event)
 
+        # Remove each network previously shared
+        for network, dst_event in self._destinations:
+            self.remove_network(network, dst_event)
+
+        # Schedule an evaluation
         proc_time = self.proc_time.get_value()
         decision_process = Event(proc_time, event.id, Events.UPDATE_SEND_PROCESS,
                               self, self, obj=None)
         self.event_store.put(decision_process)
 
+        # If configured to do so reannounce the destinations
         if not self.signaling and self.reannounce:
             reannouncement_timing = self.reannouncement_dist.get_value()
             redistribute_event = Event(reannouncement_timing, None, Events.REANNOUNCE,
@@ -269,7 +298,7 @@ class Node(Module):
             self.event_store.put(redistribute_event)
 
     def add_destination(self, destination: str, path: list, next_hop: str, # pylint: disable=too-many-arguments
-            policy_value=0, share=False) -> None:
+            policy_value=0) -> None:
         """add_destination.
         Function used to add a destination to the node not already in route
         format
@@ -281,8 +310,6 @@ class Node(Module):
         :param next_hop: Id of the next hop node
         :type next_hop: str
         :param policy_value: Policy value to add to the route, defualt=0
-        :param share: Sharing flag, default=True, if false the route will
-                      be added but not shared
         :rtype: None
         """
 
@@ -290,7 +317,6 @@ class Node(Module):
         policy = PolicyValue(policy_value)
         new_route = Route(network, path, next_hop, policy_value=policy, mine=True)
         intro_event = Event(0, None, Events.DST_ADD, self, self)
-        # self.new_network(new_route, intro_event, share=share)
         self._destinations.append((new_route, intro_event))
 
     def change_state(self, waiting_time):
@@ -326,10 +352,10 @@ class Node(Module):
             # self.withdraw_handler(event, packet)
             route = deepcopy(packet.content)
             self.rib_handler.receive_withdraw(route, event)
-            withdraw_packet = Packet(Packet.WITHDRAW, route)
-            withdraw_event = Event(0, event.id, Events.WITHDRAW,
-                                   self, self, obj=withdraw_packet)
-            self.event_store.put(withdraw_event)
+            # withdraw_packet = Packet(Packet.WITHDRAW, route)
+            # withdraw_event = Event(0, event.id, Events.WITHDRAW,
+            #                        self, self, obj=withdraw_packet)
+            # self.event_store.put(withdraw_event)
         proc_time = self.proc_time.get_value()
         decision_process = Event(proc_time, event.id, Events.UPDATE_SEND_PROCESS,
                               self, self, obj=None)
@@ -369,42 +395,73 @@ class Node(Module):
         yield self._env.timeout(wait)
         self.tx_res.release(request)
 
-    def evaluate_advertisement_rib_out(self, event: Event) -> bool:
+    def __evaluate_advertisement_rib_out(self, event: Event) -> bool:
+        """evaluate_advertisement_rib_out.
+        Function to evaluate the ADJ-RIB-out if there is an advertisement to share
+
+        :param event: Event that generates the lookup in the ADJ-RIB-out
+        :type event: Event
+        :rtype: bool Returns if something has been shared
+        """
+        # Flag to keep track if something has been shared
         share_flag = False
         neigh = event.obj
         neigh_node = self._neighbors[neigh].node
         neigh_id = neigh_node.id
+        # Corresponding rib-out table
         adj_rib_out = self.rib_handler.get_rib_out(neigh_id)
+        # Check each destination in the ADJ-RIB-out
         for destination in adj_rib_out:
             tmp_route = destination[0]
             for route in destination:
                 packet = Packet(Packet.UPDATE, deepcopy(route))
                 self._print("rib_out transmitting advertisement {}".format(route))
+                # Share the packet and change the flag
                 self.send_msg_to_dst(packet, event, neigh_node)
                 share_flag = True
                 adj_rib_out.remove(route)
+            # Remove the corresponding element in the table
             del adj_rib_out[tmp_route]
         return share_flag
 
-    def evaluate_withdraw_rib_out(self, event: Event):
+    def __evaluate_withdraw_rib_out(self, event: Event) -> bool:
+        """evaluate_withdraw_rib_out.
+        Evaluate the rib out if there are new withdraws to share
+
+        :param event: Event that triggered the lookup
+        :type event: Event
+        :rtype: bool Returns if something has been shared
+        """
         share_flag = False
         neigh = event.obj
         neigh_node = self._neighbors[neigh].node
         neigh_id = neigh_node.id
         adj_rib_out = self.rib_handler.get_rib_out(neigh_id)
-        for route in adj_rib_out.get_withdraws():
-            packet = Packet(Packet.WITHDRAW, deepcopy(route))
-            self._print("rib_out transmitting withdraw {}".format(route))
-            self.send_msg_to_dst(packet, event, neigh_node)
-            share_flag = True
-            adj_rib_out.remove_from_withdraws(route)
+        withdraw_keys = adj_rib_out.get_withdraws_keys()
+        for key in withdraw_keys:
+            for route in adj_rib_out.get_withdraws(key):
+                if not adj_rib_out.exists(route):
+                    packet = Packet(Packet.WITHDRAW, deepcopy(route))
+                    self._print("rib_out transmitting withdraw {}".format(route))
+                    self.send_msg_to_dst(packet, event, neigh_node)
+                    share_flag = True
+                adj_rib_out.remove_from_withdraws(route)
+            if len(adj_rib_out.get_withdraws(key)) == 0:
+                adj_rib_out.del_withdraws(key)
         return share_flag
 
-    def evaluate_routing_table(self):
+    def __evaluate_routing_table(self) -> None:
+        """evaluate_routing_table.
+        Evaluate the LOC-RIB to update the routing table
+
+        :rtype: None
+        """
+        # Add new routes
         for route in self.rib_handler.loc_rib:
             if route not in self.routing_table:
                 self.routing_table[route.addr] = route
 
+        # Remove old routes
         route_to_be_removed = []
         for route in self.routing_table:
             if not self.rib_handler.loc_rib.exists(route):
@@ -413,7 +470,15 @@ class Node(Module):
         for route in route_to_be_removed:
             del self.routing_table[route.addr]
 
-    def mrai_waiting(self, event):
+    def mrai_waiting(self, event: Event) -> None:
+        """mrai_waiting.
+        Function used to handle an MRAI cycle, at the end the ADJ-RIB-out will
+        be evaluated to see if something changed during the cycle
+
+        :param event: Event that triggered the evaluation
+        :type event: Event
+        :rtype: None
+        """
         waiting_time = event.event_duration
         yield self._env.timeout(waiting_time)
         self.logger.mrai_cicle(self, event)
@@ -421,11 +486,9 @@ class Node(Module):
         node_id = event.obj
         link = self._neighbors[node_id]
         # Look if there is something to propagate
-        self._print("Required decision process, event cause: {}".format(event.event_cause))
-        # self.rib_handler.decision_process()
-        # self.evaluate_routing_table()
-        a_result = self.evaluate_advertisement_rib_out(event)
-        w_result = self.evaluate_withdraw_rib_out(event)
+        # Send advertisement or withdraw and evaluate if something changed
+        w_result = self.__evaluate_withdraw_rib_out(event)
+        a_result = self.__evaluate_advertisement_rib_out(event)
         # If nothing has been shared reset the flag
         # Otherwise wait for another timer cicle
         if a_result or w_result:
@@ -443,17 +506,26 @@ class Node(Module):
             self._print("Nothing has been sent, so I deactivate MRAI")
             link.mrai_not_active()
 
-    def update_send_process(self, event):
+    def update_send_process(self, event: Event) -> None:
+        """update_send_process.
+        Function that require to execute the decision process at the rib and
+        Require the destination sharing if the MRAI timer permits it
+        It will also update the Routing Table
+
+        :param event: Event that triggered the update send process
+        :type event: Event
+        :rtype: None
+        """
         waiting_time = event.event_duration
         yield self._env.timeout(waiting_time)
         self._print("update send process, event cause: {}".format(event.event_cause))
-        # propagation that thakes into account MRAI
-        # if len(self._neighbors) == 0:
+        # Execute the decision process
         self.rib_handler.decision_process()
-        self.evaluate_routing_table()
-        # else:
+        # Evaluate the routing table
+        self.__evaluate_routing_table()
         for neigh in self._neighbors:
             link = self._neighbors[neigh]
+            # Require an MRAI execution if there isn't one already triggered
             if not link.mrai_state:
                 mrai_time = link.mrai
                 self._print("Mrai not active, mrai time: {}".format(mrai_time))
@@ -461,36 +533,17 @@ class Node(Module):
                                    obj=neigh)
                 self.event_store.put(mrai_event)
 
-    # TODO remove
-    def share_dst(self, event):
-        """share_dst.
-        Share a destiantion to all the neighbors
-        If the destination is originated by this node and the withdraw flag
-        is active a withdraw will also be triggered
-
-        :param event: event that triggered the sharing of the destination
-        """
-        waiting_time = event.event_duration
-        yield self._env.timeout(waiting_time)
-        dst = event.obj
-
-        route = deepcopy(dst)
-        # Add the self id to the path and nh field
-        route.add_to_path(self._id)
-        route.nh = self._id
-        packet = Packet(Packet.UPDATE, route)
-        self.send_msg_to_all(packet, event)
-
-        if dst.mine and not self.signaling and self.withdraw:
-            # Generate the withdraw event
-            withdraw_packet = Packet(Packet.WITHDRAW, dst)
-            withdraw_time = self.withdraw_dist.get_value()
-            withdraw_event = Event(withdraw_time, event.event_cause,
-                                   Events.WITHDRAW, self, self,
-                                   obj=withdraw_packet)
-            self.event_store.put(withdraw_event)
-
     def send_msg_to_dst(self, packet: Packet, event: Event, dst_node) -> None:
+        """send_msg_to_dst.
+        Function used to send a packet to a specific destination node
+
+        :param packet: Packet to share
+        :type packet: Packet
+        :param event: Event that triggered the shering
+        :type event: Event
+        :param dst_node: Destination node of the packet
+        :rtype: None
+        """
         route = packet.content
         route.add_to_path(self.id)
         route.nh = self.id
@@ -533,71 +586,7 @@ class Node(Module):
         """
         for neigh in self._neighbors:
             dst_node = self._neighbors[neigh].node
-            # self.send_msg_to_dst(packet, event, dst_node)
-
-    # TODO remove
-    def program_withdraw(self, event):
-        """program_withdraw.
-        Function used to program a withdraw of a previusly
-        shared destination
-
-        :param event: event that generates the withdraw, used to
-            get the delay time and the route that needs to be withdrawed
-        """
-        # Wait the time defined by the withdraw distribution
-        yield self._env.timeout(event.event_duration)
-
-        # Get the route
-        packet = event.obj
-        route = packet.content
-        self._print("Route to withdraw: " + str(route))
-
-        # Delete the route from the routing table and the rib
-        old_best = self.rib[route.addr]
-        if self.rib.contains(route.addr, route):
-            change_event = Event(0, event.event_cause, Events.RIB_CHANGE,
-                    None, None)
-            change_event.id = event.event_cause
-            self.rib.remove(route.addr, route, event=change_event)
-        else:
-            self._print("Rib does not contains: " + str(route))
-            return
-        new_best = self.rib[route.addr]
-
-        if new_best is None:
-            del self.routing_table[route.addr]
-            rt_change_event = Event(0, event.event_cause, Events.RT_CHANGE,
-                                    self, self, obj=Route(route.addr, [], None))
-            self.logger.log_rt_change(self, rt_change_event)
-
-            # Send a withdraw for the route
-            route_copy = deepcopy(packet.content)
-            route_copy.add_to_path(self._id)
-            route_copy.nh = self._id
-            withdraw_packet = Packet(Packet.WITHDRAW, route_copy)
-            self.send_msg_to_all(withdraw_packet, event)
-        elif new_best != old_best:
-            self.routing_table[route.addr] = new_best
-            rt_change_event = Event(0, event.event_cause, Events.RT_CHANGE,
-                                    self, self, obj=new_best)
-            self.logger.log_rt_change(self, rt_change_event)
-
-            # Send an update with the new best
-            update_route = deepcopy(new_best)
-            update_route.add_to_path(self._id)
-            update_route.nh = self._id
-            update_packet = Packet(Packet.UPDATE, update_route)
-            self.send_msg_to_all(update_packet, event)
-        elif new_best == old_best:
-            self._print("Best route not changed, nothing to share")
-            return
-
-        # Check if it's needed a redistribution
-        if not self.signaling and self.reannounce and packet.content.mine == 0:
-            reannouncement_timing = self.reannouncement_dist.get_value()
-            redistribute_event = Event(reannouncement_timing, None, Events.REANNOUNCE,
-                                        self, self, obj=route.addr)
-            self.event_store.put(redistribute_event)
+            self.send_msg_to_dst(packet, event, dst_node)
 
     def reannounce_handler(self, event):
         """
@@ -627,10 +616,6 @@ class Node(Module):
                 self._env.process(self.tx_pkt(event))
             elif event.event_type == Events.RX:
                 self._env.process(self.rx_pkt(event))
-            elif event.event_type == Events.NEW_DST:
-                self._env.process(self.share_dst(event))
-            elif event.event_type == Events.WITHDRAW:
-                self._env.process(self.program_withdraw(event))
             elif event.event_type == Events.REANNOUNCE:
                 self._env.process(self.reannounce_handler(event))
             elif event.event_type == Events.UPDATE_SEND_PROCESS:
@@ -669,6 +654,5 @@ class Node(Module):
         res += "Neighborhood: {}\n".format([n.node.id for n in self._neighbors.values()])
         res += "Destinations queue: "
         res += "\n" + str(self.routing_table)
-        res += str(self.rib)
         res += str(self.rib_handler)
         return res

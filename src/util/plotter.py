@@ -203,7 +203,7 @@ class Plotter():
                          box.width, box.height * 0.9])
         ax.set_position([box.x0, box.y0 + box.height * 0.15,
                          box.width, box.height * 0.9])
-        
+
         # Put a legend below current axis
         ax2.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
                   fancybox=True, ncol=2)

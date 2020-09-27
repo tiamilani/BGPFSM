@@ -30,6 +30,8 @@ import os
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + '/../')
 from events import Events
+from event import Event
+from node import Node
 import bgp_sim
 
 
@@ -57,6 +59,7 @@ class Log:
         self.log_routing_change = log_routing_change
         self.log_paths = log_paths
         self.log_rib = log_rib_change
+        self.log_mrai = log_mrai
 
     def __delete__(self, instance):
         self.log_file.close()
@@ -75,10 +78,17 @@ class Log:
                                             self.sim.env.now, node.id,
                                             event.obj))
 
-    def mrai_cicle(self, node, event):
+    def mrai_cicle(self, node: Node, event: Event) -> None:
+        """mrai_cicle.
+        Funcrtion to log an MRAI cicle
+
+        :param node: Node that triggered the event
+        :type node: Node
+        :param event: Event triggered
+        :type event: Event
+        :rtype: None
         """
-        """
-        if self.log_routing_change:
+        if self.log_mrai:
             self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id,
                                             event.event_cause if event.event_cause is not None \
                                                     else -1,
