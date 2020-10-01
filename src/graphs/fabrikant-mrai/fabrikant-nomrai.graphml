@@ -6,7 +6,7 @@
   <key attr.name="mrai" attr.type="string" for="edge" id="d3" />
   <graph edgedefault="directed">
     <node id="1">
-		<data key="d0">130.0.30.0/24</data>
+		<data key="d0">10.0.0.0/24</data>
     </node>
     <node id="2_1" />
     <node id="2_2" />
@@ -22,63 +22,63 @@
     <edge source="1" target="2_1">
 		<data key="d1">{"distribution": "unif", "min": 1, "max": 3, "int": 0.001}</data>	
 		<data key="d2">0, inf, inf</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">0.0</data>	
 	</edge>
     <edge source="2_1" target="2_2">
 		<data key="d2">0, inf, inf</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">0.0</data>	
 	</edge>
     <edge source="1" target="3">
 		<data key="d2">0, inf, inf</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">0.0</data>	
 	</edge>
     <edge source="2_2" target="4">
 		<data key="d2">0, inf, inf</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">0.0</data>	
 	</edge>
     <edge source="3" target="4">
 		<data key="d2">1, inf, inf</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">0.0</data>	
 	</edge>
     <edge source="4" target="5">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">0.0</data>	
 	</edge>
     <edge source="4" target="6">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">0.0</data>	
 	</edge>
     <edge source="6" target="5">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">0.0</data>	
 	</edge>
     <edge source="5" target="8">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">0.0</data>	
 	</edge>
     <edge source="5" target="7">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">0.0</data>	
 	</edge>
     <edge source="8" target="7">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">0.0</data>	
 	</edge>
     <edge source="7" target="10">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">0.0</data>	
 	</edge>
     <edge source="7" target="9">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">0.0</data>	
 	</edge>
     <edge source="10" target="9">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">0.0</data>	
 	</edge>
     <edge source="9" target="11">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">0.0</data>	
 	</edge>
   </graph>
 </graphml>

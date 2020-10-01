@@ -72,9 +72,9 @@ class Link:
             self._policy_function = PolicyFunction(properties[Link.POLICY_FUNCTION])
         else:
             self._policy_function = PolicyFunction(PolicyFunction.PASS_EVERYTHING)
-        self._mrai = 30
+        self._mrai = 30.0
         if Link.MRAI in properties:
-            self._mrai = properties[Link.MRAI]
+            self._mrai = float(properties[Link.MRAI])
         self._mrai_active = False
         self._jitter = Distribution(json.loads('{"distribution": "unif", \
                        "min": 0, "max": ' + str(self._mrai*0.25)  + ', "int": 0.01}'))

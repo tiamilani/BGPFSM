@@ -121,6 +121,7 @@ class Node(Module):
         self.signaling_accepted_simbols = ["A", "W"]
         # Resource for the acquisition of the tx channel resource
         self.tx_res = simpy.Resource(self._env, capacity=1)
+        self.processing_res = simpy.Resource(self._env, capacity=1)
 
     def _print(self, msg: str) -> None:
         """_print.
@@ -336,7 +337,9 @@ class Node(Module):
         packet = event.obj
         waiting_time = event.event_duration
         # Waiting for the reception
-        yield self._env.timeout(waiting_time)
+        request = self.processing_res.request()
+        yield request 
+        yield self._env.timeout(waiting_time) 
         # Log the reception
         self._print("Packet_RX: " + str(packet))
         self.logger.log_packet_rx(self, event)
@@ -360,6 +363,10 @@ class Node(Module):
         decision_process = Event(proc_time, event.id, Events.UPDATE_SEND_PROCESS,
                               self, self, obj=None)
         self.event_store.put(decision_process)
+        # Release the resource
+        wait = self.proc_time.get_value()
+        yield self._env.timeout(wait)
+        self.processing_res.release(request)
 
     def tx_pkt(self, event):
         """
@@ -410,6 +417,7 @@ class Node(Module):
         neigh_id = neigh_node.id
         # Corresponding rib-out table
         adj_rib_out = self.rib_handler.get_rib_out(neigh_id)
+        print("Before\n", adj_rib_out)
         # Check each destination in the ADJ-RIB-out
         for destination in adj_rib_out:
             tmp_route = destination[0]
@@ -422,6 +430,7 @@ class Node(Module):
                 adj_rib_out.remove(route)
             # Remove the corresponding element in the table
             del adj_rib_out[tmp_route]
+        print("After\n", adj_rib_out)
         return share_flag
 
     def __evaluate_withdraw_rib_out(self, event: Event) -> bool:
@@ -517,9 +526,11 @@ class Node(Module):
         :rtype: None
         """
         waiting_time = event.event_duration
+        request = self.processing_res.request()
+        yield request 
         yield self._env.timeout(waiting_time)
-        self._print("update send process, event cause: {}".format(event.event_cause))
         # Execute the decision process
+        self._print("Decision process execution")
         self.rib_handler.decision_process()
         # Evaluate the routing table
         self.__evaluate_routing_table()
@@ -528,10 +539,13 @@ class Node(Module):
             # Require an MRAI execution if there isn't one already triggered
             if not link.mrai_state:
                 mrai_time = link.mrai
-                self._print("Mrai not active, mrai time: {}".format(mrai_time))
                 mrai_event = Event(mrai_time, event.event_cause, Events.MRAI, self, self,
                                    obj=neigh)
                 self.event_store.put(mrai_event)
+        # Release the resource
+        wait = self.proc_time.get_value()
+        yield self._env.timeout(wait)
+        self.processing_res.release(request)
 
     def send_msg_to_dst(self, packet: Packet, event: Event, dst_node) -> None:
         """send_msg_to_dst.

@@ -26,7 +26,7 @@
 	</edge>
     <edge source="2_1" target="2_2">
 		<data key="d2">0, inf, inf</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">16.0</data>	
 	</edge>
     <edge source="1" target="3">
 		<data key="d2">0, inf, inf</data>
@@ -34,51 +34,51 @@
 	</edge>
     <edge source="2_2" target="4">
 		<data key="d2">0, inf, inf</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">16.0</data>	
 	</edge>
     <edge source="3" target="4">
 		<data key="d2">1, inf, inf</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">16.0</data>	
 	</edge>
     <edge source="4" target="5">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">8.0</data>	
 	</edge>
     <edge source="4" target="6">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">8.0</data>	
 	</edge>
     <edge source="6" target="5">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">8.0</data>	
 	</edge>
     <edge source="5" target="8">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">4.0</data>	
 	</edge>
     <edge source="5" target="7">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">4.0</data>	
 	</edge>
     <edge source="8" target="7">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">4.0</data>	
 	</edge>
     <edge source="7" target="10">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">2.0</data>	
 	</edge>
     <edge source="7" target="9">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">2.0</data>	
 	</edge>
     <edge source="10" target="9">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">2.0</data>	
 	</edge>
     <edge source="9" target="11">
 		<data key="d2">2, 2, 2</data>
-		<data key="d3">30.0</data>	
+		<data key="d3">1.0</data>	
 	</edge>
   </graph>
 </graphml>

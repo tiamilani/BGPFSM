@@ -29,6 +29,7 @@ import re
 import pandas as pd
 from graphviz import Digraph
 from route import Route
+from typing import Optional
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from analysis import NodeAnalyzer
@@ -215,3 +216,21 @@ class Plotter():
         ax.set_title("Out signaling")
 
         fig.savefig(output_file, format="pdf")
+
+class GeneralPlotter():
+    """
+    GeneralPlotter
+    --------------
+
+    Class used to plot information for the general study of an experiment
+    Convergence time/Number of messages sent/ ecc
+    """
+
+    def __init__(self, ges_df: str):
+        self.ges = pd.read_csv(ges_df, sep="|", index_col="id")
+
+    def ges_boxplot(self, output_file_name: str, _column: str) -> None:
+        boxplot = self.ges.boxplot(column=_column)
+        plt.savefig(output_file_name, format="pdf")
+        plt.close()
+

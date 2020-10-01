@@ -97,15 +97,15 @@
 		// Implicit withdraw of routes
 		"implicit_withdraw": "True",
 		// Withdraw signaling 
-		"withdraw": "False",
+		"withdraw": "True",
 		// Reannouncement of a destination after a withdraw
-		"reannouncement": "False",
+		"reannouncement": "True",
 		// Withdraw interval distribution from the announcement
-		"withdraw_dist": [{"distribution": "unif", "min": 1, "max": 10, "int": 0.1},
-						  {"distribution": "unif", "min": 7, "max": 10, "int": 0.1}],
+		"withdraw_dist": [{"distribution": "unif", "min": 5, "max": 10, "int": 0.1},
+						  {"distribution": "unif", "min": 10, "max": 15, "int": 0.1}],
 		// announcement interval distribution from the withdraw 
-		"reannouncement_dist": [{"distribution": "unif", "min": 1, "max": 10, "int": 0.1},
-								{"distribution": "unif", "min": 7, "max": 10, "int": 0.1}],
+		"reannouncement_dist": [{"distribution": "unif", "min": 5, "max": 10, "int": 0.1},
+								{"distribution": "unif", "min": 10, "max": 15, "int": 0.1}],
 		// Transmission time required to start the actual message transmission 
 		"datarate": {"distribution": "exp", "lambda" : 100},
 		// Processing time distribution

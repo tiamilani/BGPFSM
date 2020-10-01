@@ -745,6 +745,8 @@ class BGP_RIB_handler(): # pylint: disable=invalid-name
                     else:
                         # Remove the route from the advertisements
                         self.nodes_rib_out[neigh].remove(old_best)
+                        if len(self.nodes_rib_out[neigh][old_best]) == 0:
+                            del self.nodes_rib_out[neigh][old_best]
                         # If the route in the withdraws is equal to the new best don't do anything
                         # Otherwise insert the new route as an advertisement
                         if self.nodes_rib_out[neigh].exists_withdraws(best_route) and \
@@ -757,8 +759,9 @@ class BGP_RIB_handler(): # pylint: disable=invalid-name
             if not self.adj_rib_in.exists(destination):
                 del self.loc_rib[destination]
                 for neigh in self.nodes_rib_out:
+                    # if self.nodes_rib_out[neigh].exists(destination):
+                    #    del self.nodes_rib_out[neigh][destination]
                     self.nodes_rib_out[neigh].insert_withdraw(destination)
-        print(self)
 
     def exists(self, node_id: str) -> bool:
         """exists.

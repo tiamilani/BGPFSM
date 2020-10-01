@@ -388,6 +388,32 @@ class NodeAnalyzer():
         res = res.replace(']', '}')
         return res
 
+    def __state_analyzer(self, new_state: set, rx_value: str) -> set:
+        # The state is changed thanks to this reception message
+        if len(self.experiment_actual_state ^ new_state) > 0:
+            # If the difference is larger than 1 then there is a problem
+            if abs(len(self.experiment_actual_state)-len(new_state)) > 1:
+                print("something really bad happened")
+                sys.exit(3)
+
+            if abs(len(self.experiment_actual_state)-len(new_state)) == 1:
+                new_state = self.__statate_incremental_variation(rx_value, new_state)
+            else:
+                new_state = self.__statate_swap_variation(rx_value, new_state)
+
+        return new_state
+
+    def __state_register(self, new_state: set) -> None:
+        # Check if the state has already been known
+        state_hash = NodeAnalyzer.hash_state_set(new_state)
+        if state_hash not in self.states.index:
+            # Add the state to the states dictionary
+            self.states.loc[state_hash] = [str(new_state), 1]
+        else:
+            # The state is already in the dictionary, increase the counter
+            self.states.at[state_hash, NodeAnalyzer.STATES_COLUMNS[2]] += 1
+
+
     def __evaluate_event_rx(self, rx_event_id: int, rx_value: str,
                             data_frame: pd.DataFrame):
 
@@ -422,26 +448,8 @@ class NodeAnalyzer():
         transmitted_routes = None if len(transmitted_routes) == 0 else \
                              sorted(transmitted_routes)
 
-        # The state is changed thanks to this reception message
-        if len(self.experiment_actual_state ^ new_state) > 0:
-            # If the deifference is larger than 1 then there is a problem
-            if abs(len(self.experiment_actual_state)-len(new_state)) > 1:
-                print("something really bad happened")
-                sys.exit(2)
-
-            if abs(len(self.experiment_actual_state)-len(new_state)) == 1:
-                new_state = self.__statate_incremental_variation(rx_value, new_state)
-            else:
-                new_state = self.__statate_swap_variation(rx_value, new_state)
-
-            # Check if the state has already been known
-            state_hash = NodeAnalyzer.hash_state_set(new_state)
-            if state_hash not in self.states.index:
-                # Add the state to the states dictionary
-                self.states.loc[state_hash] = [str(new_state), 1]
-            else:
-                # The state is already in the dictionary, increase the counter
-                self.states.at[state_hash, NodeAnalyzer.STATES_COLUMNS[2]] += 1
+        new_state = self.__state_analyzer(new_state, rx_value)
+        self.__state_register(new_state)
 
         # Create the new transition
         input_state = NodeAnalyzer.hash_state_set(self.actual_state)
@@ -466,10 +474,90 @@ class NodeAnalyzer():
                             data_frame: pd.DataFrame):
         # Events before the MRAI timeout
         events_before = data_frame[data_frame.time < mrai_event_time]
-        print(events_before)
+        previous_mrai = None
+        if Events.MRAI in events_before.event.values:
+            previous_mrai = events_before[events_before.event == Events.MRAI].tail(1).time.values[0]
+        if previous_mrai is not None:
+            events_before = events_before[(events_before.time > previous_mrai) &\
+                                          (events_before.event != Events.MRAI) &\
+                                          (events_before.event != Events.TX)]
         # Find events caused by the MRAI
-        events_after = data_frame.loc[[mrai_id], :]
-        print(events_after)
+        events_after = pd.DataFrame(columns=NodeAnalyzer.EVALUATION_COLUMNS)
+        if mrai_id in data_frame.index:
+            events_after = data_frame.loc[[mrai_id], :]
+
+        # Keep a tmp variable with the state that can have been changed
+        # thanks to this reception
+        new_state = None
+
+        # Keep a list of received and transmitted routes
+        received_routes = []
+        transmitted_routes = []
+        rx_value = None
+
+        memory_actual_state = self.actual_state.copy()
+
+        if len(events_before.index) == 0:
+            return
+
+        # Check each row of the events caused by the reception
+        for row_event, row_value in zip(events_before[NodeAnalyzer.EVALUATION_COLUMNS[2]],
+                                        events_before[NodeAnalyzer.EVALUATION_COLUMNS[5]]):
+            # If the event is a change in the state, I update the local
+            # variable that keeps the state
+            # TODO search for the rib changes caused by the reception instead of this
+            if row_event == Events.RIB_CHANGE:
+                if rx_value is not None:
+                    if new_state is None:
+                        new_state = set()
+                    else:
+                        self.actual_state = new_state
+                    new_state = NodeAnalyzer.__evaluate_rib_change(row_value)
+                    new_state = self.__state_analyzer(new_state, rx_value)
+            # If the event is a TX i update the corresponding sets
+            if row_event == Events.RX:
+                rx_value = row_value
+                elem = self.__evaluate_rx(row_value)
+                if elem not in received_routes:
+                    received_routes.append(elem)
+
+        new_state = set() if new_state is None else new_state
+        self.actual_state = memory_actual_state
+        self.__state_register(new_state)
+
+        # Check each row of the events caused by the reception
+        for row_event, row_value in zip(events_after[NodeAnalyzer.EVALUATION_COLUMNS[2]],
+                                        events_after[NodeAnalyzer.EVALUATION_COLUMNS[5]]):
+            # If the event is a TX i update the corresponding sets
+            if row_event == Events.TX:
+                elem = self.__evaluate_tx(row_value)
+                if elem not in transmitted_routes:
+                    transmitted_routes.append(elem)
+
+        received_routes = None if len(received_routes) == 0 else \
+                             sorted(received_routes)
+        transmitted_routes = None if len(transmitted_routes) == 0 else \
+                             sorted(transmitted_routes)
+
+        
+        # Create the new transition
+        input_state = NodeAnalyzer.hash_state_set(self.actual_state)
+        output_state = NodeAnalyzer.hash_state_set(new_state)
+        transition = Transition(input_state, output_state,
+                                received_routes, transmitted_routes)
+
+        # Change the state
+        self.actual_state = new_state
+        # Check if the transition has already been known
+        if hash(transition) not in self.transitions.index:
+            self.transitions.loc[hash(transition)] = [transition.init_state,
+                                                      transition.output_state,
+                                                      transition.input,
+                                                      transition.output,
+                                                      transition.counter]
+        else:
+            # The transition is already in the dictionary, increase the
+            self.transitions.at[hash(transition), NodeAnalyzer.TRANSITIONS_COLUMNS[5]] += 1
 
     # @profile
     def evaluate_fsm(self, data_frame: pd.DataFrame) -> None:
@@ -485,14 +573,7 @@ class NodeAnalyzer():
         self.actual_state = set()
         self.experiment_actual_state = set()
 
-        print(data_frame)
         tmp_mrai = data_frame[(data_frame.event == Events.MRAI)]
-        print(tmp_mrai)
-
-        # To activate a useful O(LogN) index search the datafram must be sorted
-        # This will break the event time order, but we already extrapolated
-        # RX events in time order
-        # data_frame = data_frame.sort_index()
 
         tmp_mrai.apply(lambda row: self.__evaluate_event_mrai(row.time,
                                                           row.event_id,
@@ -539,13 +620,22 @@ class FileAnalyzer():
                                 'time': float,
                                 'node': str,
                                 'value': str}
+    GENERAL_STUDY_COLUMNS = ['id', 'file_name', 'convergence_time', 'total_messages']
+    GENERAL_STUDY_FILE_NAME = "general_study"
 
-    def __init__(self, input_file_path: str, node_analyzers: Dict[str, NodeAnalyzer]):
+    def __init__(self, input_file_path: str, node_analyzers: Dict[str, NodeAnalyzer],
+                 general_study_df: Optional[pd.DataFrame] = None):
+        self.file_name = input_file_path.split('/')[-1]
         self._df = pd.read_csv(open(input_file_path), sep='|',
                                index_col=FileAnalyzer.EVALUATION_COLUMNS[1],
                                dtype=FileAnalyzer.EVALUATION_COLUMNS_TYPES)
         self.nodes = node_analyzers
         self.none_type = type(None)
+        if isinstance(general_study_df, self.none_type):
+            self.general_study = pd.DataFrame(columns=FileAnalyzer.GENERAL_STUDY_COLUMNS)
+            self.general_study = self.general_study.set_index(FileAnalyzer.GENERAL_STUDY_COLUMNS[0])
+        else:
+            self.general_study = general_study_df
 
     def __select_node(self, node_id: str, dataframe: Optional[pd.DataFrame] = None) -> pd.DataFrame:
         """selectNode.
@@ -607,3 +697,12 @@ class FileAnalyzer():
                                                      Events.MRAI],
                                                     dataframe=node_df)
             self.nodes[node].evaluate_fsm(node_filtered_df)
+
+    def general_file_study(self) -> pd.DataFrame:
+        start_time = self._df.head(1)[FileAnalyzer.EVALUATION_COLUMNS[3]].values[0]
+        endup_time = self._df.tail(1)[FileAnalyzer.EVALUATION_COLUMNS[3]].values[0]
+        convergence_time = endup_time - start_time
+        number_of_messages = len(self.__filter_events([Events.TX]).index)
+        self.general_study.loc[hash(self.file_name)] = (self.file_name, convergence_time, 
+                                                        number_of_messages)
+        return self.general_study

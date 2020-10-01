@@ -23,7 +23,8 @@ SECTION='simulation'
 CONFFILE='json/config.json'
 J=1
 nflag=false
-outdir='./'
+oflag=false
+outdir='/dev/null'
 
 while getopts ":n:c:s:j:o:" o; do
 	case "${o}" in
@@ -42,6 +43,7 @@ while getopts ":n:c:s:j:o:" o; do
 			;;
 		o)
 			outdir=${OPTARG}
+			oflag=true
 			;;
 		*)
 			usage
@@ -60,10 +62,18 @@ then
 	usage
 fi
 
-if [ ! -d "${outdir}" ]; then
-	mkdir "${outdir}"
+if $oflag; then
+	echo "oflag true"
+	if [ ! -d "${outdir}" ]; then
+		mkdir "${outdir}"
+	fi
 fi
 
-seq 0 ${N} | parallel -i% -j ${J} --bar python3 fsm.py -c ${CONFFILE} -s ${SECTION} -r % ">" ${outdir}out_%.log
+if $oflag
+then 
+	seq 0 ${N} | parallel -i% -j ${J} --bar python3 fsm.py -c ${CONFFILE} -s ${SECTION} -r % ">" ${outdir}out_%.log
+else
+	seq 0 ${N} | parallel -i% -j ${J} --bar python3 fsm.py -c ${CONFFILE} -s ${SECTION} -r % ">" ${outdir}
+fi
 
 echo "Experiments done"

@@ -219,6 +219,7 @@ class Sim:
         # Save only if it is not present
         if not os.path.isfile(name):
             plt.savefig(name)
+            plt.close()
 
     @property
     def env(self):

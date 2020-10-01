@@ -53,11 +53,13 @@ import argparse
 import os.path
 import sys
 import timeit
+import pandas as pd
+import pickle
 from graphviz import Digraph
 
 sys.path.insert(1, 'util')
 from analysis import FileAnalyzer, NodeAnalyzer
-from plotter import Plotter
+from plotter import Plotter, GeneralPlotter
 from tqdm import tqdm
 
 # Setup command line parameters
@@ -99,11 +101,44 @@ parser.add_argument("-s", "--signaling", dest="signaling", default=False,
                             signaling experiment use this option to have a csv \
                             of the output signals")
 
+def load_pickle(general_file_study: pd.DataFrame, input_file: str) -> pd.DataFrame:
+    _format = ".pkl"
+    if os.path.isfile(input_file + FileAnalyzer.GENERAL_STUDY_FILE_NAME + _format):
+        general_file_study = pickle.load(open(input_file + \
+                                              FileAnalyzer.GENERAL_STUDY_FILE_NAME + \
+                                              _format, "rb"))
+    else:
+        return None 
+    return general_file_study
+
+def save_gfs_df(df: pd.DataFrame, output_file: str, pickling = False) -> None:
+    """save_df
+    Function used to save all the dataframes controlled by the FileAnalyzer 
+
+    :param output_file: Output file, this is the path and the first part of
+    the name that must be used to save the files
+    :type output_file: str
+    :param pickling: (Default False) defines if it is required to save also
+    the dataframes in pickle format
+    :rtype: None
+    """
+    _format = ".csv"
+    df.to_csv(output_file + FileAnalyzer.GENERAL_STUDY_FILE_NAME + \
+                              _format, '|')
+
+    if pickling:
+        _format = ".pkl"
+        pickle.dump(df, open(output_file + FileAnalyzer.GENERAL_STUDY_FILE_NAME\
+                    + _format, "wb"))
+
+
 def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-many-statements
     # Parse the arguments
     options = parser.parse_args()
 
     output_file_path = options.outputFile
+    general_file_study = pd.DataFrame(columns=FileAnalyzer.GENERAL_STUDY_COLUMNS)
+    general_file_study = general_file_study.set_index(FileAnalyzer.GENERAL_STUDY_COLUMNS[0])
 
     # Check that the output file does not exists
     if os.path.isfile(output_file_path) and options.security:
@@ -124,6 +159,13 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
                 del node_analyzers[node]
                 pickle_loading = False
                 node_analyzers[node] = NodeAnalyzer()
+    # Load general analyzer file pickle
+    if options.pickle and pickle_loading:
+        general_file_study = load_pickle(general_file_study, 
+                                         "/".join(output_file_path.split("/")[:-1]) + "/")
+        if general_file_study is None:
+            pickle_loading = False
+
 
     # If states is not none means that pickles has been loaded and it is not
     # necessary to parse the files
@@ -145,7 +187,9 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
                 starttime = timeit.default_timer()
                 init_time= timeit.default_timer()
 
-            file_analyzer = FileAnalyzer(input_file_path, node_analyzers)
+            file_name = input_file_path.split("/")[-1].split(".")[0]
+            file_analyzer = FileAnalyzer(input_file_path, node_analyzers,
+                                         general_study_df=general_file_study)
 
             if options.time:
                 print("The init time has been:", timeit.default_timer() - init_time)
@@ -177,6 +221,17 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
                 print("fsm study done")
 
             if options.time:
+                general_study = timeit.default_timer()
+
+            general_file_study = file_analyzer.general_file_study()
+
+            if options.time:
+                print("The general study time has been:", timeit.default_timer() - \
+                                                          general_study)
+            if options.verbose:
+                print("general study done")
+
+            if options.time:
                 print("The total study time has been:", timeit.default_timer() - \
                                                         starttime)
             if options.verbose:
@@ -184,6 +239,16 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
 
             del file_analyzer
 
+    save_gfs_df(general_file_study, '/'.join(output_file_path.split("/")[:-1]) + "/",
+                pickling=options.pickle)
+
+    gfs_plt = GeneralPlotter('/'.join(output_file_path.split("/")[:-1]) + "/" + \
+                             "general_study.csv")
+    gfs_plt.ges_boxplot('/'.join(output_file_path.split("/")[:-1]) + "/" \
+                                + "convergence_time_boxplot.pdf", "convergence_time")
+    gfs_plt.ges_boxplot('/'.join(output_file_path.split("/")[:-1]) + "/" \
+                                + "messages_boxplot.pdf", "total_messages")
+    
     # Save results
     for node in node_analyzers:
         node_analyzers[node].save_df(output_file_path + "_" + str(node) + "_",
