@@ -4,7 +4,6 @@
 
 RESULTS='results'
 
-
 if [ ! -d "${RESULTS}" ]; then
 	mkdir "${RESULTS}"
 fi

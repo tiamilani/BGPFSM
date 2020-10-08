@@ -37,6 +37,7 @@ of this arguments also define the first part of the name of all the output files
 `-pi` The pickle option, if active the pickle fille will be loaded if present
 or saved at the end of the analysis if them does not exists
 `-s` option to study a signaling experiment
+`-F` option to disable the study of the FSM
 
 All this options can be combined in different commands for example:
 
@@ -70,9 +71,9 @@ parser = argparse.ArgumentParser(usage="python3 analyzer.py [options]",
                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-f", "--file", dest="inputFile", default="output_0.csv",
                     nargs='*', action="store", help="File to analize")
-parser.add_argument("-n", "--node", nargs='+', dest="node", default=0,
+parser.add_argument("-n", "--node", nargs='+', dest="node",
                     type=str, action="store",
-                    help="Node that the user want to see the FSM")
+                    help="Node for which the user want to see the FSM")
 parser.add_argument("-o", "--output", dest="outputFile", default="output_fsm",
                     action="store", help="Output file containing the FSM representation")
 parser.add_argument("-r", "--render", dest="render", default=False,
@@ -100,6 +101,8 @@ parser.add_argument("-s", "--signaling", dest="signaling", default=False,
                     action="store_true", help="If you want to analyze a\
                             signaling experiment use this option to have a csv \
                             of the output signals")
+parser.add_argument("-F", "--fsm", dest="fsm", default=True, action="store_false", \
+                    help="Use this argument to disable the fsm study of the nodes")
 
 def load_pickle(general_file_study: pd.DataFrame, input_file: str) -> pd.DataFrame:
     _format = ".pkl"
@@ -149,16 +152,17 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
     nodes = options.node
     node_analyzers = {}
     pickle_loading = options.pickle
-    for node in nodes:
-        node_analyzers[node] = NodeAnalyzer()
-        if options.pickle and pickle_loading:
-            res = node_analyzers[node].load_pickle(output_file_path + \
-                    "_" + str(node) + "_")
-            # Something went wrong with the pickle load
-            if not res:
-                del node_analyzers[node]
-                pickle_loading = False
-                node_analyzers[node] = NodeAnalyzer()
+    if nodes is not None and len(nodes) > 0:
+        for node in nodes:
+            node_analyzers[node] = NodeAnalyzer()
+            if options.pickle and pickle_loading:
+                res = node_analyzers[node].load_pickle(output_file_path + \
+                        "_" + str(node) + "_")
+                # Something went wrong with the pickle load
+                if not res:
+                    del node_analyzers[node]
+                    pickle_loading = False
+                    node_analyzers[node] = NodeAnalyzer()
     # Load general analyzer file pickle
     if options.pickle and pickle_loading:
         general_file_study = load_pickle(general_file_study, 
@@ -175,7 +179,8 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
             if options.progress:
                 pbar.set_description("Processing {}".format(input_file_path))
             else:
-                print("Processing {}".format(input_file_path))
+                if options.verbose:
+                    print("Processing {}".format(input_file_path))
             # Check that the input file exists
             if not os.path.isfile(input_file_path):
                 # doesn't exist
@@ -209,16 +214,17 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
                     print("Signaling study done")
 
 
-            if options.time:
-                fsm_study = timeit.default_timer()
+            if options.fsm:
+                if options.time:
+                    fsm_study = timeit.default_timer()
 
-            file_analyzer.study_fsm(nodes)
+                file_analyzer.study_fsm(nodes)
 
-            if options.time:
-                print("The fsm study time has been:", timeit.default_timer() - \
-                                                      fsm_study)
-            if options.verbose:
-                print("fsm study done")
+                if options.time:
+                    print("The fsm study time has been:", timeit.default_timer() - \
+                                                          fsm_study)
+                if options.verbose:
+                    print("fsm study done")
 
             if options.time:
                 general_study = timeit.default_timer()
@@ -239,14 +245,14 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
 
             del file_analyzer
 
-    save_gfs_df(general_file_study, '/'.join(output_file_path.split("/")[:-1]) + "/",
-                pickling=options.pickle)
+    save_gfs_df(general_file_study, output_file_path, pickling=options.pickle)
 
-    gfs_plt = GeneralPlotter('/'.join(output_file_path.split("/")[:-1]) + "/" + \
-                             "general_study.csv")
-    gfs_plt.ges_boxplot('/'.join(output_file_path.split("/")[:-1]) + "/" \
-                                + "convergence_time_boxplot.pdf", "convergence_time")
-    gfs_plt.ges_boxplot('/'.join(output_file_path.split("/")[:-1]) + "/" \
+    if options.render:
+        gfs_plt = GeneralPlotter('/'.join(output_file_path.split("/")[:-1]) + "/" + \
+                                 "general_study.csv")
+        gfs_plt.ges_boxplot('/'.join(output_file_path.split("/")[:-1]) + "/" \
+                                    + "convergence_time_boxplot.pdf", "convergence_time")
+        gfs_plt.ges_boxplot('/'.join(output_file_path.split("/")[:-1]) + "/" \
                                 + "messages_boxplot.pdf", "total_messages")
     
     # Save results

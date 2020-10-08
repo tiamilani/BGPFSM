@@ -1,0 +1,82 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key attr.name="mrai" attr.type="double" for="edge" id="d2" />
+  <key attr.name="policy" attr.type="string" for="edge" id="d1" />
+  <key attr.name="destinations" attr.type="string" for="node" id="d0" />
+  <graph edgedefault="directed">
+    <node id="d">
+      <data key="d0">10.0.0.0/24</data>
+    </node>
+    <node id="P1.1" />
+    <node id="P1.2" />
+    <node id="P2" />
+    <node id="L1" />
+    <node id="L2" />
+    <node id="U1" />
+    <node id="L3" />
+    <node id="U2" />
+    <node id="L4" />
+    <node id="U3" />
+    <node id="L5" />
+    <edge source="d" target="P1.1">
+      <data key="d1">0, inf, inf</data>
+      <data key="d2">14.163</data>
+    </edge>
+    <edge source="d" target="P2">
+      <data key="d1">0, inf, inf</data>
+      <data key="d2">6.19</data>
+    </edge>
+    <edge source="P1.1" target="P1.2">
+      <data key="d1">0, inf, inf</data>
+      <data key="d2">23.763</data>
+    </edge>
+    <edge source="P1.2" target="L1">
+      <data key="d1">0, inf, inf</data>
+      <data key="d2">9.298</data>
+    </edge>
+    <edge source="P2" target="L1">
+      <data key="d1">1, inf, inf</data>
+      <data key="d2">3.991</data>
+    </edge>
+    <edge source="L1" target="L2">
+      <data key="d1">2, 2, 2</data>
+      <data key="d2">24.095</data>
+    </edge>
+    <edge source="L1" target="U1">
+      <data key="d1">2, 2, 2</data>
+      <data key="d2">55.077</data>
+    </edge>
+    <edge source="L2" target="U2">
+      <data key="d1">2, 2, 2</data>
+      <data key="d2">48.027</data>
+    </edge>
+    <edge source="L2" target="L3">
+      <data key="d1">2, 2, 2</data>
+      <data key="d2">45.91</data>
+    </edge>
+    <edge source="U1" target="L2">
+      <data key="d1">2, 2, 2</data>
+      <data key="d2">13.316</data>
+    </edge>
+    <edge source="L3" target="U3">
+      <data key="d1">2, 2, 2</data>
+      <data key="d2">32.201</data>
+    </edge>
+    <edge source="L3" target="L4">
+      <data key="d1">2, 2, 2</data>
+      <data key="d2">16.601</data>
+    </edge>
+    <edge source="U2" target="L3">
+      <data key="d1">2, 2, 2</data>
+      <data key="d2">10.36</data>
+    </edge>
+    <edge source="L4" target="L5">
+      <data key="d1">2, 2, 2</data>
+      <data key="d2">6.371</data>
+    </edge>
+    <edge source="U3" target="L4">
+      <data key="d1">2, 2, 2</data>
+      <data key="d2">12.864</data>
+    </edge>
+  </graph>
+</graphml>

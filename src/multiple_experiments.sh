@@ -24,9 +24,10 @@ CONFFILE='json/config.json'
 J=1
 nflag=false
 oflag=false
+silent_flag=false
 outdir='/dev/null'
 
-while getopts ":n:c:s:j:o:" o; do
+while getopts ":n:c:s:j:o:S" o; do
 	case "${o}" in
 		n)
 			nflag=true
@@ -44,6 +45,9 @@ while getopts ":n:c:s:j:o:" o; do
 		o)
 			outdir=${OPTARG}
 			oflag=true
+			;;
+		S)
+			silent_flag=true
 			;;
 		*)
 			usage
@@ -71,9 +75,22 @@ fi
 
 if $oflag
 then 
-	seq 0 ${N} | parallel -i% -j ${J} --bar python3 fsm.py -c ${CONFFILE} -s ${SECTION} -r % ">" ${outdir}out_%.log
+	if $silent_flag
+	then
+		seq 0 ${N} | parallel -i% -j ${J} python3 fsm.py -c ${CONFFILE} -s ${SECTION} -r % ">" ${outdir}out_%.log
+	else
+		seq 0 ${N} | parallel -i% -j ${J} --bar python3 fsm.py -c ${CONFFILE} -s ${SECTION} -r % ">" ${outdir}out_%.log
+	fi
 else
-	seq 0 ${N} | parallel -i% -j ${J} --bar python3 fsm.py -c ${CONFFILE} -s ${SECTION} -r % ">" ${outdir}
+	if $silent_flag
+	then
+		seq 0 ${N} | parallel -i% -j ${J} python3 fsm.py -c ${CONFFILE} -s ${SECTION} -r % ">" ${outdir}
+	else
+		seq 0 ${N} | parallel -i% -j ${J} --bar python3 fsm.py -c ${CONFFILE} -s ${SECTION} -r % ">" ${outdir}
+	fi
 fi
 
-echo "Experiments done"
+if ! $silent_flag
+then
+	echo "Experiments done"
+fi
