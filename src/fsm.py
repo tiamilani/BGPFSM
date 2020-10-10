@@ -43,7 +43,7 @@ import sys
 from bgp_sim import Sim
 
 # setup command line parameters
-parser = argparse.ArgumentParser(usage="usage: %prog [options]",
+parser = argparse.ArgumentParser(usage="usage: fsm [options]",
                       description="Runs a simulation configured in the "
                                   "specified config file under the specified "
                                   "section",

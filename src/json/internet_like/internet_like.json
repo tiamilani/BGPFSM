@@ -1,13 +1,13 @@
 {
-	"internet-1000" : {
+	"internet-100" : {
 		// seed(s) to initialize PRNGs
 		"seed" : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
 		// duration of each simulation in seconds
 		"duration" : 6000,
 		// Graph file to simulate
-		"graph": "graphs/internet_like/graph-1000-tmp.graphml",
+		"graph": "graphs/internet_like/graph-100/graph.graphml",
 		// log file name using configuration parameters, use {seed} or {date-time}
-		"output" : "results/internet_like/des_output/output_{seed}.csv",
+		"output" : "results/internet_like/graph-100/des_output/output_{seed}.csv",
 		// Verbose value
 		"verbose": "True",
 		// Signaling flag
@@ -29,6 +29,6 @@
 		// Processing time distribution
 		"processing": {"distribution": "const", "mean": 0.00001},
 		// Network delay distribution
-		"delay": {"distribution": "unif", "min": 0.001, "max": 3, "int": 0.001}
+		"delay": {"distribution": "unif", "min": 0.012, "max": 3, "int": 0.001}
 	}
 }

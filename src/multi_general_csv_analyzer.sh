@@ -22,6 +22,19 @@ study_folder(){
 	echo "$file|$avg_time|$avg_msg" >> $2
 }
 
+known_folders(){
+	res=$(awk -F '|' ' {print $1} ' $1 | tail -n +2)
+	for path in $res;
+	do
+		IFS='/' read -ra path_array <<< "$path"
+		size=$((${#path_array[@]} - 1))
+		unset path_array[$size]
+		IFS='/' eval 'path="${path_array[*]}"'
+		path="${path}"
+		echo $path
+	done
+}
+
 while getopts ":o:s:a" o; do
 	case "${o}" in
 		o)
@@ -45,12 +58,28 @@ FOLDERS=$@
 
 if $AGGREGATE_FLAG; then
 	file_exists ${OUTPUT_FILE}
+	known_folders=$(known_folders ${OUTPUT_FILE})
+	l1=()
+	for elem in $known_folders; do
+		l1+=($elem)
+	done
+	
+	l2=()
+	for elem in ${FOLDERS}; do
+		l2+=($elem)
+	done
+	
+	printf -- '%s\n' "${l1[@]}" | sort > tmp1.txt
+	printf -- '%s\n' "${l2[@]}" | sort > tmp2.txt
+	
+	FOLDERS=$(comm -13 --nocheck-order tmp1.txt tmp2.txt)
+	rm -f tmp1.txt tmp2.txt
 fi
 
 for folder in $FOLDERS
 do
 	if ! $AGGREGATE_FLAG; then
-		rm -f ${OUTPUT_FILE}
+		rm -i ${OUTPUT_FILE} 2> /dev/null
 		touch ${OUTPUT_FILE}
 		echo "id|avg_time|avg_msg" >> ${OUTPUT_FILE}
 		AGGREGATE_FLAG=true

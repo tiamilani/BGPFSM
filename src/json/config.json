@@ -5,7 +5,7 @@
 		// duration of each simulation in seconds
 		"duration" : 300,
 		// Graph file to simulate
-		"graph": "graphs/fig_4_fsm_model.graphml",
+		"graph": "graphs/fig_4_fsm_model/fig_4_fsm_model.graphml",
 		// log file name using configuration parameters, use {seed} or {date-time}
 		"output" : "results/test/experiment_fig_4/output_{seed}_{withdraw_dist.min}_{reannouncement_dist.min}_{datarate.lambda}.csv",
 		// Verbose value

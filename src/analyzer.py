@@ -248,8 +248,7 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
     save_gfs_df(general_file_study, output_file_path, pickling=options.pickle)
 
     if options.render:
-        gfs_plt = GeneralPlotter('/'.join(output_file_path.split("/")[:-1]) + "/" + \
-                                 "general_study.csv")
+        gfs_plt = GeneralPlotter(output_file_path + "general_study.csv")
         gfs_plt.ges_boxplot('/'.join(output_file_path.split("/")[:-1]) + "/" \
                                     + "convergence_time_boxplot.pdf", "convergence_time")
         gfs_plt.ges_boxplot('/'.join(output_file_path.split("/")[:-1]) + "/" \

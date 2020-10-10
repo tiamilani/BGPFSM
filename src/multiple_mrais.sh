@@ -19,7 +19,7 @@ VERBOSE=true
 
 make_folder(){
 	if [ ! -d "$1" ]; then
-		mkdir "$1"
+		mkdir -p "$1"
 	fi
 }
 
@@ -42,10 +42,10 @@ get_section(){
 }
 
 get_output_folder(){
-	path=$(grep "\"output\"" $1 | awk '{print $2}')
-	path="${path%,}"
-	path="${path%\"}"
-	path="${path#\"}"
+	path=$(grep "\"output\"" $1 | awk -F ':' '{print $2}' | awk -F '"' '{print $2}')
+	#path="${path#\"}"
+	#path="${path%,}"
+	#path="${path%\"}"
 	IFS='/' read -ra path_array <<< "$path"
 	size=$((${#path_array[@]} - 1))
 	unset path_array[$size]
@@ -73,10 +73,7 @@ get_file_folder_from_path(){
 } 
 
 get_graph_file(){
-	path=$(grep "\"graph\"" $1 | awk '{print $2}')
-	path="${path%,}"
-	path="${path%\"}"
-	path="${path#\"}"
+	path=$(grep "\"graph\"" $1 | awk -F ':' '{print $2}' | awk -F '"' '{print $2}')
 	echo $path
 }
 
@@ -89,7 +86,7 @@ change_json_graph_file(){
 } 
 
 change_json_output_folder(){
-	sed -i -E "s|\"output\":.*|\"output\": \"$2\",|g" $1	
+	sed -i -E "s|\"output\".*:.*|\"output\": \"$2\",|g" $1	
 } 
 
 do_experiments(){
@@ -105,6 +102,7 @@ experiment_cicle(){
 	# Get the output des folder
 	new_des_output_folder_suffix="_${1}"
 	des_output_folder=$(get_output_folder $2 $new_des_output_folder_suffix)
+	make_folder $des_output_folder
 	# Get the csv output folder
 	csv_output_folder_name="csv_output_${1}"
 	csv_output_folder=$(get_csv_output_folder $des_output_folder $csv_output_folder_name)
