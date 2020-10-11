@@ -17,3 +17,6 @@ ignored/*
 src/results/*
 src/env/*
 src/.ycm_extra_conf.py
+experiment_*.json
+random-l*-mrai-graph_*.graphml
+constant-l*-mrai-graph_*.graphml

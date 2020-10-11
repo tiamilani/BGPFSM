@@ -16,6 +16,7 @@ N_EXP=3
 EXP_START=1
 PARALLEL_PROCESSES=4
 VERBOSE=true
+MRAI_MEAN=30.0
 
 make_folder(){
 	if [ ! -d "$1" ]; then
@@ -78,7 +79,7 @@ get_graph_file(){
 }
 
 get_mrai_graph(){
-	python3 util/graph_generator/mrai_setter.py -f $1 -o $2 -t $3 -m $4 -s $5
+	python3 util/graph_generator/mrai_setter.py -f $1 -o $2 -t $3 -m $4 -s $5 -M ${MRAI_MEAN}
 } 
 
 change_json_graph_file(){
@@ -129,7 +130,7 @@ experiment_cicle(){
 	do_experiments $4 $new_json_file_path $5 $des_output_folder $csv_output_folder 
 }
 
-while getopts ":n:l:s:j:c:m:v" o; do
+while getopts ":n:l:s:j:c:m:M:v" o; do
 	case "${o}" in
 		n)
 			N_EXP=${OPTARG}
@@ -148,6 +149,9 @@ while getopts ":n:l:s:j:c:m:v" o; do
 			;;
 		m)
 			MRAI_TYPE=${OPTARG}
+			;;
+		M)
+			MRAI_MEAN=${OPTARG}
 			;;
 		v)
 			VERBOSE=false

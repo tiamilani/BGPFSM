@@ -14,6 +14,8 @@ OUTPUT_PDF="output.pdf"
 EXP_DIVISOR=10
 U_EXP_PER_PROCESS=0
 AGGREGATE_FLAG=false
+MRAI_MEAN=30.0
+YES_FLAG=false
 
 get_output_folder(){
 	path=$(grep "\"output\"" $1 | awk -F ':' '{print $2}' | awk -F '"' '{print $2}')
@@ -34,7 +36,7 @@ get_csv_output_folder(){
 	echo $path	
 }
 
-while getopts ":n:l:j:J:c:m:o:u:s:a" o; do
+while getopts ":n:l:j:J:c:m:M:o:u:s:aY" o; do
 	case "${o}" in
 		n)
 			N_EXP=${OPTARG}
@@ -54,6 +56,9 @@ while getopts ":n:l:j:J:c:m:o:u:s:a" o; do
 		m)
 			MRAI_TYPE=${OPTARG}
 			;;
+		M)
+			MRAI_MEAN=${OPTARG}
+			;;
 		o)
 			OUTPUT_PDF=${OPTARG}
 			;;
@@ -62,6 +67,9 @@ while getopts ":n:l:j:J:c:m:o:u:s:a" o; do
 			;;
 		a)
 			AGGREGATE_FLAG=true
+			;;
+		Y)
+			YES_FLAG=true
 			;;
 		s)
 			EXP_START=${OPTARG}
@@ -91,20 +99,33 @@ size=$((${#path_array[@]} - 1))
 unset path_array[$size]
 IFS='/' eval 'path="${path_array[*]}/"'
 
-if ! $AGGREGATE_FLAG; then
-	read -p "Do you really want to delete everything is inside $path* [y/n]: " yn
-	case $yn in
-	    [Yy]* ) rm -r $path*;;
-	    [Nn]* ) exit;;
-	    * ) echo "Please answer yes or no.";;
-	esac
+if $AGGREGATE_FLAG && $YES_FLAG ; then
+	echo "Error, you can't have at the same time the aggregate flag and the yes flags active, be aware of what you are doing"
+	exit 1
 fi
 
-seq ${EXP_START} $exp_per_process $((${N_EXP_LIMIT} - $resto)) | parallel -i% -j ${PARALLEL_EXPERIMENTS} --bar ./multiple_mrais.sh -c ${CONFFILE} -n ${exp_per_process} -l ${MRAI_LIMIT} -s % -j ${PARALLEL_PROCESSES} -m ${MRAI_TYPE} -v
+if ! $AGGREGATE_FLAG; then
+	if ! $YES_FLAG; then
+		read -p "Do you really want to delete everything is inside $path* [y/n]: " yn
+		case $yn in
+		    [Yy]* ) rm -r $path*;;
+		    [Nn]* ) exit;;
+		    * ) echo "Please answer yes or no.";;
+		esac
+	else
+		echo "removing everything in ${path}"
+		sleep 5
+		rm -r $path*
+	fi
+fi
+
+if [ ! "${exp_per_process}" -eq "0" ]; then
+	seq ${EXP_START} $exp_per_process $((${N_EXP_LIMIT} - $resto)) | parallel -i% -j ${PARALLEL_EXPERIMENTS} --bar ./multiple_mrais.sh -c ${CONFFILE} -n ${exp_per_process} -l ${MRAI_LIMIT} -s % -j ${PARALLEL_PROCESSES} -m ${MRAI_TYPE} -M ${MRAI_MEAN} -v
+fi
 
 if ! [ "$resto" -eq "0" ]; then
 	start=$((${N_EXP_LIMIT} - $resto + 1))
-	./multiple_mrais.sh -c ${CONFFILE} -n ${resto} -l ${MRAI_LIMIT} -s $start -j ${PARALLEL_PROCESSES} -m ${MRAI_TYPE} -v
+	./multiple_mrais.sh -c ${CONFFILE} -n ${resto} -l ${MRAI_LIMIT} -s $start -j ${PARALLEL_PROCESSES} -m ${MRAI_TYPE} -M ${MRAI_MEAN} -v
 fi
 
 csv_output_folder_name="csv_output_*"
