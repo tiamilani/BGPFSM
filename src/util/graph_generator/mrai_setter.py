@@ -39,7 +39,7 @@ parser.add_argument("-m", "--mrai", dest="default_mrai", default=0.0, action="st
                   help="defines the default mrai that will be applyed", type=float)
 parser.add_argument("-s", "--seed", dest="seed", default=1234, action="store",
                   help="defines the seed used during the generation", type=int)
-parser.add_argument("-M", "--mean", dest="mean", default=0.0, action="store",
+parser.add_argument("-M", "--mean", dest="mean", default=-1, action="store",
                   help="defines the default mean of mrais timers that need to be \
                         respected, with 0.0 the mean should not be evaluated", type=float)
 
@@ -70,20 +70,25 @@ def apply_constant_strategy(G :nx.DiGraph, value: float) -> None:
 @mrai_strategy
 def apply_random_strategy(G: nx.DiGraph, value: float) -> None:
     for edge in G.edges(data=True):
-        G.edges[(edge[0], edge[1])]['mrai'] = round(random.uniform(0, value), 3)
+        f = 0 + (value-0)*random.random()
+        G.edges[(edge[0], edge[1])]['mrai'] = round(f, 3)
 
 def adapt_to_mean(G, expected_mean):
     mean = 0.0
     n_elements = 0
-    for e in G.edges(data=True):
-        if e[2]['mrai'] != 0.0:
-            mean += e[2]['mrai']
-            n_elements += 1
-    mean /= n_elements
+    if expected_mean != 0.0:
+        for e in G.edges(data=True):
+            if e[2]['mrai'] != 0.0:
+                mean += e[2]['mrai']
+                n_elements += 1
+        mean /= n_elements
 
-    multiplier = round(float(expected_mean) / mean, 2)
-    for e in G.edges(data=True):
-        e[2]['mrai'] = round(e[2]['mrai'] * multiplier, 2)
+        multiplier = round(float(expected_mean) / mean, 2)
+        for e in G.edges(data=True):
+            e[2]['mrai'] = round(e[2]['mrai'] * multiplier, 2)
+    else:
+        for e in G.edges(data=True):
+            e[2]['mrai'] = 0.0
 
 def main():
     options = parser.parse_args()
@@ -92,7 +97,7 @@ def main():
     
     G = nx.read_graphml(options.inputFile)
     mrai_strategyfy(options.type, G, options.default_mrai)
-    if options.mean > 0.0:
+    if options.mean >= 0.0:
         adapt_to_mean(G, options.mean)
     nx.write_graphml(G, options.out)
 

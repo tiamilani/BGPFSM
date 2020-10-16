@@ -6,6 +6,19 @@ FOLDERS=()
 CSV_FILE_NAME="general_study.csv"
 OUTPUT_FILE="general_avg.csv"
 AGGREGATE_FLAG=false
+MRAI_VALUE="None"
+
+usage () {
+	echo "Usage: $0 [OPTIONS] (set_of_folders_to_study)"
+	echo "options:"
+	echo "	-o	[value]	output file name (default = general_avg.csv)"
+	echo "	-s	[value]	input csv file name, this is the file that the program"
+	echo "			will look for in each directory passed (default = general_study.csv)"
+	echo "	-m	[value]	MRAI value to register with the experiments (default = None)"
+	echo "	-a		Aggregate flag, use it if you want to aggregate the experiments"
+	echo "			results with the already present results"
+	exit 1
+}
 
 file_exists(){
 	if [ ! -f "$1" ]; then
@@ -19,7 +32,7 @@ study_folder(){
 	file_exists $file
 	avg_time=$(awk -F '|' '{x+=$3; next} END{print x/NR}' $file)
 	avg_msg=$(awk -F '|' '{x+=$4; next} END{print x/NR}' $file)
-	echo "$file|$avg_time|$avg_msg" >> $2
+	echo "$file|${MRAI_VALUE}|$avg_time|$avg_msg" >> $2
 }
 
 known_folders(){
@@ -35,7 +48,7 @@ known_folders(){
 	done
 }
 
-while getopts ":o:s:a" o; do
+while getopts ":o:s:m:a" o; do
 	case "${o}" in
 		o)
 			OUTPUT_FILE=${OPTARG}
@@ -46,9 +59,11 @@ while getopts ":o:s:a" o; do
 		a)
 			AGGREGATE_FLAG=true
 			;;
+		m)
+			MRAI_VALUE=${OPTARG}
+			;;
 		*)
-			#TODO write how to use
-			exit 1
+			usage
 			;;
 	esac
 done
@@ -79,9 +94,11 @@ fi
 for folder in $FOLDERS
 do
 	if ! $AGGREGATE_FLAG; then
-		rm -i ${OUTPUT_FILE} 2> /dev/null
+		echo "deleting ${OUTPUT_FILE}"
+		sleep 5
+		rm -if ${OUTPUT_FILE} 2> /dev/null
 		touch ${OUTPUT_FILE}
-		echo "id|avg_time|avg_msg" >> ${OUTPUT_FILE}
+		echo "id|mrai|avg_time|avg_msg" >> ${OUTPUT_FILE}
 		AGGREGATE_FLAG=true
 	fi
 	study_folder $folder ${OUTPUT_FILE}

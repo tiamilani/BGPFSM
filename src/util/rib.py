@@ -699,6 +699,10 @@ class BGP_RIB_handler(): # pylint: disable=invalid-name
                 self.local_state.remove(self.rib_knowledge[hash(substitute)])
             self.local_state.add(self.rib_knowledge[hash(a_route)])
             self.rib_event_register(event)
+        if route is None and substitute is not None:
+            if len(self.adj_rib_in[a_route]) == 0:
+                del self.adj_rib_in[a_route]
+            self.local_state.remove(self.rib_knowledge[hash(substitute)])
 
     def decision_process(self) -> None:
         """decision_process.

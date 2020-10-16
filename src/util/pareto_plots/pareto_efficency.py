@@ -19,13 +19,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from plotter import Plotter, GeneralPlotter
-
 parser = argparse.ArgumentParser(usage="python3 pareto_efficency.py [options]",
                         description="Analize an output file that describes "
                                   "the avg convergence time and the avg number "
                                   "of messages, one line is considered a compleate "
-                                  "experimetn environment result",
+                                  "experiment environment result",
                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-f", "--file", dest="inputFile", default="general_avg.csv",
                     action="store", help="File to analize")
@@ -33,18 +31,20 @@ parser.add_argument("-o", "--output", dest="outputFile", default="paretoplot.pdf
                     action="store", help="Where to save the results")
 parser.add_argument("-r", "--render", dest="render", default=True,
                     action='store_false', help="Render the results on a pdf file in")
+parser.add_argument("-m", "--mrai_type", dest="mrai_type", default="random",
+                    action='store', help="type of mrai used in the experiments")
 
-COLUMNS=["id", "avg_time", "avg_msg"]
+COLUMNS=["id", "mrai" ,"avg_time", "avg_msg"]
 xmin=200
 ymin=0
 xmax=450
 ymax=200
 
 def check_limits(df: pd.DataFrame) -> None:
-    x_min = df[df[COLUMNS[2]] < xmin]
-    x_max = df[df[COLUMNS[2]] > xmax]
-    y_min = df[df[COLUMNS[1]] < ymin]
-    y_max = df[df[COLUMNS[1]] > ymax]
+    x_min = df[df[COLUMNS[3]] < xmin]
+    x_max = df[df[COLUMNS[3]] > xmax]
+    y_min = df[df[COLUMNS[2]] < ymin]
+    y_max = df[df[COLUMNS[2]] > ymax]
     if len(x_min.index) > 0:
         print("Errors, values under the x threshold")
     if len(x_max.index) > 0:
@@ -88,22 +88,29 @@ def main():
 
     df = pd.read_csv(inputFile, sep="|", index_col=COLUMNS[0])
 
-    check_limits(df)
+    #check_limits(df)
 
     duplicateRowsDF = df[df.duplicated()]
     if len(duplicateRowsDF.index) > 0:
         print("Warning, there are some duplicates")
 
-    points=np.column_stack([df[COLUMNS[1]].values, df[COLUMNS[2]].values])
+    points=np.column_stack([df[COLUMNS[2]].values, df[COLUMNS[3]].values])
     pareto_front=df.iloc[is_pareto_efficient(points, return_mask=False)]
 
     if options.render:
-        ax = df.plot.scatter(x=COLUMNS[2], y=COLUMNS[1], label="Constant MRAI experiments")
-        pareto_front.plot.scatter(x=COLUMNS[2], y=COLUMNS[1], c='red', ax=ax, label="Pareto front")
+        ax = df.plot.scatter(x=COLUMNS[3], y=COLUMNS[2], label="Random MRAI experiments")
+        pareto_front.plot.scatter(x=COLUMNS[3], y=COLUMNS[2], c='red', ax=ax, label="Pareto front")
 
-        axes = plt.gca()
-        axes.set_xlim([xmin,xmax])
-        axes.set_ylim([ymin,ymax])
+        #axes = plt.gca()
+        #axes.set_xlim([xmin,xmax])
+        #axes.set_ylim([ymin,ymax])
+
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.15,
+                         box.width, box.height * 0.9])
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                  fancybox=True, ncol=2)
 
         ax.set_xlabel("Messages transmitted")
         ax.set_ylabel("Convergence time")
@@ -111,6 +118,33 @@ def main():
 
         plt.savefig(options.outputFile, format="pdf")
         plt.close()
+
+        if options.mrai_type == "constant":
+            fig, ax = plt.subplots()
+            ax2 = ax.twinx()
+
+            l1 = ax.plot(df[COLUMNS[1]], df[COLUMNS[2]], label="Convergence time")
+            l2 = ax2.plot(df[COLUMNS[1]], df[COLUMNS[3]], 'r', label="# Messages")
+
+            lns = l1 + l2
+            labs = [l.get_label() for l in lns]
+            # Shrink current axis's height by 10% on the bottom
+            box = ax2.get_position()
+            ax2.set_position([box.x0, box.y0 + box.height * 0.15,
+                             box.width, box.height * 0.9])
+            ax.set_position([box.x0, box.y0 + box.height * 0.15,
+                             box.width, box.height * 0.9])
+            # Put a legend below current axis
+            ax2.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                      fancybox=True, ncol=2)
+
+            ax.set_xlabel("MRAI value")
+            ax.set_ylabel("Convergence time [s]")
+            ax2.set_ylabel("# Packets")
+            ax.set_title("constant MRAI performances")
+
+            fig.savefig(options.outputFile + "_mrai_evolution.pdf", format="pdf")
+            plt.close()
 
 if __name__ == "__main__":
     main()

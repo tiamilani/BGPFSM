@@ -699,8 +699,10 @@ class FileAnalyzer():
             self.nodes[node].evaluate_fsm(node_filtered_df)
 
     def general_file_study(self) -> pd.DataFrame:
-        start_time = self._df.head(1)[FileAnalyzer.EVALUATION_COLUMNS[3]].values[0]
-        endup_time = self._df.tail(1)[FileAnalyzer.EVALUATION_COLUMNS[3]].values[0]
+        tx_df = self.__filter_events([Events.TX], dataframe=self._df)
+        rx_df = self.__filter_events([Events.RX], dataframe=self._df)
+        start_time = tx_df.head(1)[FileAnalyzer.EVALUATION_COLUMNS[3]].values[0]
+        endup_time = rx_df.tail(1)[FileAnalyzer.EVALUATION_COLUMNS[3]].values[0]
         convergence_time = endup_time - start_time
         number_of_messages = len(self.__filter_events([Events.TX]).index)
         self.general_study.loc[hash(self.file_name)] = (self.file_name, convergence_time, 

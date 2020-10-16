@@ -1,0 +1,34 @@
+{
+	"internet-100" : {
+		// seed(s) to initialize PRNGs
+		"seed" : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+		// duration of each simulation in seconds
+		"duration" : 6000,
+		// Graph file to simulate
+		"graph": "graphs/internet_like/graph-100-nomean/graph.graphml",
+		// log file name using configuration parameters, use {seed} or {date-time}
+		"output" : "results/internet_like/graph-100-nomean/des_output/output_{seed}.csv",
+		// Verbose value
+		"verbose": "True",
+		// Signaling flag
+		"signaling": "True",
+		// Signaling sequence, ignored if signaling false
+		"signaling_sequence": "A",
+		// Implicit withdraw of routes
+		"implicit_withdraw": "True",
+		// Withdraw signaling 
+		"withdraw": "False",
+		// Reannouncement of a destination after a withdraw
+		"reannouncement": "False",
+		// Withdraw interval distribution from the announcement
+		"withdraw_dist": {"distribution": "const", "mean": 30},
+		// announcement interval distribution from the withdraw 
+		"reannouncement_dist": {"distribution": "const", "mean": 30},
+		// Transmission time required to start the actual message transmission 
+		"datarate": {"distribution": "exp", "lambda" : 100},
+		// Processing time distribution
+		"processing": {"distribution": "const", "mean": 0.00001},
+		// Network delay distribution
+		"delay": {"distribution": "unif", "min": 0.012, "max": 3, "int": 0.001}
+	}
+}

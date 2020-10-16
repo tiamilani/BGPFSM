@@ -26,7 +26,7 @@ import functools
 from collections import defaultdict
 import random
 
-parser = argparse.ArgumentParser(usage="usage: %prog [options]",
+parser = argparse.ArgumentParser(usage="usage: graph_generator [options]",
                       description="Generate different possible graphs",
                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-t", "--type", dest="type", default="elmokashfi",
@@ -35,10 +35,6 @@ parser.add_argument("-o", "--outpute", dest="out", default="graph.graphml",
                   action="store", help="define the output graph")
 parser.add_argument("-n", "--nodes", dest="nodes", default=1000, action="store",
                   help="defines the number of nodes to generate", type=int)
-parser.add_argument("-mt", "--mraitype", dest="mrai_strategy", default="constant",
-                  action="store", help="define the type of mrai to apply")
-parser.add_argument("-m", "--mrai", dest="default_mrai", default=0.0, action="store",
-                  help="defines the default mrai that will be applyed", type=float)
 parser.add_argument("-p", "--policies", dest="policies", default="True",
                     action="store_false", help="remove the introduction of policies \
                     on the links")
@@ -46,7 +42,6 @@ parser.add_argument("-s", "--seed", dest="seed", default=1234, action="store",
                   help="defines the seed used during the generation", type=int)
 
 graph_strategies = []
-mrai_strategies = []
 
 def graph_strategy(func):
     """ Wrapper for strategy definition; it adds strategy name to the strategy list.
@@ -62,23 +57,6 @@ def graph_strategy(func):
 def graph_strategyfy(strategy:str, number_of_nodes: int, seed: int = 1234) -> nx.DiGraph:
     if strategy in graph_strategies:
         return eval("apply_" + strategy + "_strategy")(number_of_nodes, seed)
-    else:
-        raise ValueError(f"Strategy \"{strategy}\" not available")
-
-def mrai_strategy(func):
-    """ Wrapper for strategy definition; it adds strategy name to the strategy list.
-    Strategy name *must not* include an underscore and the function *must* be
-    called "apply_<strategyname>_strategy".
-    """
-    mrai_strategies.append(func.__qualname__.split('_')[1])
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        return func(*args, **kwargs)
-    return wrapper
-
-def mrai_strategyfy(strategy:str, G: nx.DiGraph, value: float) -> nx.DiGraph:
-    if strategy in mrai_strategies:
-        eval("apply_" + strategy + "_strategy")(G, value)
     else:
         raise ValueError(f"Strategy \"{strategy}\" not available")
 
@@ -113,15 +91,21 @@ def apply_elmokashfi_strategy(number_of_nodes: int, seed: int = 1234) -> nx.DiGr
     correct_graph_data(G)
     return G
 
-@mrai_strategy
-def apply_constant_strategy(G :nx.DiGraph, value: float) -> None:
-    nx.set_edge_attributes(G, value, "mrai")
+@graph_strategy
+def apply_clique_strategy(number_of_nodes: int, seed: int = 0) -> nx.DiGraph:
+    G=nx.DiGraph()
+    l=[(x, y) for x in range(number_of_nodes) for y in range(number_of_nodes) if x != y]
+    G.add_edges_from(l)
+    G.add_edges_from([('d', 0)])
+    G.nodes['d']['destinations'] = "100.0.0.0/24"
+    for edge in G.edges(data=True):
+        G.edges[(edge[0], edge[1])]['policy'] = "2, 2, 2"
+    return G
 
 def main():
     options = parser.parse_args()
     
     G = graph_strategyfy(options.type, options.nodes, options.seed)
-    mrai_strategyfy(options.mrai_strategy, G, options.default_mrai)
     nx.write_graphml(G, options.out)
 
 if __name__ == "__main__":

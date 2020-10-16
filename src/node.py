@@ -93,9 +93,11 @@ class Node(Module):
         # Routing table, This table represent the routing knowledge
         # actually present in the node
         self.routing_table = RoutingTable()
+        # Implicit withdraw flag
+        self.implicit_withdraw = config.get_param(Node.PAR_IMPLICIT_WITHDRAW) in ("True", "true")
         # Rib table, this table represent all the routing knowledge
         # present in the node, plus routes that are not the best
-        self.rib_handler = BGP_RIB_handler(self._id, self.logger)
+        self.rib_handler = BGP_RIB_handler(self._id, self.logger, self.implicit_withdraw)
         # Event handler of a node
         self.reception = self._env.process(self.handle_event())
         # Neighbor of the node
@@ -108,8 +110,6 @@ class Node(Module):
         self.reannounce = config.get_param(Node.PAR_REANNOUNCE) in ("True", "true")
         # Signaling flag
         self.signaling = config.get_param(Node.PAR_SIGNALING) in ("True", "true")
-        # Implicit withdraw flag
-        self.implicit_withdraw = config.get_param(Node.PAR_IMPLICIT_WITHDRAW) in ("True", "true")
         # Distributions used inside the node
         self.rate = Distribution(config.get_param(Node.PAR_DATARATE))
         self.proc_time = Distribution(config.get_param(Node.PAR_PROC_TIME))
@@ -122,6 +122,7 @@ class Node(Module):
         # Resource for the acquisition of the tx channel resource
         self.tx_res = simpy.Resource(self._env, capacity=1)
         self.processing_res = simpy.Resource(self._env, capacity=1)
+        self.__already_scheduled_decision_process = False
 
     def _print(self, msg: str) -> None:
         """_print.
@@ -353,16 +354,14 @@ class Node(Module):
         # Withdraw handler
         if packet.packet_type == Packet.WITHDRAW:
             # self.withdraw_handler(event, packet)
-            route = deepcopy(packet.content)
+            # route = deepcopy(packet.content)
             self.rib_handler.receive_withdraw(route, event)
-            # withdraw_packet = Packet(Packet.WITHDRAW, route)
-            # withdraw_event = Event(0, event.id, Events.WITHDRAW,
-            #                        self, self, obj=withdraw_packet)
-            # self.event_store.put(withdraw_event)
-        proc_time = self.proc_time.get_value()
-        decision_process = Event(proc_time, event.id, Events.UPDATE_SEND_PROCESS,
-                              self, self, obj=None)
-        self.event_store.put(decision_process)
+        if not self.__already_scheduled_decision_process:
+            proc_time = self.proc_time.get_value()
+            decision_process = Event(proc_time, event.id, Events.UPDATE_SEND_PROCESS,
+                                  self, self, obj=None)
+            self.event_store.put(decision_process)
+            self.__already_scheduled_decision_process = True
         # Release the resource
         wait = self.proc_time.get_value()
         yield self._env.timeout(wait)
@@ -417,7 +416,6 @@ class Node(Module):
         neigh_id = neigh_node.id
         # Corresponding rib-out table
         adj_rib_out = self.rib_handler.get_rib_out(neigh_id)
-        print("Before\n", adj_rib_out)
         # Check each destination in the ADJ-RIB-out
         for destination in adj_rib_out:
             tmp_route = destination[0]
@@ -430,7 +428,6 @@ class Node(Module):
                 adj_rib_out.remove(route)
             # Remove the corresponding element in the table
             del adj_rib_out[tmp_route]
-        print("After\n", adj_rib_out)
         return share_flag
 
     def __evaluate_withdraw_rib_out(self, event: Event) -> bool:
@@ -449,7 +446,7 @@ class Node(Module):
         withdraw_keys = adj_rib_out.get_withdraws_keys()
         for key in withdraw_keys:
             for route in adj_rib_out.get_withdraws(key):
-                if not adj_rib_out.exists(route):
+                if not self.implicit_withdraw or not adj_rib_out.exists(route):
                     packet = Packet(Packet.WITHDRAW, deepcopy(route))
                     self._print("rib_out transmitting withdraw {}".format(route))
                     self.send_msg_to_dst(packet, event, neigh_node)
@@ -529,6 +526,7 @@ class Node(Module):
         request = self.processing_res.request()
         yield request 
         yield self._env.timeout(waiting_time)
+        self.__already_scheduled_decision_process = False
         # Execute the decision process
         self._print("Decision process execution")
         self.rib_handler.decision_process()

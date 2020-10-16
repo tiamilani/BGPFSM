@@ -17,6 +17,28 @@ AGGREGATE_FLAG=false
 MRAI_MEAN=30.0
 YES_FLAG=false
 
+usage () {
+	echo "Usage: $0 [OPTIONS]"
+	echo "options:"
+	echo "	-n	[value]	Number of experiments to run (default = 10)"
+	echo "	-l	[value]	limit to apply to the MRAI setter of the graph (default = 60)"
+	echo "	-j	[value]	umber of parallel runs to execute (default = 4)"
+	echo "	-J	[value]	umber of parallel experiments to execute (default = 1)"
+	echo "	-c	[value]	onfiguration file to use (default = json/config.json)"
+	echo "	-m	[value]	RAI type to use [random, constant] (default = random)"
+	echo "	-M	[value]	RAI mean to respect (default = 30.0)"
+	echo "	-o	[value]	utput file name (default = output.pdf)"
+	echo "	-u	[value]	umber of experiments for each process, if 0 experiments will"
+	echo "			be divided equally between each process, if J = 1 one process"
+	echo "			will execute all the experiments (default 0)"
+	echo "	-s	[value]	Number of experiment used as start point (default 1)"
+	echo "	-a		Aggregate flag, use it if you want to aggregate the experiments"
+	echo "			results with the already present results"
+	echo "	-Y		Flag to automatically delete the files in the experiment folder"
+	echo "			without asking confirmation, use with consciousness"
+	exit 1
+}
+
 get_output_folder(){
 	path=$(grep "\"output\"" $1 | awk -F ':' '{print $2}' | awk -F '"' '{print $2}')
 	IFS='/' read -ra path_array <<< "$path"
@@ -25,6 +47,13 @@ get_output_folder(){
 	IFS='/' eval 'path="${path_array[*]}"'
 	path="${path}/"
 	echo $path
+}
+
+file_exists(){
+	if [ ! -f "$1" ]; then
+		echo "$1 does not exist."
+		exit 1
+	fi
 }
 
 get_csv_output_folder(){
@@ -75,12 +104,13 @@ while getopts ":n:l:j:J:c:m:M:o:u:s:aY" o; do
 			EXP_START=${OPTARG}
 			;;
 		*)
-			#TODO write how to use
-			exit 1
+			usage
 			;;
 	esac
 done
 shift $((OPTIND-1))
+
+file_exists $CONFFILE
 
 des_output=$(get_output_folder $CONFFILE)
 
@@ -134,9 +164,9 @@ general_output=$(get_csv_output_folder $des_output "")
 general_output="${general_output%\/}"
 
 if ! $AGGREGATE_FLAG; then
-	./multi_general_csv_analyzer.sh -o ${general_output}/${OUTPUT_CSV} $csv_output_folder
+	./multi_general_csv_analyzer.sh -o ${general_output}/${OUTPUT_CSV} -m ${MRAI_MEAN} $csv_output_folder
 else
-	./multi_general_csv_analyzer.sh -o ${general_output}/${OUTPUT_CSV} -a $csv_output_folder
+	./multi_general_csv_analyzer.sh -o ${general_output}/${OUTPUT_CSV} -m ${MRAI_MEAN} -a $csv_output_folder
 fi
 
-python3 util/pareto_efficency.py -f ${general_output}/${OUTPUT_CSV} -o ${OUTPUT_PDF}
+python3 util/pareto_plots/pareto_efficency.py -f ${general_output}/${OUTPUT_CSV} -o ${OUTPUT_PDF} -m ${MRAI_TYPE}

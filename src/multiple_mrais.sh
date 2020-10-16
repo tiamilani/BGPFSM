@@ -18,6 +18,20 @@ PARALLEL_PROCESSES=4
 VERBOSE=true
 MRAI_MEAN=30.0
 
+usage () {
+	echo "Usage: $0 [OPTIONS]"
+	echo "options:"
+	echo "	-n	[value]	Number of experiments to run (default = 3)"
+	echo "	-l	[value]	limit to apply to the MRAI setter of the graph (default = 60)"
+	echo "	-s	[value]	Number of experiment used as start point (default 1)"
+	echo "	-j	[value]	umber of parallel runs to execute (default = 4)"
+	echo "	-c	[value]	onfiguration file to use (default = conf.json)"
+	echo "	-m	[value]	RAI type to use [random, constant] (default = random)"
+	echo "	-M	[value]	RAI mean to respect (default = 30.0)"
+	echo "	-v		Deactivate the verbose mode"
+	exit 1
+}
+
 make_folder(){
 	if [ ! -d "$1" ]; then
 		mkdir -p "$1"
@@ -157,8 +171,7 @@ while getopts ":n:l:s:j:c:m:M:v" o; do
 			VERBOSE=false
 			;;
 		*)
-			#TODO write how to use
-			exit 1
+			usage
 			;;
 	esac
 done
