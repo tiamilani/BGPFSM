@@ -61,22 +61,23 @@ def main():
     colors = plt.rcParams["axes.prop_cycle"]()
     for _file in options.inputFile:
         file_name=_file.split('/')[-1].split('.')[0]
-        print(file_name)
+        scatter_label=file_name.split('_')[1]
 
         df = pd.read_csv(_file, sep="|", index_col=COLUMNS[0])
-
-        check_limits(df)
 
         if options.render:
             c = next(colors)["color"]
             if ax is None:
-                ax = df.plot.scatter(x=COLUMNS[3], y=COLUMNS[2], label=file_name.split('_')[1], c=c)
+                ax = df.plot.scatter(x=COLUMNS[3], y=COLUMNS[2], label=scatter_label, c='b')
             else:
-                df.plot.scatter(x=COLUMNS[3], y=COLUMNS[2], ax=ax, label=file_name.split('_')[1], c=c)
+                df.plot.scatter(x=COLUMNS[3], y=COLUMNS[2], ax=ax, label=scatter_label, c=c)
 
-    # axes = plt.gca()
-    # axes.set_xlim([xmin,xmax])
-    # axes.set_ylim([ymin,ymax])
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0 + box.height * 0.15,
+                     box.width, box.height * 0.9])
+    # Put a legend below current axis
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
+              fancybox=True, ncol=3)
 
     ax.set_xlabel("Messages transmitted")
     ax.set_ylabel("Convergence time")

@@ -12,7 +12,8 @@
 \graphicspath{images/}
 \usepackage{cite}
 \usepackage{url}
-\usepackage{subfig}
+% \usepackage{subfig}
+\usepackage{subcaption}
 \usepackage{float}
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 \SetKwProg{Fn}{Event}{}{}
@@ -313,6 +314,32 @@ been generated with different MRAIs values on the edges.
 
 In total has been generated \num{6000} internet like graphs.
 
+The base graph is represented in \Cref{fig:internet_like_graph}
+
+\begin{figure}[tb]
+	\centering
+	\begin{subfigure}{\columnwidth}
+		\centering
+		\includegraphics[width=\figwidth\columnwidth]{images/internet_like/graph-100-colored}
+		\caption{Internet like graph with an "explosive" layout}
+		\label{fig:internet_like_graph_explosive}
+		\qquad
+	\end{subfigure}
+
+	\begin{subfigure}{\columnwidth}
+		\centering
+		\includegraphics[width=\figwidth\columnwidth]{images/internet_like/graph_dot}
+		\caption{Internet like graph with a "hierarchical" layout}
+		\label{fig:internet_like_graph_hierarchical}
+		\qquad
+	\end{subfigure}
+
+	\caption{Internet like graph colored to show the hierarchicaly structure, 4 tipes
+			 of nodes, T (tier 1 mesh), M, CP, C (Customers, purple one)}
+	\label{fig:internet_like_graph}
+	\vspace{\figvspace}
+\end{figure}
+
 \section{Input arguments}
 \label{sec:envDesc}
 
@@ -504,6 +531,16 @@ These guesses are confirmed by the \Cref{fig:clique_mrai_evolution} where we can
 see those trends.
 The two $y$ axis are used to represent the trend of the convergence time and
 the number of messages transmitted in relation of the \ac{MRAI} value.
+Error bars represent the standard deviation of the time/messages for the \num{10}
+experiments that represent each point.
+Interesting the fact that the standard deviation becomes smaller icreasing the
+\ac{MRAI} timer.
+The two \Cref{fig:clique_mrai_evolution_a,fig:clique_mrai_evolution_b} refers
+to two different situations in the same clique graph.
+In the first figure the implicit withdraw is active, in the second has been
+deactivated, the difference is evident, the number of messages, the convergence
+time and even the standard deviation is higher without the implicit withdraw
+active. This confirm what has been presented in \cite{labovitz2000delayed} 
 
 \begin{figure}[tb]
 	\centering
@@ -515,9 +552,51 @@ the number of messages transmitted in relation of the \ac{MRAI} value.
 
 \begin{figure}[tb]
 	\centering
-	\includegraphics[width=\figwidth\columnwidth]{images/clique/mrai_evolution}
+
+	\begin{subfigure}{\columnwidth}
+		\centering
+		\includegraphics[width=\figwidth\columnwidth]{images/clique/mrai_evolution}
+		\caption{Clique environment with Implicit Withdraw active}
+		\label{fig:clique_IW_mrai_evolution}
+		\qquad
+	\end{subfigure}
+
+	\begin{subfigure}{\columnwidth}
+		\centering
+		\includegraphics[width=\figwidth\columnwidth]{images/clique-noImplicitWithdraw/mrai_evolution}
+		\caption{Clique environment \textbf{without} Implicit Withdraw active}
+		\label{fig:clique_noIW_mrai_evolution}
+		\qquad
+	\end{subfigure}
+
 	\caption{Evolution of the number of messages sent and the convergence time as \ac{MRAI} grows
 		in the clique environment}
+	\label{fig:clique_mrai_evolution}
+	\vspace{\figvspace}
+\end{figure}
+
+\begin{figure}[tb]
+	\centering
+
+	\begin{subfigure}{\columnwidth}
+		\centering
+		\includegraphics[width=\figwidth\columnwidth]{images/clique/mrai_evolution_std_alpha}
+		\caption{Clique environment with Implicit Withdraw active}
+		\label{fig:clique_IW_mrai_evolution_std}
+		\qquad
+	\end{subfigure}
+
+	\begin{subfigure}{\columnwidth}
+		\centering
+		\includegraphics[width=\figwidth\columnwidth]{images/clique-noImplicitWithdraw/mrai_evolution_std_alpha}
+		\caption{Clique environment \textbf{without} Implicit Withdraw active}
+		\label{fig:clique_noIW_mrai_evolution_std}
+		\qquad
+	\end{subfigure}
+
+	\caption{Evolution of the number of messages sent and the convergence time as \ac{MRAI} grows
+		in the clique environment, the range around the line represent the standard
+		deviation of the experiment}
 	\label{fig:clique_mrai_evolution}
 	\vspace{\figvspace}
 \end{figure}
@@ -536,6 +615,10 @@ has a steep fall, it reaches the constant state in few seconds (the clique exper
 in \Cref{fig:clique_mrai_evolution} took more than \num{20} seconds).
 But we can say the same thing for the convergence time too.
 Tose results are similar to the one available in \cite{griffin2001experimental}.
+The standard deviation has a different evolution, is possible to see that it
+doesn't becomes lower but remains constant. This is caused by the fact that 
+in this network the \ac{MRAI} is more influent than the delay that at each step
+becomes less influent.
 
 \begin{figure}[tb]
 	\centering
@@ -547,10 +630,137 @@ Tose results are similar to the one available in \cite{griffin2001experimental}.
 
 \begin{figure}[tb]
 	\centering
-	\includegraphics[width=\figwidth\columnwidth]{images/internet_like/graph-100-constant/mrai_evolution}
+
+	\begin{subfigure}{\columnwidth}
+		\centering
+		\includegraphics[width=\figwidth\columnwidth]{images/internet_like/graph-100-constant/mrai_evolution}
+		\caption{Internet like constant \ac{MRAI} environment with Implicit Withdraw active}
+		\label{fig:constant_IW_mrai_evolution}
+		\qquad
+	\end{subfigure}
+
+	\begin{subfigure}{\columnwidth}
+		\centering
+		\includegraphics[width=\figwidth\columnwidth]{images/internet_like/graph-100-constant-noIW/mrai_evolution}
+		\caption{Internet like constant \ac{MRAI} environment \textbf{without} Implicit Withdraw active}
+		\label{fig:constant_noIW_mrai_evolution}
+		\qquad
+	\end{subfigure}
+
 	\caption{Evolution of the number of messages sent and the convergence time as \ac{MRAI} grows
-		in the internet like constant \ac{MRAI} environment}
+		in the \textbf{internet like} constant \ac{MRAI} environment}
 	\label{fig:constant_mrai_evolution}
+	\vspace{\figvspace}
+\end{figure}
+
+\begin{figure}[tb]
+	\centering
+
+	\begin{subfigure}{\columnwidth}
+		\centering
+		\includegraphics[width=\figwidth\columnwidth]{images/internet_like/graph-100-constant/mrai_evolution_std_alpha}
+		\caption{Internet like constant \ac{MRAI} environment with Implicit Withdraw active, standard deviation}
+		\label{fig:constant_IW_mrai_evolution_std_a}
+		\qquad
+	\end{subfigure}
+
+	\begin{subfigure}{\columnwidth}
+		\centering
+		\includegraphics[width=\figwidth\columnwidth]{images/internet_like/graph-100-constant-noIW/mrai_evolution_std_alpha}
+		\caption{Internet like constant \ac{MRAI} environment \textbf{without} Implicit Withdraw active, standard deviation}
+		\label{fig:constant_noIW_mrai_evolution_std}
+		\qquad
+	\end{subfigure}
+
+	\caption{Evolution of the number of messages sent and the convergence time as \ac{MRAI} grows
+		in the \textbf{internet like} constant \ac{MRAI} environment. The range around the lines
+		represent the standard deviation of the experiment}
+	\label{fig:constant_mrai_evolution_std}
+	\vspace{\figvspace}
+\end{figure}
+
+\begin{figure}[tb]
+	\centering
+	\includegraphics[width=\figwidth\columnwidth]{images/internet_like/graph-100-dpc/pareto-internet_like-dpc}
+	\caption{Pareto front in the Internet like \ac{DPC} \ac{MRAI} environment}
+	\label{fig:dpc_mrai_pareto_freq}
+	\vspace{\figvspace}
+\end{figure}
+
+\begin{figure}[tb]
+	\centering
+
+	\begin{subfigure}{\columnwidth}
+		\centering
+		\includegraphics[width=\figwidth\columnwidth]{images/internet_like/graph-100-dpc/mrai_evolution}
+		\caption{Internet like \ac{DPC} \ac{MRAI} environment with Implicit Withdraw active}
+		\label{fig:dpc_mrai_evolution_IW}
+		\qquad
+	\end{subfigure}
+
+	\begin{subfigure}{\columnwidth}
+		\centering
+		\includegraphics[width=\figwidth\columnwidth]{images/internet_like/graph-100-dpc-noIW/mrai_evolution}
+		\caption{Internet like \ac{DPC} \ac{MRAI} environment \textbf{without} Implicit Withdraw active}
+		\label{fig:dpc_mrai_evolution_noIW}
+		\qquad
+	\end{subfigure}
+
+	\caption{Evolution of the number of messages sent and the convergence time as \ac{MRAI} grows
+		in the \textbf{internet like} constant \ac{MRAI} environment}
+	\label{fig:dpc_mrai_evolution}
+	\vspace{\figvspace}
+\end{figure}
+
+\begin{figure}[tb]
+	\centering
+
+	\begin{subfigure}{\columnwidth}
+		\centering
+		\includegraphics[width=\figwidth\columnwidth]{images/internet_like/graph-100-dpc/mrai_evolution_std_alpha}
+		\caption{Internet like \ac{DPC} \ac{MRAI} environment with Implicit Withdraw active, standard deviation}
+		\label{fig:dpc_mrai_evolution_IW_std}
+		\qquad
+	\end{subfigure}
+
+	\begin{subfigure}{\columnwidth}
+		\centering
+		\includegraphics[width=\figwidth\columnwidth]{images/internet_like/graph-100-dpc-noIW/mrai_evolution_std_alpha}
+		\caption{Internet like \ac{DPC} \ac{MRAI} environment \textbf{without} Implicit Withdraw active, standard deviation}
+		\label{fig:dpc_mrai_evolution_noIW_std}
+		\qquad
+	\end{subfigure}
+
+	\caption{Evolution of the number of messages sent and the convergence time as \ac{MRAI} grows
+		in the \textbf{internet like} \ac{DPC} \ac{MRAI} environment. The range around the lines
+		represent the standard deviation of the experiment}
+	\label{fig:dpc_mrai_evolution_std}
+	\vspace{\figvspace}
+\end{figure}
+
+\begin{figure}[tb]
+	\centering
+
+	\begin{subfigure}{\columnwidth}
+		\centering
+		\includegraphics[width=\figwidth\columnwidth]{images/internet_like/dpc-vs-constant-30fixed/constant-dpc-comparison-30fixed_time_boxplot}
+		\caption{Convergence time comparison between different environments}
+		\label{fig:dpc_mrai_evolution_IW_std}
+		\qquad
+	\end{subfigure}
+
+	\begin{subfigure}{\columnwidth}
+		\centering
+		\includegraphics[width=\figwidth\columnwidth]{images/internet_like/dpc-vs-constant-30fixed/constant-dpc-comparison-30fixed_messages_boxplot}
+		\caption{Messages necessary to reach the convergence comparison}
+		\label{fig:dpc_mrai_evolution_noIW_std}
+		\qquad
+	\end{subfigure}
+
+	\caption{Comparison between the \ac{DPC} \ac{MRAI} strategy and the constant \ac{MRAI}
+			 strategy, 100 experiments with the same conditions with $MRAI_{mean}$
+			 equals to \num{30.0}}
+	\label{fig:dpc_mrai_evolution_std}
 	\vspace{\figvspace}
 \end{figure}
 
@@ -580,7 +790,7 @@ to send more messages than the random one.
 
 \begin{figure}[tb]
 	\centering
-	\includegraphics[width=\figwidth\columnwidth]{images/internet_like/combine_results_2}
+	\includegraphics[width=\figwidth\columnwidth]{images/internet_like/combine_results_3}
 	\caption{Comparison of the random strategy and the constant one in the internet like environment}
 	\label{fig:internet_pareto_comparison}
 	\vspace{\figvspace}

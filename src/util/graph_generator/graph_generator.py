@@ -25,13 +25,16 @@ import argparse
 import functools
 from collections import defaultdict
 import random
+import matplotlib.pyplot as plt
+
+import milaniBGPLoad as DPC
 
 parser = argparse.ArgumentParser(usage="usage: graph_generator [options]",
                       description="Generate different possible graphs",
                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-t", "--type", dest="type", default="elmokashfi",
                   action="store", help="define the type of network to generate")
-parser.add_argument("-o", "--outpute", dest="out", default="graph.graphml",
+parser.add_argument("-o", "--output", dest="out", default="graph.graphml",
                   action="store", help="define the output graph")
 parser.add_argument("-n", "--nodes", dest="nodes", default=1000, action="store",
                   help="defines the number of nodes to generate", type=int)
@@ -62,14 +65,13 @@ def graph_strategyfy(strategy:str, number_of_nodes: int, seed: int = 1234) -> nx
 
 def correct_graph_data(G: nx.DiGraph) -> None:
     for node in G.nodes(data=True):
-        del G.nodes[node[0]]['type']
         if 'peers' in G.nodes[node[0]]:
             del G.nodes[node[0]]['peers']
     for edge in G.edges(data=True):
         if G.edges[(edge[0], edge[1])]['type'] == "peer":
             G.edges[(edge[0], edge[1])]['policy'] = "1, inf, inf"
         elif G.edges[(edge[0], edge[1])]['type'] == "transit":
-            if G.edges[(edge[0], edge[1])]['customer'] == edge[0]:
+            if G.edges[(edge[0], edge[1])]['customer'] == str(edge[0]):
                 G.edges[(edge[0], edge[1])]['policy'] = "0, inf, inf"
             else:
                 G.edges[(edge[0], edge[1])]['policy'] = "2, 2, 2"
@@ -83,9 +85,34 @@ def insert_random_destination(G: nx.DiGraph) -> None:
     node = random.choice(reverse_types['C'])
     G.nodes[node]['destinations'] = "100.0.0.0/24"
 
+def plot_original(G: nx.Graph) -> None:
+    pos_dot = nx.nx_agraph.graphviz_layout(G, prog="dot")
+    pos_twopi = nx.nx_agraph.graphviz_layout(G, prog="twopi")
+    color_map = []
+    for node in G.nodes(data=True):
+        if node[1]['type'] == 'T':
+                color_map.append('red')
+        if node[1]['type'] == 'M':
+                color_map.append('orange')
+        if node[1]['type'] == 'CP':
+                color_map.append('yellow')
+        if node[1]['type'] == 'C':
+                color_map.append('purple')
+    plt.figure(3,figsize=(12,12))
+    nx.draw(G, pos=pos_dot, node_size=150, node_color=color_map, width=0.5)
+    plt.savefig("graph_dot.pdf", format="pdf")
+    plt.close()
+    plt.figure(3,figsize=(12,12))
+    nx.draw(G, pos=pos_twopi, node_size=150, node_color=color_map, width=0.5)
+    plt.savefig("graph_twopi.pdf", format="pdf")
+    plt.close()
+
+
 @graph_strategy
 def apply_elmokashfi_strategy(number_of_nodes: int, seed: int = 1234) -> nx.DiGraph:
     G = nx.random_internet_as_graph(number_of_nodes, seed)
+    nx.write_graphml(G, "original.graphml")
+    plot_original(G)
     G = nx.DiGraph(G)
     insert_random_destination(G)
     correct_graph_data(G)
@@ -105,6 +132,7 @@ def apply_clique_strategy(number_of_nodes: int, seed: int = 0) -> nx.DiGraph:
 def main():
     options = parser.parse_args()
     
+    random.seed(options.seed)
     G = graph_strategyfy(options.type, options.nodes, options.seed)
     nx.write_graphml(G, options.out)
 

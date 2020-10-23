@@ -26,6 +26,7 @@ import functools
 from collections import defaultdict
 import random
 
+
 parser = argparse.ArgumentParser(usage="usage: %prog [options]",
                       description="Generate different possible graphs",
                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -63,6 +64,16 @@ def mrai_strategyfy(strategy:str, G: nx.DiGraph, value: float) -> nx.DiGraph:
     else:
         raise ValueError(f"Strategy \"{strategy}\" not available")
 
+def set_node_mrai(G, node, mrai):
+    for j in nx.neighbors(G, node):
+        e = G.edges[(node, j)]
+        e['mrai'] = round(float(mrai), 2)
+
+def find_adv_node(G :nx.DiGraph):
+    for node in G.nodes(data=True):
+        if 'destinations' in node[1]:
+            return node[0]
+
 @mrai_strategy
 def apply_constant_strategy(G :nx.DiGraph, value: float) -> None:
     nx.set_edge_attributes(G, value, "mrai")
@@ -72,6 +83,79 @@ def apply_random_strategy(G: nx.DiGraph, value: float) -> None:
     for edge in G.edges(data=True):
         f = 0 + (value-0)*random.random()
         G.edges[(edge[0], edge[1])]['mrai'] = round(f, 3)
+
+@mrai_strategy
+def apply_dpc_strategy(G: nx.DiGraph, value:float) -> None:
+    T = value  # max mrai in seconds
+    adv_node = find_adv_node(G)
+    cent = {i[0]: i[1]['centrality'] for i in G.nodes(data=True) }
+    visited_nodes = set()
+    set_node_mrai(G, adv_node, T*cent[adv_node]/2)
+    fifo = set()
+    for j in nx.neighbors(G, adv_node):
+        fifo.add((adv_node, j))
+
+    while len(fifo) > 0:
+        i, j = fifo.pop()
+        if j not in visited_nodes:
+            e = G.edges[(i,j)]
+            # Case j is the customer
+            if str(e['policy']) == '2, 2, 2':  # we are in phase 3
+                set_node_mrai(G, j, T*cent[j]/2)
+            elif G.nodes[j]['type'] == 'T':  # we are in phase 2
+                set_node_mrai(G, j, T/2)
+                set_node_mrai(G, j, T*cent[j]/2)
+            else:  # we are in phase 3
+                set_node_mrai(G, j, T*(2-cent[j])/2)
+            visited_nodes.add(j)
+
+            # Case i is the customer
+            if str(e['policy']) == '0, inf, inf':
+                for z in nx.neighbors(G, j):
+                    if z != i and z not in visited_nodes:
+                        fifo.add((j, z))
+            else:
+                for z in nx.neighbors(G, j):
+                    if str(G.edges[(j, z)]['policy']) == '2, 2, 2' and z not in visited_nodes:
+                        fifo.add((j, z))
+
+@mrai_strategy
+def apply_dpc2_strategy(G: nx.DiGraph, value:float) -> None:
+    T = value  # max mrai in seconds
+    adv_node = find_adv_node(G)
+    cent = {i[0]: i[1]['centrality'] for i in G.nodes(data=True) }
+    ss = max(cent.values())
+    cent = {i: v/ss for i,v in cent.items()}
+
+    visited_nodes = set()
+    set_node_mrai(G, adv_node, T*cent[adv_node]/2)
+    fifo = set()
+    for j in nx.neighbors(G, adv_node):
+        fifo.add((adv_node, j))
+
+    while len(fifo) > 0:
+        i, j = fifo.pop()
+        if j not in visited_nodes:
+            e = G.edges[(i,j)]
+            # Case j is the customer
+            if str(e['policy']) == '2, 2, 2':  # we are in phase 3
+                set_node_mrai(G, j, T*cent[j]/2)
+            elif G.nodes[j]['type'] == 'T':  # we are in phase 2
+                set_node_mrai(G, j, T/2)
+                set_node_mrai(G, j, T*cent[j]/2)
+            else:  # we are in phase 3
+                set_node_mrai(G, j, T*(2-cent[j])/2)
+            visited_nodes.add(j)
+
+            # Case i is the customer
+            if str(e['policy']) == '0, inf, inf':
+                for z in nx.neighbors(G, j):
+                    if z != i and z not in visited_nodes:
+                        fifo.add((j, z))
+            else:
+                for z in nx.neighbors(G, j):
+                    if str(G.edges[(j, z)]['policy']) == '2, 2, 2' and z not in visited_nodes:
+                        fifo.add((j, z))
 
 def adapt_to_mean(G, expected_mean):
     mean = 0.0

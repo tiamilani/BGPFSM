@@ -18,6 +18,7 @@ import argparse
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import plotter
 
 parser = argparse.ArgumentParser(usage="python3 pareto_efficency.py [options]",
                         description="Analize an output file that describes "
@@ -34,7 +35,8 @@ parser.add_argument("-r", "--render", dest="render", default=True,
 parser.add_argument("-m", "--mrai_type", dest="mrai_type", default="random",
                     action='store', help="type of mrai used in the experiments")
 
-COLUMNS=["id", "mrai" ,"avg_time", "avg_msg"]
+COLUMNS=["id", "mrai" ,"avg_time", "avg_msg", "n95_perc_time", "n05_perc_time", "std_time",
+         "n95_perc_msg", "n05_perc_msg", "std_msg"]
 xmin=200
 ymin=0
 xmax=450
@@ -97,54 +99,32 @@ def main():
     points=np.column_stack([df[COLUMNS[2]].values, df[COLUMNS[3]].values])
     pareto_front=df.iloc[is_pareto_efficient(points, return_mask=False)]
 
+    out_name = options.outputFile.split('.')[0]
+
     if options.render:
-        ax = df.plot.scatter(x=COLUMNS[3], y=COLUMNS[2], label="Random MRAI experiments")
-        pareto_front.plot.scatter(x=COLUMNS[3], y=COLUMNS[2], c='red', ax=ax, label="Pareto front")
+        plotter.plot_scatter(df[COLUMNS[3]].values, df[COLUMNS[2]].values, 
+                             pareto_front=(pareto_front[COLUMNS[3]].values, pareto_front[COLUMNS[2]].values),
+                             label=str(options.mrai_type) + " MRAI experiments",
+                             xlabel="Messages transmitted", ylabel="Convergence time",
+                             title="Experiments efficency",
+                             output_file_name= out_name+".pdf")
 
-        #axes = plt.gca()
-        #axes.set_xlim([xmin,xmax])
-        #axes.set_ylim([ymin,ymax])
+        allowed_types = ["constant", "dpc", "dpc2"]
+        if options.mrai_type in allowed_types:
+            plotter.plot_messages_time_comparison(df[COLUMNS[1]].values,
+                                                  df[COLUMNS[2]].values, df[COLUMNS[3]].values,
+                                                  title="MRAI " + options.mrai_type + " performances",
+                                                  output_file_name=out_name+"_mrai_evolution.pdf")
 
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0 + box.height * 0.15,
-                         box.width, box.height * 0.9])
-        # Put a legend below current axis
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
-                  fancybox=True, ncol=2)
+            plotter.plot_messages_time_comparison_error_bars(df[COLUMNS[1]].values,
+                    df[COLUMNS[2]].values, df[COLUMNS[3]].values, df[COLUMNS[6]].values,
+                    df[COLUMNS[9]].values, title = "MRAI " + options.mrai_type + " performances " +
+                    "with Std deviation", output_file_name=out_name+"_mrai_evolution_std.pdf")
 
-        ax.set_xlabel("Messages transmitted")
-        ax.set_ylabel("Convergence time")
-        plt.title("Pareto efficency front")
-
-        plt.savefig(options.outputFile, format="pdf")
-        plt.close()
-
-        if options.mrai_type == "constant":
-            fig, ax = plt.subplots()
-            ax2 = ax.twinx()
-
-            l1 = ax.plot(df[COLUMNS[1]], df[COLUMNS[2]], label="Convergence time")
-            l2 = ax2.plot(df[COLUMNS[1]], df[COLUMNS[3]], 'r', label="# Messages")
-
-            lns = l1 + l2
-            labs = [l.get_label() for l in lns]
-            # Shrink current axis's height by 10% on the bottom
-            box = ax2.get_position()
-            ax2.set_position([box.x0, box.y0 + box.height * 0.15,
-                             box.width, box.height * 0.9])
-            ax.set_position([box.x0, box.y0 + box.height * 0.15,
-                             box.width, box.height * 0.9])
-            # Put a legend below current axis
-            ax2.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
-                      fancybox=True, ncol=2)
-
-            ax.set_xlabel("MRAI value")
-            ax.set_ylabel("Convergence time [s]")
-            ax2.set_ylabel("# Packets")
-            ax.set_title("constant MRAI performances")
-
-            fig.savefig(options.outputFile + "_mrai_evolution.pdf", format="pdf")
-            plt.close()
+            plotter.plot_messages_time_comparison_error_bars_alpha(df[COLUMNS[1]].values,
+                    df[COLUMNS[2]].values, df[COLUMNS[3]].values, df[COLUMNS[6]].values,
+                    df[COLUMNS[9]].values, title = "MRAI " + options.mrai_type + " performances " +
+                    "with Std deviation", output_file_name=out_name+"_mrai_evolution_std_alpha.pdf")
 
 if __name__ == "__main__":
     main()

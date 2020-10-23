@@ -2,7 +2,13 @@
 #
 # Script to run multiple different mrai experiments 
 
+USE_PATH="../../"
+
 read foo
+
+source ${USE_PATH}env/bin/activate
+
+cd $USE_PATH
 
 experiments=100
 i=1
