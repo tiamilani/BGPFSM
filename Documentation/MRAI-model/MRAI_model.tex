@@ -1,0 +1,707 @@
+\documentclass[10pt,conference,letterpaper]{IEEEtran}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{silence}\WarningsOff[latexfont]
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+
+\usepackage{graphicx}
+\graphicspath{images/}
+\usepackage{cite}
+\usepackage{url}
+% \usepackage{subfig}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+\SetKwProg{Fn}{Event}{}{}
+\SetKw{And}{and}
+\usepackage[binary-units,per-mode=symbol]{siunitx}
+\sisetup{list-final-separator = {, and },detect-weight=true, detect-family=true}
+\usepackage{booktabs}
+\usepackage{pifont}
+\usepackage{microtype}
+\usepackage{textcomp}
+\usepackage[american]{babel}
+\usepackage[capitalise]{cleveref}
+\def\figname{\csname cref@figure@name\endcsname\xspace}
+\def\tabname{\csname cref@table@name\endcsname\xspace}
+\def\secname{\csname cref@section@name\endcsname\xspace}
+\def\eqpname{\csname cref@equation@name@plural\endcsname\xspace}
+\crefname{algorithm}{Listing}{Lists.}
+\Crefname{algorithm}{Listing}{Listings}
+\SetAlgorithmName{Listing}{Listing}{List of Listings}
+\crefname{lstlisting}{listing}{listings}
+\Crefname{lstlisting}{Listing}{Listings}
+\usepackage{xspace}
+\usepackage{hyphenat}
+\usepackage[draft,inline,nomargin,index]{fixme}
+\fxsetup{theme=color}
+\usepackage{grffile}
+\usepackage{xfrac}
+\usepackage{multirow}
+%\usepackage[para]{footmisc}
+\usepackage[font={small}]{caption}
+
+\usepackage{tikz}
+\usetikzlibrary{calc,shapes,arrows,fit,positioning}
+
+\usepackage{listings}
+\lstset{
+   language=sh,
+   columns=fixed,
+   breaklines=true,
+   breakatwhitespace=true,
+   prebreak=\textbackslash,
+   basicstyle=\ttfamily\small,
+   showstringspaces=false,
+   upquote=true,
+   keywordstyle=\ttfamily\small
+}
+
+\usepackage{color}
+\definecolor{gray}{rgb}{0.4,0.4,0.4}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.6}
+\definecolor{cyan}{rgb}{0.0,0.6,0.6}
+
+
+\lstdefinelanguage{XML}
+{
+  morestring=[b]",
+  morestring=[s]{>}{<},
+  morecomment=[s]{<?}{?>},
+  stringstyle=\color{black},
+  identifierstyle=\color{darkblue},
+  keywordstyle=\color{cyan},
+  morekeywords={xmlns,version,type}% list your attributes here
+}
+
+
+% fix cleveref and breqn
+\makeatletter
+\let\cref@old@eq@setnumberOld\eq@setnumber
+\def\eq@setnumber{%
+\cref@old@eq@setnumberOld%
+\cref@constructprefix{equation}{\cref@result}%
+\protected@xdef\cref@currentlabel{%
+[equation][\arabic{equation}][\cref@result]\p@equation\eq@number}}
+\makeatother
+
+% reduce verbatim font size
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\@verbatim}
+  %%%{\verbatim@font} %% blow up TexMaker formatting ???!!! 
+  {\verbatim@font\small}
+  {}{}
+\makeatother
+
+\RequirePackage{xstring}
+\RequirePackage{xparse}
+\RequirePackage[index=true]{acro}
+\NewDocumentCommand\acrodef{mO{#1}mG{}}{\DeclareAcronym{#1}{short={#2}, long={#3}, #4}}
+\NewDocumentCommand\acused{m}{\acuse{#1}}
+
+
+\acrodef{ADV}{advertisement}
+\acrodef{AS}{Autonomous System}{short-plural=es}
+\acrodef{BGP}{Border Gateway Protocol}
+\acrodef{BIRD}{BGP Internet Routing Daemon}
+\acrodef{DPC}{Destination Partial Centrality}
+\acrodef{eBGP}{Exterior BGP}
+\acrodef{ERP}{Exterior Routing Protocol}
+\acrodef{IoF}{Internet on FIRE}
+\acrodef{IP}{Internet Protocol}
+\acrodef{MRAI}{Minimum Route Advertisement Interval}
+\acrodef{NH}{Next Hop}
+\acrodef{RFC}{Request For Comment} 
+\acrodef{TCP}{Transmission Control Protocol}
+\acrodef{FSM}{Finite State Machine}
+\acrodef{SR}{SemiRings}
+
+\newcommand\useallac{
+\acused{IP}
+\acused{TCP}
+\acused{RFC}
+}
+
+\useallac
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+
+\newcommand{\figwidthfour}{0.78}
+\newcommand{\figwidth}{0.78}
+\newcommand{\figvspace}{-1.5em}
+\newcommand{\update}{\texttt{UPDATE}\xspace}
+\newcommand{\nodeset}{\ensuremath{\mathcal{V}}\xspace}
+\newcommand{\edgeset}{\ensuremath{\mathcal{E}}\xspace}
+\newcommand{\graphg}{\ensuremath{\mathcal{G}}\xspace}
+\newcommand{\graph}{\ensuremath{\mathcal{\graphg(\nodeset,\edgeset)}}\xspace}
+\newcommand{\natpernat}{\ensuremath{\mathcal{\mathbb{N} \times \mathbb{N}}}\xspace}
+
+\newcommand{\semiringset}{\ensuremath{\matchal{S}}\xspace}
+\newcommand{\semiringchoice}{\ensuremath{\matchal{\oplus}}\xspace}
+\newcommand{\semiringfunctions}{\ensuremath{\matchal{F}}\xspace}
+\newcommand{\semiringempty}{\ensuremath{\matchal{\overline{\rm 0}}}\xspace}
+\newcommand{\semiringinvalid}{\ensuremath{\matchal{\overline{\rm \infty}}}\xspace}
+\newcommand{\semiring}{\ensuremath{\mathcal{(\semiringset, \semiringchoice, \semiringfunctions, \semiringempty, \semiringinvalid)}}\xspace}
+\newcommand{\invalidfunction}{\ensuremath{f_\semiringinvalid}\xspace}
+
+\newcommand{\Amatrix}{\ensuremath{\mathcal{X}}\xspace}
+\newcommand{\Amatrixelem}{\ensuremath{\Amatrix_{ij}}\xspace}
+
+\newcommand{\invalidpath}{\ensuremath{\mathcal{\bot}}\xspace}
+\newcommand{\pathset}{\ensuremath{\mathcal{P}}\xspace}
+
+\newcommand{\pathalgebra}[1]{\ensuremath{\mathcal{\mathbb{P}\mathbb{A}(#1)} = (((\semiringset - \{\infty\})
+	\times \pathset) \cup \{\infty^{'}\}, \semiringchoice^{'}, \semiringfunctions^{'}, 
+	(\semiringempty, []), \infty^{'})}\xspace}
+\newcommand{\pathalgebrashort}[1]{\ensuremath{\mathcal{\mathbb{P}\mathbb{A}(#1)}}\xspace}
+
+\newcommand{\concatenation}{\ensuremath{\mathcal{\hat{::}}}\xspace}
+
+\newcommand{\semiringpath}{\ensuremath{\mathcal{(\semiringset, \semiringchoice, \semiringfunctions, \semiringempty, \semiringinvalid, \text{\textit{path}})}}\xspace}
+
+\newcommand{\bufferset}{\ensuremath{\mathcal{B}}\xpsace}
+
+\newcommand{\bufferalgebra}[1]{\ensuremath{\mathcal{\mathbb{B}\mathbb{A}(#1)} = (((\semiringset - \{\infty\})
+	\times \bufferset) \cup \{\infty^{'}\}, \semiringchoice^{'}, \semiringfunctions^{'}, 
+	(\semiringempty, []), \infty^{'})}\xspace}
+\newcommand{\bufferalgebrashort}[1]{\ensuremath{\mathcal{\mathbb{B}\mathbb{A}(#1)}}\xspace}
+\newcommand{\semiringbuffer}{\ensuremath{\mathcal{(\semiringset, \semiringchoice, \semiringfunctions, \semiringempty, \semiringinvalid, \text{\textit{buffer}})}}\xspace}
+
+\newcommand{\setofmatrixes}{\ensuremath{\mathcal{\mathbb{M}}_n(\semiringset)}\xspace}
+
+\newcommand{\sigmaop}[1]{\ensuremath{\mathcal{\sigma}(#1)_{ij}}\xspace}
+
+\IEEEoverridecommandlockouts
+
+\begin{document}
+
+\title{(draft) MRAI Model}
+\author{
+	\IEEEauthorblockN{Mattia Milani\IEEEauthorrefmark{1}}
+    \IEEEauthorblockA{\IEEEauthorrefmark{1}Dept. of Information Engineering and Computer Science, University of Trento, Italy}
+    \texttt{mattia.milani@studenti.unitn.it}
+}
+
+
+\maketitle
+
+\section{Main Idea}
+\label{sec:mainIdea}
+
+This document has to bee take as my flow of consiousness, it will be
+probably written again, corrected and changed many times.
+
+The main idea behind the \ac{MRAI} model that I have in mind is that: 
+In \cite{daggitt2018rate} has been shown how to model and algebricaly solve
+problems with \ac{SR} like hop-count shortest-path and even policies.
+One of the main ideas is to consider the network as a matrix $A$ where each
+row represent a node $i$ and each column represent a function to reach node
+$j$.
+The adjacency matrix $A$ permits to have a mastrix $X$ that represent the state of
+the network, this matrix $X$ evolves in time, at each step a routing algebra is applied to each
+edge solving the local shortest path problem.
+At some point, a further step would not make the matrix change, so convergence
+has been reached.
+
+My is an asynchronous approach to the matrix evolution.
+My Idea is to don't apply the algebra to the whole matrix $A$ but apply it
+locally to single edges selecting the best route in the knowledge buffer
+of the node neighbourhood.
+The algebra would select the best possible path in the vector of possibilities
+in the nodes and then introudce this coice in the set of possibilities of 
+the edge.
+The step can be executed indipendently from each other edge in the network.
+At the end, when no steps produce changes the network is converged.
+
+\section{Goals}
+\label{sec:goals}
+
+The main goal is to be able to model \ac{MRAI} and solve problems caused by it.
+
+\section{Semirings, Routing algebra}
+\label{sec:routing_algebra}
+
+I should start in order, first of all I have to define what is a routing algebra.
+
+\theoremstyle{definition}
+\begin{definition}
+	A routing algebra is a tuple \semiring where:
+	\begin{itemize}
+			\item \semiringset the set of weights with $\semiringempty \in \semiringset$
+				and $\semiringinvalid \in \semiringset$,
+			\item \semiringchoice: $\semiringset X \semiringset \to \semiringset$
+				is the choice operator
+			\item \semiringfunctions is a set of functions from $\semiringset \to \semiringset$
+	\end{itemize}
+	such that:
+	\semiringchoice is Associative, commutative and selective, \semiringempty is
+	an annhilator for \semiringchoice, \semiringinvalid is an identitity function for
+	\semiringchoice and a fixed point $\forall f \in \semiringfunctions$
+\end{definition}
+
+It's possible to define a total order between elements.
+
+\begin{equation}
+	x \leq y \triangleq x \semiringchoice y = x \quad
+	x < y \triangleq x \leq y \land x \neq y
+
+	x \leq y \iff x \semiringchoice y = x
+\end{equation}
+
+each function \semiringfunctions represents a procedure to transform a route's
+weight when that route is extended along and edge.
+Elements of \semiringfunctions will be used to label edges, so we have
+arc functions.
+
+The algebra is distributive if:
+
+\begin{equation}
+	\forall f \in \semiringfunctions, x,y \in \semiringset: f(x \semiringchoice y) = f(x) \semiringchoice f(y) 
+\end{equation}
+
+The algebra is increasing if:
+
+\begin{equation}
+	\forall f \in \semiringfunctions, x \in \semiringset: x \leq f(x)
+\end{equation}
+
+The algebra is strictly increasing if:
+
+\begin{equation}
+	\forall f \in \semiringfunctions, x \in \semiringset: x \neq \semiringinvalid \Rightarrow  x < f(x)
+\end{equation}
+
+\section{Network}
+\label{sec:network}
+
+A network is represented by a directed graph \graph where \nodeset is a set of
+$n$ nodes $\nodeset=\{0,1, ... , n-1\}$ and \edgeset is a set of arcs.
+A configuration of \graphg with respect to a routing algebra \semiring is a mapping
+from \edgeset to \semiringfunctions.
+
+Such mappings will be represented by an $n \times n$ adjacency matrix \Amatrix where
+$\Amatrixelem \in \semiringfunctions$. 
+
+I assume the constant function $\invalidfunction \in \semiringfunctions$ exists that always returns the invalid
+weight, function used to represent missing edges.
+
+For example we can have the following graph:
+
+\begin{center}
+\begin{tikzpicture}[scale=0.2]
+\tikzstyle{every node}+=[inner sep=0pt]
+\draw [black] (18.3,-25.7) circle (3);
+\draw (18.3,-25.7) node {$0$};
+\draw [black] (35.3,-25.7) circle (3);
+\draw (35.3,-25.7) node {$2$};
+\draw [black] (52,-25.7) circle (3);
+\draw (52,-25.7) node {$4$};
+\draw [black] (35.3,-40.5) circle (3);
+\draw (35.3,-40.5) node {$3$};
+\draw [black] (35.3,-10.8) circle (3);
+\draw (35.3,-10.8) node {$1$};
+\draw [black] (20.56,-23.72) -- (33.04,-12.78);
+\fill [black] (33.04,-12.78) -- (32.11,-12.93) -- (32.77,-13.68);
+\draw (25.28,-17.76) node [above] {$f_{1}$};
+\draw [black] (35.3,-13.8) -- (35.3,-22.7);
+\fill [black] (35.3,-22.7) -- (35.8,-21.9) -- (34.8,-21.9);
+	\draw (34.8,-18.25) node [left] {$f_{3}$};
+\draw [black] (21.3,-25.7) -- (32.3,-25.7);
+\fill [black] (32.3,-25.7) -- (31.5,-25.2) -- (31.5,-26.2);
+	\draw (26.8,-26.2) node [below] {$f_{2}$};
+\draw [black] (38.3,-25.7) -- (49,-25.7);
+\fill [black] (49,-25.7) -- (48.2,-25.2) -- (48.2,-26.2);
+	\draw (43.65,-25.2) node [above] {$f_{4}$};
+\draw [black] (49.75,-27.69) -- (37.55,-38.51);
+\fill [black] (37.55,-38.51) -- (38.48,-38.35) -- (37.81,-37.61);
+	\draw (45.17,-33.59) node [below] {$f_{6}$};
+\draw [black] (35.3,-37.5) -- (35.3,-28.7);
+\fill [black] (35.3,-28.7) -- (34.8,-29.5) -- (35.8,-29.5);
+	\draw (35.8,-33.1) node [right] {$f_{5}$};
+\end{tikzpicture}
+\end{center}
+
+That has as \Amatrix the one in \cref{matrix:simple_graph_edgematrix}
+
+\begin{equation}
+	  \Amatrix=
+	  \left[ {\begin{array}{ccccc}
+		   \invalidfunction & f_{1} & f_{2} & \invalidfunction & \invalidfunction\\
+		   \invalidfunction & \invalidfunction & f_{3} & \invalidfunction & \invalidfunction\\
+		   \invalidfunction & \invalidfunction & \invalidfunction & \invalidfunction & f_{4}\\
+		   \invalidfunction & \invalidfunction & f_{5} & \invalidfunction & \invalidfunction\\
+		   \invalidfunction & \invalidfunction & \invalidfunction & f_{6} & \invalidfunction\\
+	  \end{array} } \right]
+	  \label{matrix:simple_graph_edgematrix}
+\end{equation}
+
+The definition of path must be independent from the definition of the current
+graph, we can have paths that are not corresponding to the current graph \graphg.
+
+A \textit{path} $p = [(v_{1}, v^{'}_{1}), \xspace ... \xspace , (v_{m}, v^{'}_{m})]$
+is a (possibily empty) sequence of arcs such that $v^{'}_{i} = v_{i+1}$ for all 
+$0 \leq i < m$. Arcs are not members of \edgeset but are arbitrary members of
+\natpernat.
+
+I will assume the same notational convenience on paths as \cite{daggitt2018rate}.
+$p = []$ represent the empty path, $(v_1, v^{'}_1) :: q$ when $0 \leq i < m$
+where $q = [(v_{2}, v^{'}_{2}), \xspace ... \xspace , (v_{k}, v^{'}_{k})]$,
+a path is simple if it never visit a vertex mre than once. the \invalidpath simbol
+to represent the invalid path, \pathset represent the set of paths, $|p|$ is the
+length of the path $p$
+
+\section{Path algebras}
+\label{sec:pathalgebra}
+
+We are interested in protocols which track the path tat routes are generated along and
+remove any looping path. Given the routing algebra $\mathcal{A} = \semiring$ we can
+add path to the algebra as follows:
+
+\pathalgebra{A}
+
+In \pathalgebrashort{A} weights are in form $(s, p)$ or $\infty^{'}$.
+where $s \in \semiringset - \{\infty\}$ and $p \in \pathset$.
+$\forall (s, p) : (s, p) \semiringchoice^{'} \infty^{'} = (s, p)$, non-$\infty^{'}$
+rutes are compared lexicographically:
+
+\begin{equation}
+  (s_1, p_1) \semiringchoice (s_2, p_2) &\triangleq
+  \begin{cases}
+	  (s_1, p_1)
+		  & \text{if $s_1 = (s1 \semiringchoice s2 ) \neq s_2$}, \\
+	  (s_2, p_2)
+		  & \text{if $s_1 \neq (s1 \semiringchoice s2 ) = s_2$}, \\
+	  (s_1, p_1 \hat{\semiringchoice} p_2)
+		  & \text{if $s_1 = s_2$},
+  \end{cases} 
+\end{equation}
+
+where 
+
+\begin{equation}
+	p_1 \hat{\semiringchoice} p_2 &\triangleq
+  \begin{cases}
+	  p_1
+		  & \text{if $|p_1| < |p_2|$}, \\
+	  p_2
+		  & \text{if $|p_1| > |p_2|$}, \\
+	  \text{dict$(p_1, p_2)$} 
+		  & \text{otherwise},
+  \end{cases} 
+\end{equation}
+
+dict returns the smallest path in dictionary order.
+
+I define the concatenation operator as in \cite{daggitt2018rate}.
+\concatenation takes an arc and a path, $(i,j) \concatenation p$, the result is \invalidpath if
+the first node of $p$ is not $j$.
+
+The $\semiringfunctions^{'}$ fr the path-algebra is the collections of policies
+functions $g_{f,u,v}$ defined as:
+
+$$g_{f,u,v}(\infty^{'}) = \infty^{'}$$
+
+\begin{equation}
+	g_{f,u,v}(s,p) &\triangleq
+  \begin{cases}
+	  \infty^{'}
+		  & \text{if $f(s) = \infty$}, \\
+	  \infty^{'}
+		  & \text{if $(u, v) \concatenation p = \invalidpath$}, \\
+		  (f(s), (u,v) \concatenation p)
+		  & \text{otherwise},
+  \end{cases} 
+\end{equation}
+
+\theoremstyle{definition}
+\begin{definition}
+	A path algebra is a tuple \semiringpath where:
+	\begin{itemize}
+			\item \semiring is a routing algebra;
+			\item \textit{path}: $\semiringset \rightarrow \pathset$ is a 
+				function that returns the path the weight was generated along
+	\end{itemize}
+	such that:
+	\begin{itemize}
+		\item[\textit{P1)}] $\text{path}(x) = \invalidpath \iff x = \semiringinvalid$
+		\item[\textit{P2)}] $\text{path}(x) = [] \Leftarrow x = \semiringempty$
+		\item[\textit{P3)}] $\text{path}(\Amatrixelem(x)) = (i,j) :: \text{\textit{path}}(x) \iff i \notin \text{\textit{path}}(x) \land j = \text{\textit{src}}(\text{\textit{path}}(x))$
+	\end{itemize}
+\end{definition}
+
+P3) implies that if a path algebra is increasing it is automatically strictly 
+increasing.
+\pathalgebrashort{A} is a path algebra for any routing algebra,
+the path function is defined as $\text{\textit{path}}(\infty^{'}) = \invalidpath$
+and $\text{\textit{path}}((s,p)) = p$
+
+\section{Buffer algebra}
+\label{sec:buffer}
+
+Thinking about \ac{MRAI} could be easy to think about operation on buffers of paths
+rather than the comparison of only paths.
+
+First of all I have to define what is a buffer.
+A \textit{buffer} $b = [p_1, p_2, \xspace ... \xpsace, p_k]$ is a (possibily empty)
+sequence of paths such that $p_x$ is unique in $b$ for all $ 0 \leq x \leq k$.
+For notational convenience I will write $b$ as $[$ $]$ when $k = 0$.
+Buffers, for our pourpose, could be only simple.
+this restriction could be removed in future.
+I will refer to the set of buffers with $\mathcal{B}$ and the length of a buffer $b$
+as $|b|$.
+I will refer to the sub-buffer $b\{x,y\}$ as the subset $[p_x, \xspace ... \xspace, p_y]$
+of $b$ with $0 \leq x < y < |b|$ an invalid subbuffer will return the invalid operator \invalidpath.
+
+For this reason I thought about the following algebra.
+Given a routing algebra $\mathcal{A} = \semiring$ one way to add buffers to 
+$\mathcal{A}$ is as follows:
+
+\bufferalgebra{A}
+
+In the augmented algebra, \bufferalgebrashort{A}, weights are of the form $\infty^{'}$
+or $(s, b)$ where $s \in \semiringset - \{\infty\}$ and $b$ is a buffer.
+For all $(s, b)$ we have $(s, b) \semiringchoice^{'}\infty^{'} = \infty^{'}\semiringchoice^{'}(s, b) = (s, p)$.
+The result of a comparison is the the resulting best path in the buffer, with $p \in \pathset$.
+Non-$\infty^{'}$ routes are compared lexicographically:
+
+\begin{equation}
+  (s_1, b_1) \semiringchoice (s_2, b_2) &\triangleq
+  \begin{cases}
+	  (s_1,\hat{\semiringchoice} b_1)
+		  & \text{if $s_1 = (s1 \semiringchoice s2 ) \neq s_2$}, \\
+	  (s_2, \hat{\semiringchoice} b_2)
+		  & \text{if $s_1 \neq (s1 \semiringchoice s2 ) = s_2$}, \\
+	  (s_1, \hat{\semiringchoice}b_1 \hat{\hat{\semiringchoice}} \hat{\semiringchoice}b_2)
+		  & \text{if $s_1 = s_2$},
+  \end{cases} 
+\end{equation}
+
+where 
+
+\begin{equation}
+  \hat{\semiringchoice} b &\triangleq
+  \begin{cases}
+	  \infty^{'}
+		  & \text{if $b = []$}, \\
+	  \text{\textit{best}}(b)
+		  & otherwise
+  \end{cases} 
+\end{equation}
+
+where, given $p_0$ as the first element of $b = [p_0, p_1, \xspace ... \xspace, p_{|b-1|}]$
+
+\begin{equation}
+	\text{\textit{best}}(b) = p_0 \hat{\hat{\semiringchoice}} \text{\textit{best}}(b\{1,|b-1|\})
+\end{equation}
+
+This function is used to recursively chose the best path in the buffer.
+
+whith:
+
+\begin{equation}
+	p_1 \hat{\hat{\semiringchoice}} p_2 &\triangleq
+  \begin{cases}
+	  p_1
+		  & \text{if $|p_1| < |p_2|$}, \\
+	  p_2
+		  & \text{if $|p_1| > |p_2|$}, \\
+	  \text{dict$(p_1, p_2)$} 
+		  & \text{otherwise},
+  \end{cases} 
+\end{equation}
+
+where dict$(p_1, p_2)$ returns the smallest path in dictionary order.
+
+I define the concatention operator \concatenation that takes a path and a buffer.
+The result of $p \concatenation b$ is $b$ if $p$ is already in $b$, otherwaise
+it returns $b :: p$. For example:
+
+$$ [(3,4), (4,5)] \concatenation [[(3,4), (4,5)]] = [[(3,4),(4,5)]]$$
+$$ [(1,9)] \concatenation [[(3,4), (4,5)]] = [[(3,4), (4,5)],[(1,9)]] $$
+
+If in the buffer is already present a path to the same destination with the same first
+edge, the new path should substitute the old path in the buffer.
+In this way we have "Implicit Withdrawing".
+If a neighbour change idea on how to reach a destination the node can't have
+in it's knowledge both paths, but just the last one.
+
+In a more formal way:
+\begin{itemize}
+	\item Given $(i,j)$ as the edge with the neighbour chosen.
+	\item Given $p$ as the best path to reach a destination given by the neighbour $j$.
+	\item Given $b$ as the local buffer.
+	\item The first concatenation is applied to the path $(i,j) \concatenation p$, if the
+concatenation is correct we obtain a path $p^{'} = [(i,j), (j, j_1), \xspace ... \xspace, (j_k, k)]$ 
+The destination of this path is the node $k$.
+\end{itemize}
+To sum up, the resulting buffer of the concatenation will be:
+
+\begin{equation}
+	b \concatenation p^{'} &=
+  \begin{cases}
+	  b
+		  & \text{if $p^{'} \in b$}, \\
+	  \{b - p_{p}\} \cup p^{'}
+		  & \text{if $\begin{split} \exists p_{p} \in b &: p_{p}[0] = p^{'}[0] \\
+														& \land dst(p_{p}) = dst(p^{'}) \end{split}$} \\
+	  b \cup p^{'}\
+		  & \text{otherwise},
+  \end{cases} 
+\end{equation}
+
+
+The $\semiringfunctions^{'}$ for the buffer algebra is the collection of policy
+functions $g_{f,p}$ which are defined as:
+
+$$g_{f,p}(\infty^{'}) = \infty^{'}$$
+
+\begin{equation}
+	g_{f,p}(s,b) &\triangleq
+  \begin{cases}
+	  \infty^{'}
+		  & \text{if $f(s) = \infty$}, \\
+	  (f(s), p \concatenation b)
+		  & \text{otherwise},
+  \end{cases} 
+\end{equation}
+
+\theoremstyle{definition}
+\begin{definition}
+	A buffer algebra is a tuple \semiringbuffer where:
+	\begin{itemize}
+			\item \semiring is a routing algebra;
+			\item \textit{buffer}: $\semiringset \rightarrow \bufferset$ is a 
+				function that returns the buffer the weight was generated along
+	\end{itemize}
+	such that:
+	\begin{itemize}
+		\item[\textit{B1)}] $\text{buffer}(x) = \invalidpath \iff x = \semiringinvalid$
+		\item[\textit{B2)}] $\text{buffer}(x) = [] \Leftarrow x = \semiringempty$
+		\item[\textit{B3)}] \begin{equation}
+								 \text{\textit{buffer}}(\Amatrixelem(x)) &=
+								 \begin{cases}
+									 \infty^{'}
+									  & \text{if $(i,j) \concatenation path(x) = \invalidpath$}, \\
+									 b
+									  & \text{if $(i,j) \concatenation path(x) \in b$}, \\
+									\begin{split}
+										(i,j) & \concatenation path(x) \\
+											   & \concatenation b
+									\end{split}
+ 								   	  & \text{otherwise},
+ 								 \end{cases} 
+							\end{equation}
+	\end{itemize}
+\end{definition}
+
+\bufferalgebrashort{A} is a path algebra for any $\mathcal{A}$. Its buffer function
+is defined as $\text{buffer}(\infty^{'}) = \invalidpath$ and $\text{buffer}((s, p)) = p \concatenation b$.
+
+\section{Solving problems}
+\label{sec:solving_problems}
+
+Having \graph as a directed graph.
+Let $\mathcal{A}$ be the adjacency matrix of \graphg where $\mathcal{A}_{ij} \in \semiringfunctions$
+is the weight of the edge from $i$ to $j$.
+Missing edges are represented by \invalidfunction.
+
+Let \setofmatrixes be the set of $n \times n$ matrices over \semiringset. Each matrix
+$X \in \setofmatrixes$ represent one possible global state of the routing protocol.
+The row $X_i$ represent all the current buffers of node $i$ and $X_{ij}$
+is node $i$'s current input buffer for reaching node $j$.
+
+Every node has input buffers from which it will retrives information, an input 
+buffer for a node is the actual knowledge of all its input neighbours.
+
+Given Equation \num{4} of \cite{daggitt2018rate}, I report an equation that 
+will be useful later. 
+define the application of $A$ to $X$ as:
+
+$$ A(X)_{ij} \triangleq \semiringchoice_{0 \leq k < n} A_{ik}(X_{kj}) $$
+
+If we apply also the idendity value in $I_{ij}$ we then obtain that:
+node i’s new route to j is the best choice out of the extensions
+of the best routes offered to it by each knowledge buffer of its neighbours k
+
+\section{Iterative solution}
+\label{sec:iterative solution}
+
+I therefore define the function \sigmaop{X} as:
+
+$$ \sigmaop{X} \triangleq A(X)_{ij} \semiringchoice I_{ij} $$
+
+Given $I$ as the identity matrix.
+
+The result of \sigmaop{X} is that $i$ will now extend the buffer in $X_{ij}$ 
+with the best path (extended with $i$) contained in all the output buffers of
+its neighbourhood.
+
+Refers to \cite{daggitt2018asynchronous} for the asynchronous convergence.
+I will explain it to be sure of my vision of it.
+
+\section{Asynchronous convergence}
+
+Now that we have all the buffers that we need we can exploit an asynchronous
+convergence system.
+I use the model from \"Uresing \& Dubois [insert citation] which assumes a discrete
+and linear notion of time $\mathbb{T}$ denoting the times of events of interest
+in the network
+
+\theoremstyle{definition}
+\begin{definition}
+	A Schedule consists of a pair of functions:
+	\begin{itemize}
+		\item $\alpha : \mathbb{T} \rightarrow 2^{V}$ is the activation function,
+			where $\alpha(t)$ is the set of nodes which update their routing table
+			at time $t$
+		\item $\beta : \mathbb{T} \times V \times V \rightarrow \mathbb{T}$ is the
+			data flow function where $\beta(t,i,j)$ is the time at which the 
+			information used by node $i$ at time $t$ was sent by node $j$.
+	\end{itemize}
+	where $V$ is the set of nodes in the network, such that:
+	\begin{itemize}
+		\item[\textit{S1)}] Every node continues to activate indefinetely
+			$$\forall it . \exists k. i \in \alpha(t + k) $$
+		\item[\textit{S2)}] information only travels forward in time
+			$$\forall ijt . \beta(t, i, j) < t $$
+		\item[\textit{S3)}] no link has a loss rate of \num{100}\%
+			$$\forall ijt. \exists t' . \forall k. \beta(t' + k, i, j) \neq t $$
+	\end{itemize}
+\end{definition}
+
+Nothing in S2 or S3 forbids the data flow function $\beta$ from delaying, losing
+reordering or dublicating messages.
+
+For a given schedule $(\alpha, \beta)$ and starting state $X$ we define $\delta$,
+the asynchonous version of $\sigma$ as follows:
+
+\begin{equation}
+	\begin{align*}
+		\delta^{0}(X)_{ij} &\triangleq X_{ij} \\
+	\delta^{t}(X)_{ij} &=
+	\begin{cases}
+		\semiringchoice_{k}A_{ik}(\delta^{\beta(t,i,k)}(X)_{kj})\semiringchoice I_{ij}
+		 & \text{if $i \in \alpha(t)$}, \\
+		\delta^{t-1}(X)_{ij}
+	     & \text{otherwise}, \\
+ 	\end{cases} 
+	\end{align*}
+\end{equation}
+
+Giving what is demonstrated in \cite{daggitt2018asynchronous} if my implementation
+is strictly incrasing then absolute convergence is guaranted.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

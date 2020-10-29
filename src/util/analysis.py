@@ -120,12 +120,14 @@ class NodeAnalyzer():
     ROUTES_COLUMNS = ['id', 'value', 'addr', 'nh', 'path', 'policy_value']
     SIGNAL_COLUMNS = ['id', 'signal', 'advertisements', 'withdraws',
                       'total_messages', 'counter']
+    CONVERGENCE_COLUMNS = ['convergence_time', 'in_messages']
 
     # File names for load and save
     STATES_FILE_NAME = "_states"
     TRANSITIONS_FILE_NAME = "_transitions"
     ROUTES_FILE_NAME = "_routes"
     SIGNAL_FILE_NAME = "_signal"
+    CONVERGENCE_FILE_NAME = "_convergence"
 
     # Evaluation dataframe columns expected
     # NEVER CHANGE THE POSITION OF THE ELEMENTS ALREADY IN THE LIST
@@ -144,6 +146,7 @@ class NodeAnalyzer():
         self.routes = self.routes.set_index(NodeAnalyzer.ROUTES_COLUMNS[0])
         self.signaling = pd.DataFrame(columns=NodeAnalyzer.SIGNAL_COLUMNS)
         self.signaling = self.signaling.set_index(NodeAnalyzer.SIGNAL_COLUMNS[0])
+        self.convergence = pd.DataFrame(columns=NodeAnalyzer.CONVERGENCE_COLUMNS)
         self.actual_state = set()
         self.experiment_actual_state = set()
         self.route_counter = 0
@@ -179,6 +182,11 @@ class NodeAnalyzer():
                                       + _format, "rb"))
         else:
             return False
+        if os.path.isfile(input_file + NodeAnalyzer.CONVERGENCE_FILE_NAME + _format):
+            self.signaling = pickle.load(open(input_file + NodeAnalyzer.CONVERGENCE_FILE_NAME\
+                                      + _format, "rb"))
+        else:
+            return False
         return True
 
     def save_df(self, output_file: str, pickling = False) -> None:
@@ -197,6 +205,8 @@ class NodeAnalyzer():
         self.transitions.to_csv(output_file + NodeAnalyzer.TRANSITIONS_FILE_NAME + _format, '|')
         self.routes.to_csv(output_file + NodeAnalyzer.ROUTES_FILE_NAME + _format, '|')
         self.signaling.to_csv(output_file + NodeAnalyzer.SIGNAL_FILE_NAME + _format, '|')
+        self.convergence.to_csv(output_file + NodeAnalyzer.CONVERGENCE_FILE_NAME + _format, '|',
+                index=False)
 
         if pickling:
             _format = ".pkl"
@@ -207,6 +217,8 @@ class NodeAnalyzer():
             pickle.dump(self.routes, open(output_file + NodeAnalyzer.ROUTES_FILE_NAME \
                         + _format, "wb"))
             pickle.dump(self.signaling, open(output_file + NodeAnalyzer.SIGNAL_FILE_NAME \
+                        + _format, "wb"))
+            pickle.dump(self.convergence, open(output_file + NodeAnalyzer.CONVERGENCE_FILE_NAME\
                         + _format, "wb"))
 
     def __get_route_data(self, route: Route) -> Dict:
@@ -579,6 +591,26 @@ class NodeAnalyzer():
                                                           row.event_id,
                                                           data_frame), axis=1)
 
+    def evaluate_convergence(self, data_frame: pd.DataFrame, start_time: float) -> None:
+        """evaluate_convergence.
+        Evaluate the convergence time required by the node
+
+        :param data_frame: Dataframe to evaluate
+        :type data_frame: pd.DataFrame
+        :rtype: None
+        """
+
+        rib_events = data_frame[(data_frame.event == Events.RIB_CHANGE)]
+        if len(rib_events.index) > 0:
+            last_rib = rib_events.tail(1)[NodeAnalyzer.EVALUATION_COLUMNS[3]].values[0]
+        else:
+            last_rib = start_time 
+        conv_time = last_rib - start_time
+        conv_df = data_frame[(data_frame.time <= last_rib)]
+        messages_rx = len(conv_df[(conv_df.event == Events.RX)].index)
+        self.convergence.loc[len(self.convergence.index)] = [conv_time, messages_rx]
+        
+
     def __delitem__(self, value):
         """__delitem__
         Ensure to delete all the local dataframes
@@ -622,6 +654,10 @@ class FileAnalyzer():
                                 'value': str}
     GENERAL_STUDY_COLUMNS = ['id', 'file_name', 'convergence_time', 'total_messages']
     GENERAL_STUDY_FILE_NAME = "general_study"
+
+    NODE_STUDY_COLUMNS = ['node', 'convergence_time', 'convergence_time_std', 
+                          'in_messages', 'in_messages_std', 'out_messages',
+                          'out_messages_std']
 
     def __init__(self, input_file_path: str, node_analyzers: Dict[str, NodeAnalyzer],
                  general_study_df: Optional[pd.DataFrame] = None):
@@ -697,6 +733,27 @@ class FileAnalyzer():
                                                      Events.MRAI],
                                                     dataframe=node_df)
             self.nodes[node].evaluate_fsm(node_filtered_df)
+
+    def study_node_convergence(self, nodes: List[str]) -> None:
+        """study_node_convergence
+        Study the convergence time, number of messages required for the list
+        of nodes passed
+
+        :param nodes: list of nodes passed
+        :type nodes: List[str]
+        :rtype: None
+        :raise KeyError: If one of the passed nodes is not in the dictionary
+        """
+        tx_df = self.__filter_events([Events.TX], dataframe=self._df)
+        start_time = tx_df.head(1)[FileAnalyzer.EVALUATION_COLUMNS[3]].values[0]
+
+        for node in nodes:
+            if node not in self.nodes.keys():
+                raise KeyError("{} Not found in the nodes dictionary".format(node))
+
+            node_df = self.__select_node(node)
+            node_filtered_df = self.__filter_events([Events.TX, Events.RX, Events.RIB_CHANGE], dataframe = node_df)
+            self.nodes[node].evaluate_convergence(node_filtered_df, start_time)
 
     def general_file_study(self) -> pd.DataFrame:
         tx_df = self.__filter_events([Events.TX], dataframe=self._df)

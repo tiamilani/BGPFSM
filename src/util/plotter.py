@@ -26,6 +26,7 @@ analyzer.
 import ast
 import ipaddress
 import re
+import math
 import pandas as pd
 from graphviz import Digraph
 from route import Route
@@ -234,3 +235,41 @@ class GeneralPlotter():
         plt.savefig(output_file_name, format="pdf")
         plt.close()
 
+class NodeConvergencePlotter():
+    """
+    Node Convergence plotter
+    ------------------------
+
+    Used to plot the graph of nodes convergence
+    """
+    
+    COLUMNS=["avg_conv_time", "std_conv_time", "avg_in_messages", "std_in_messages"]
+
+    def __init__(self, df: pd.DataFrame):
+        self.df = df
+
+    def plot(self, output_file_name) -> None:
+        _max = math.ceil(self.df[NodeConvergencePlotter.COLUMNS[0]].max())
+        values=[]
+        for i in range(_max+1):
+            values.append(len(self.df[self.df[NodeConvergencePlotter.COLUMNS[0]] <= i].index))
+
+        fig, ax = plt.subplots() # pylint: disable=invalid-name
+
+        l = ax.plot(range(_max+1), values, 'r', label="Nodes converged")
+
+        lns = l
+        labs = [l.get_label() for l in lns]
+        # Shrink current axis's height by 10% on the bottom
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.15,
+                         box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                  fancybox=True, ncol=2)
+
+        ax.set_xlabel("Time from the starting event [s]")
+        ax.set_ylabel("# Converged nodes")
+
+        fig.savefig(output_file_name, format="pdf")

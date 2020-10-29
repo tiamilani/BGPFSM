@@ -13,6 +13,7 @@
 *.bbl
 *.blg
 *.pyc
+*.synctex.gz
 ignored/*
 src/results/*
 src/env/*

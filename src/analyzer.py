@@ -150,6 +150,12 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
 
     # Obtain variables
     nodes = options.node
+
+    if nodes[0] == "all":
+        first_file = options.inputFile[0]
+        df = pd.read_csv(first_file, '|')
+        nodes = list(map(str, list(set(df.node.values))))
+
     node_analyzers = {}
     pickle_loading = options.pickle
     if nodes is not None and len(nodes) > 0:
@@ -169,7 +175,6 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
                                          "/".join(output_file_path.split("/")[:-1]) + "/")
         if general_file_study is None:
             pickle_loading = False
-
 
     # If states is not none means that pickles has been loaded and it is not
     # necessary to parse the files
@@ -230,6 +235,7 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
                 general_study = timeit.default_timer()
 
             general_file_study = file_analyzer.general_file_study()
+            file_analyzer.study_node_convergence(nodes)
 
             if options.time:
                 print("The general study time has been:", timeit.default_timer() - \
@@ -255,15 +261,24 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
                                 + "messages_boxplot.pdf", "total_messages")
     
     # Save results
+    average_nodes_convergence = pd.DataFrame(columns=['node', 'avg_conv_time', 
+                                    'std_conv_time', 'avg_in_messages', 'std_in_messages'])
+    average_nodes_convergence = average_nodes_convergence.set_index('node')
     for node in node_analyzers:
         node_analyzers[node].save_df(output_file_path + "_" + str(node) + "_",
                                      pickling=options.pickle)
+        mean = node_analyzers[node].convergence.mean()
+        std = node_analyzers[node].convergence.std()
+        average_nodes_convergence.loc[node] = [mean[0], std[0], mean[1], std[1]]
+
+    average_nodes_convergence.to_csv(output_file_path + "_average_node_convergence.csv", '|')
 
     #Generate the graph
     for node in node_analyzers:
         plt = Plotter(node_analyzers[node])
         out_file = output_file_path + "_" + str(node)
-        plt.signaling_nmessage_probability(out_file + "_signaling_nmessage_prob.pdf")
+        if options.render:
+            plt.signaling_nmessage_probability(out_file + "_signaling_nmessage_prob.pdf")
         # plt.states_stage_boxplot(output_file_path + "_states_boxplot.pdf")
         dot = Digraph(comment='Node Graph')
         graph = plt.get_detailed_fsm_graphviz(dot)

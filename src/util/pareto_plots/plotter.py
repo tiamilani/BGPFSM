@@ -53,9 +53,13 @@ def legends(lns, axes):
     axes[0].legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
               fancybox=True, ncol=2)
 
-def plot_line(x, y, color, label="label", ax=None):
-    l = ax.plot(x, y, color, label=label)
+def plot_line(x, y, color, label="label", ax=None, marker=None):
+    l = ax.plot(x, y, color, label=label, marker=marker)
     return l
+
+def get_axes():
+    fig, ax = plt.subplots()
+    return (fig, ax)
 
 def plot_messages_time_comparison(x, time, messages, title="title", 
                                   output_file_name="mrai_evolution.pdf"):

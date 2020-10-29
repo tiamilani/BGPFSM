@@ -57,9 +57,9 @@ def graph_strategy(func):
         return func(*args, **kwargs)
     return wrapper
 
-def graph_strategyfy(strategy:str, number_of_nodes: int, seed: int = 1234) -> nx.DiGraph:
+def graph_strategyfy(strategy:str, number_of_nodes: int, seed: int = 1234, out_name: str = "graph") -> nx.DiGraph:
     if strategy in graph_strategies:
-        return eval("apply_" + strategy + "_strategy")(number_of_nodes, seed)
+        return eval("apply_" + strategy + "_strategy")(number_of_nodes, seed, out_name)
     else:
         raise ValueError(f"Strategy \"{strategy}\" not available")
 
@@ -85,7 +85,7 @@ def insert_random_destination(G: nx.DiGraph) -> None:
     node = random.choice(reverse_types['C'])
     G.nodes[node]['destinations'] = "100.0.0.0/24"
 
-def plot_original(G: nx.Graph) -> None:
+def plot_original(G: nx.Graph, out_name) -> None:
     pos_dot = nx.nx_agraph.graphviz_layout(G, prog="dot")
     pos_twopi = nx.nx_agraph.graphviz_layout(G, prog="twopi")
     color_map = []
@@ -100,26 +100,26 @@ def plot_original(G: nx.Graph) -> None:
                 color_map.append('purple')
     plt.figure(3,figsize=(12,12))
     nx.draw(G, pos=pos_dot, node_size=150, node_color=color_map, width=0.5)
-    plt.savefig("graph_dot.pdf", format="pdf")
+    plt.savefig(out_name + "_dot.pdf", format="pdf")
     plt.close()
     plt.figure(3,figsize=(12,12))
     nx.draw(G, pos=pos_twopi, node_size=150, node_color=color_map, width=0.5)
-    plt.savefig("graph_twopi.pdf", format="pdf")
+    plt.savefig(out_name + "_twopi.pdf", format="pdf")
     plt.close()
 
 
 @graph_strategy
-def apply_elmokashfi_strategy(number_of_nodes: int, seed: int = 1234) -> nx.DiGraph:
+def apply_elmokashfi_strategy(number_of_nodes: int, seed: int = 1234, out_name: str = "graph") -> nx.DiGraph:
     G = nx.random_internet_as_graph(number_of_nodes, seed)
-    nx.write_graphml(G, "original.graphml")
-    plot_original(G)
+    nx.write_graphml(G, out_name + "_original.graphml")
+    plot_original(G, out_name)
     G = nx.DiGraph(G)
-    insert_random_destination(G)
+    #insert_random_destination(G)
     correct_graph_data(G)
     return G
 
 @graph_strategy
-def apply_clique_strategy(number_of_nodes: int, seed: int = 0) -> nx.DiGraph:
+def apply_clique_strategy(number_of_nodes: int, seed: int = 0, out_name: str = "graph") -> nx.DiGraph:
     G=nx.DiGraph()
     l=[(x, y) for x in range(number_of_nodes) for y in range(number_of_nodes) if x != y]
     G.add_edges_from(l)
@@ -133,8 +133,9 @@ def main():
     options = parser.parse_args()
     
     random.seed(options.seed)
-    G = graph_strategyfy(options.type, options.nodes, options.seed)
-    nx.write_graphml(G, options.out)
+    out_name = options.out.rsplit('.', 1)[0]
+    G = graph_strategyfy(options.type, options.nodes, options.seed, out_name)
+    nx.write_graphml(G, out_name + ".graphml")
 
 if __name__ == "__main__":
     main()
