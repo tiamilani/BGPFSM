@@ -22,3 +22,8 @@ experiment_*.json
 random-l*-mrai-graph_*.graphml
 constant-l*-mrai-graph_*.graphml
 dpc*-l*-mrai-graph_*.graphml
+banded_centrality-*-mrai-graph_*.graphml
+centrality-*-mrai-graph_*.graphml
+reverse_banded_centrality-*-mrai-graph_*.graphml
+reverse_centrality-*-mrai-graph_*.graphml
+reverse_dpc-*-mrai-graph_*.graphml

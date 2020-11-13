@@ -1,20 +1,70 @@
-seq -s ' ' 0 5 60 | ./internet_like-constant-d1.sh
-# seq -s ' ' 0 5 60 | ./internet_like-constant-d2.sh
-# seq -s ' ' 0 5 60 | ./internet_like-constant-d3.sh
-# seq -s ' ' 0 5 60 | ./internet_like-constant-d4.sh
-# seq -s ' ' 0 5 60 | ./internet_like-constant-d5.sh
-# seq -s ' ' 0 5 60 | ./internet_like-constant-d6.sh
-# seq -s ' ' 0 5 60 | ./internet_like-constant-d7.sh
-# seq -s ' ' 0 5 60 | ./internet_like-constant-d8.sh
-# seq -s ' ' 0 5 60 | ./internet_like-constant-d9.sh
-# seq -s ' ' 0 5 60 | ./internet_like-constant-d10.sh
-seq -s ' ' 0 5 60 | ./internet_like-dpc-d1.sh
-# seq -s ' ' 0 5 60 | ./internet_like-dpc-d2.sh
-#seq -s ' ' 0 5 60 | ./internet_like-dpc-d3.sh
-#seq -s ' ' 0 5 60 | ./internet_like-dpc-d4.sh
-#seq -s ' ' 0 5 60 | ./internet_like-dpc-d5.sh
-#seq -s ' ' 0 5 60 | ./internet_like-dpc-d6.sh
-#seq -s ' ' 0 5 60 | ./internet_like-dpc-d7.sh
-#seq -s ' ' 0 5 60 | ./internet_like-dpc-d8.sh
-#seq -s ' ' 0 5 60 | ./internet_like-dpc-d9.sh
-#seq -s ' ' 0 5 60 | ./internet_like-dpc-d10.sh
+seq -s ' ' 0 1 60 | ./internet_like-constant-d1.sh
+seq -s ' ' 0 1 60 | ./internet_like-constant-d2.sh
+seq -s ' ' 0 1 60 | ./internet_like-constant-d3.sh
+seq -s ' ' 0 1 60 | ./internet_like-constant-d4.sh
+seq -s ' ' 0 1 60 | ./internet_like-constant-d5.sh
+seq -s ' ' 0 1 60 | ./internet_like-constant-d6.sh
+seq -s ' ' 0 1 60 | ./internet_like-constant-d7.sh
+seq -s ' ' 0 1 60 | ./internet_like-constant-d8.sh
+seq -s ' ' 0 1 60 | ./internet_like-constant-d9.sh
+seq -s ' ' 0 1 60 | ./internet_like-constant-d10.sh
+seq -s ' ' 0 1 60 | ./internet_like-dpc-d1.sh
+seq -s ' ' 0 1 60 | ./internet_like-dpc-d2.sh
+seq -s ' ' 0 1 60 | ./internet_like-dpc-d3.sh
+seq -s ' ' 0 1 60 | ./internet_like-dpc-d4.sh
+seq -s ' ' 0 1 60 | ./internet_like-dpc-d5.sh
+seq -s ' ' 0 1 60 | ./internet_like-dpc-d6.sh
+seq -s ' ' 0 1 60 | ./internet_like-dpc-d7.sh
+seq -s ' ' 0 1 60 | ./internet_like-dpc-d8.sh
+seq -s ' ' 0 1 60 | ./internet_like-dpc-d9.sh
+seq -s ' ' 0 1 60 | ./internet_like-dpc-d10.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_dpc-d1.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_dpc-d2.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_dpc-d3.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_dpc-d4.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_dpc-d5.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_dpc-d6.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_dpc-d7.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_dpc-d8.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_dpc-d9.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_dpc-d10.sh
+seq -s ' ' 0 1 60 | ./internet_like-centrality-d1.sh
+seq -s ' ' 0 1 60 | ./internet_like-centrality-d2.sh
+seq -s ' ' 0 1 60 | ./internet_like-centrality-d3.sh
+seq -s ' ' 0 1 60 | ./internet_like-centrality-d4.sh
+seq -s ' ' 0 1 60 | ./internet_like-centrality-d5.sh
+seq -s ' ' 0 1 60 | ./internet_like-centrality-d6.sh
+seq -s ' ' 0 1 60 | ./internet_like-centrality-d7.sh
+seq -s ' ' 0 1 60 | ./internet_like-centrality-d8.sh
+seq -s ' ' 0 1 60 | ./internet_like-centrality-d9.sh
+seq -s ' ' 0 1 60 | ./internet_like-centrality-d10.sh
+seq -s ' ' 0 1 60 | ./internet_like-banded_centrality-d1.sh
+seq -s ' ' 0 1 60 | ./internet_like-banded_centrality-d2.sh
+seq -s ' ' 0 1 60 | ./internet_like-banded_centrality-d3.sh
+seq -s ' ' 0 1 60 | ./internet_like-banded_centrality-d4.sh
+seq -s ' ' 0 1 60 | ./internet_like-banded_centrality-d5.sh
+seq -s ' ' 0 1 60 | ./internet_like-banded_centrality-d6.sh
+seq -s ' ' 0 1 60 | ./internet_like-banded_centrality-d7.sh
+seq -s ' ' 0 1 60 | ./internet_like-banded_centrality-d8.sh
+seq -s ' ' 0 1 60 | ./internet_like-banded_centrality-d9.sh
+seq -s ' ' 0 1 60 | ./internet_like-banded_centrality-d10.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_centrality-d1.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_centrality-d2.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_centrality-d3.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_centrality-d4.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_centrality-d5.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_centrality-d6.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_centrality-d7.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_centrality-d8.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_centrality-d9.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_centrality-d10.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_banded_centrality-d1.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_banded_centrality-d2.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_banded_centrality-d3.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_banded_centrality-d4.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_banded_centrality-d5.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_banded_centrality-d6.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_banded_centrality-d7.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_banded_centrality-d8.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_banded_centrality-d9.sh
+seq -s ' ' 0 1 60 | ./internet_like-reverse_banded_centrality-d10.sh

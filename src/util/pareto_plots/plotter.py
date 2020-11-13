@@ -50,8 +50,9 @@ def legends(lns, axes):
         ax.set_position([box.x0, box.y0 + box.height * 0.15,
                          box.width, box.height * 0.9])
     # Put a legend below current axis
-    axes[0].legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+    lgd = axes[0].legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
               fancybox=True, ncol=2)
+    return lgd
 
 def plot_line(x, y, color, label="label", ax=None, marker=None):
     l = ax.plot(x, y, color, label=label, marker=marker)

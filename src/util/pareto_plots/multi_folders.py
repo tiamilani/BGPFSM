@@ -97,21 +97,27 @@ def main():
                     l_list[_type + "_msgs"] = l2
 
     lns = None
-    for l in l_list:
+    l_keys = l_list.keys()
+    l_keys = [x[::-1] for x in l_keys]
+    l_keys = sorted(l_keys)
+    l_keys = [x[::-1] for x in l_keys]
+    for l in l_keys:
         if lns is None:
             lns = l_list[l]
         else:
             lns += l_list[l] 
 
-    plotter.legends(lns, [ax, ax2])
+    lgd = plotter.legends(lns, [ax, ax2])
 
+    ax2.set_yscale("log")
     ax.set_xlabel("MRAI value")
     ax.set_ylabel("Convergence time [s]")
     ax2.set_ylabel("# Packets")
     plt.title("MRAI evolution")
 
     out_name = options.outputFile.rsplit('.', 1)[0]
-    plt.savefig(out_name + "_all.pdf", format="pdf")
+    fig.savefig(out_name + "_all.pdf", format="pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
+    #plt.savefig(out_name + "_all.pdf", format="pdf")
     plt.close()
 
     fig, ax = plotter.get_axes()
@@ -129,7 +135,7 @@ def main():
         tmp_df = tmp_df.dropna()
         tmp_df = tmp_df.groupby(["MRAI"]).mean()
 
-        _type = c1.split('_')[0]
+        _type = c1.rsplit('_', 1)[0]
         l1 = plotter.plot_line(tmp_df.index, tmp_df[c1], types[_type][0],
                                label="Mean Conv. time " + _type, ax=ax,
                                marker = marks[_type][0])
@@ -142,21 +148,27 @@ def main():
             l_list[_type + "_msgs"] = l2
 
     lns = None
-    for l in l_list:
+    l_keys = l_list.keys()
+    l_keys = [x[::-1] for x in l_keys]
+    l_keys = sorted(l_keys)
+    l_keys = [x[::-1] for x in l_keys]
+    for l in l_keys:
         if lns is None:
             lns = l_list[l]
         else:
             lns += l_list[l] 
 
-    plotter.legends(lns, [ax, ax2])
+    lgd = plotter.legends(lns, [ax, ax2])
 
+    ax2.set_yscale("log")
     ax.set_xlabel("MRAI value")
     ax.set_ylabel("Convergence time [s]")
     ax2.set_ylabel("# Packets")
     plt.title("MRAI evolution")
 
     out_name = options.outputFile.rsplit('.', 1)[0]
-    plt.savefig(out_name + "_mean.pdf", format="pdf")
+    fig.savefig(out_name + "_mean.pdf", format="pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
+    #plt.savefig(out_name + "_mean.pdf", format="pdf")
     plt.close()
 
 

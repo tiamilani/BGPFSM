@@ -109,7 +109,7 @@ def main():
                              title="Experiments efficency",
                              output_file_name= out_name+".pdf")
 
-        allowed_types = ["constant", "dpc", "dpc2"]
+        allowed_types = ["constant", "dpc", "dpc2", "reverse_dpcc"]
         if options.mrai_type in allowed_types:
             plotter.plot_messages_time_comparison(df[COLUMNS[1]].values,
                                                   df[COLUMNS[2]].values, df[COLUMNS[3]].values,

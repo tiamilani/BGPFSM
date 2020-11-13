@@ -151,7 +151,7 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
     # Obtain variables
     nodes = options.node
 
-    if nodes[0] == "all":
+    if nodes is not None and nodes[0] == "all":
         first_file = options.inputFile[0]
         df = pd.read_csv(first_file, '|')
         nodes = list(map(str, list(set(df.node.values))))
@@ -235,7 +235,8 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
                 general_study = timeit.default_timer()
 
             general_file_study = file_analyzer.general_file_study()
-            file_analyzer.study_node_convergence(nodes)
+            if nodes is not None and len(nodes) > 0:
+                file_analyzer.study_node_convergence(nodes)
 
             if options.time:
                 print("The general study time has been:", timeit.default_timer() - \

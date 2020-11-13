@@ -35,6 +35,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from analysis import NodeAnalyzer
 from policies import PolicyValue
+from matplotlib.lines import Line2D
 
 class Plotter():
     """
@@ -245,11 +246,15 @@ class NodeConvergencePlotter():
     
     COLUMNS=["avg_conv_time", "std_conv_time", "avg_in_messages", "std_in_messages"]
 
-    def __init__(self, df: pd.DataFrame):
+    def __init__(self, df: pd.DataFrame, centrality: dict):
         self.df = df
+        self.centrality = centrality
 
-    def plot(self, output_file_name) -> None:
-        _max = math.ceil(self.df[NodeConvergencePlotter.COLUMNS[0]].max())
+    def plot(self, output_file_name, limit=0) -> None:
+        if limit > 0:
+            _max = limit
+        else:
+            _max = math.ceil(self.df[NodeConvergencePlotter.COLUMNS[0]].max())
         values=[]
         for i in range(_max+1):
             values.append(len(self.df[self.df[NodeConvergencePlotter.COLUMNS[0]] <= i].index))
@@ -273,3 +278,297 @@ class NodeConvergencePlotter():
         ax.set_ylabel("# Converged nodes")
 
         fig.savefig(output_file_name, format="pdf")
+
+    def plot_centrality_vs_convergence(self, output_file_name, hops, limit=None):
+
+        fig, ax = plt.subplots()
+        ax2 = ax.twinx()
+
+        hops_centrality = [self.centrality[node] for node in hops.keys()]
+        hops_conv_time = [self.df[self.df.node == int(node)].avg_conv_time.values[0] for node in hops.keys()]
+
+        l = ax.plot(hops.keys(), hops_centrality, 'b', label="DPC centrality", zorder = 10, linewidth=0.7)
+        l2 = ax2.plot(hops.keys(), hops_conv_time, 'g', label="Convergence time", zorder = 3, linewidth=0.6)
+        
+        # Set the tick positions
+        ax.set_xticks(list(hops.keys()))
+    
+        actual_dist = 0
+        groups = [[]]
+        for node in hops:
+            if hops[node] > actual_dist:
+                ax.axvline(x=str(node), color='orange', ls='--', zorder=5)
+                actual_dist = hops[node]
+                groups.append([])
+            groups[-1].append(node)
+
+        groups_limits = []
+        for group in groups:
+            groups_limits.append(group[0])
+
+        avg_times = []
+        avg_centr = []
+        for i in range(len(groups_limits)):
+            group_avg_time = self.df[self.df["node"].isin(groups[i])]["avg_conv_time"].mean()
+            avg_times.append(group_avg_time)
+            gr1 = groups_limits[i]
+
+            avg_centrality = 0
+            for node in groups[i]:
+                avg_centrality += self.centrality[node]
+            avg_centrality /= len(groups[i])
+            avg_centr.append(avg_centrality)
+
+            if i == len(groups_limits) -1:
+                ax.hlines(y = avg_centrality, xmin = gr1, xmax = groups[i][-1], color="blue", ls='--', zorder=4)
+                ax2.hlines(y = group_avg_time, xmin = gr1, xmax = groups[i][-1], color="r", ls='--', zorder=4)
+            else:
+                ax.hlines(y = avg_centrality, xmin = gr1, xmax = groups_limits[i+1], color="blue", ls='--', zorder=4)
+                ax2.hlines(y = group_avg_time, xmin = gr1, xmax = groups_limits[i+1], color="r", ls='--', zorder=4)
+
+        custom_lines = [Line2D([0], [0], color="orange", ls = '--', label = "Hop group separator"),
+                        Line2D([0], [0], color="blue", ls = '--', label = "AVG centrality in the group"),
+                        Line2D([0], [0], color="r", ls = '--', label = "AVG convergence time in the group")]
+    
+        lns = l + l2 + custom_lines
+        labs = [l.get_label() for l in lns]
+        # Shrink current axis's height by 10% on the bottom
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.15,
+                         box.width, box.height * 0.9])
+        ax2.set_position([box.x0, box.y0 + box.height * 0.15,
+                         box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        lgd = ax.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                  fancybox=True, ncol=2)
+
+        ax.set_yscale("log")
+        ax.set_ylabel("Centrality normalized (log scale)")
+        ax.set_xlabel("Nodes ordered by the shortest hop distance \n by the source and by centrality")
+        ax2.set_ylabel("Convergence time [s]")
+
+        if limit is not None and limit > 0:
+            ax2.set_ylim(0, limit)
+
+        ax.set_zorder(2)
+        ax2.set_zorder(1)
+        ax.patch.set_visible(False)
+
+        ax.tick_params(
+            axis='x',          # changes apply to the x-axis
+            which='both',      # both major and minor ticks are affected
+            bottom=False,      # ticks along the bottom edge are off
+            top=False,         # ticks along the top edge are off
+            labelbottom=False) # labels along the bottom edge are off
+        ax2.tick_params(
+            axis='x',          # changes apply to the x-axis
+            which='both',      # both major and minor ticks are affected
+            bottom=False,      # ticks along the bottom edge are off
+            top=False,         # ticks along the top edge are off
+            labelbottom=False) # labels along the bottom edge are off
+
+        fig.savefig(output_file_name.rsplit('.', 1)[0] + "_centVStime.pdf", format="pdf",
+                    bbox_extra_artists=(lgd,), bbox_inches='tight')
+
+        plt.close()
+
+        fig, ax = plt.subplots()
+        ax2 = ax.twinx()
+
+        l = ax.plot(range(len(groups)), avg_centr, 'b', label="DPC centrality group trend")
+        l2 = ax2.plot(range(len(groups)), avg_times, 'g', label="Convergence time group trend")
+
+        lns = l + l2
+        labs = [l.get_label() for l in lns]
+        # Shrink current axis's height by 10% on the bottom
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.15,
+                         box.width, box.height * 0.9])
+        ax2.set_position([box.x0, box.y0 + box.height * 0.15,
+                         box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        lgd = ax.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                  fancybox=True, ncol=2)
+
+        # ax.set_yscale("log")
+        ax.set_ylabel("Centrality normalized")
+        ax.set_xlabel("Hop distance groups")
+        ax2.set_ylabel("Convergence time [s]")
+
+        if limit is not None and limit > 0:
+            ax2.set_ylim(0, limit)
+
+        ax.set_zorder(2)
+        ax2.set_zorder(1)
+        ax.patch.set_visible(False)
+
+        fig.savefig(output_file_name.rsplit('.', 1)[0] + "_centVStime_trend.pdf", format="pdf",
+                    bbox_extra_artists=(lgd,), bbox_inches='tight')
+
+        plt.close()
+        
+        return avg_times, avg_centr  
+
+    def plot_centrality_vs_messages(self, output_file_name, hops, limit=None):
+
+        fig, ax = plt.subplots()
+        ax2 = ax.twinx()
+
+        hops_centrality = [self.centrality[node] for node in hops.keys()]
+        hops_conv_time = [self.df[self.df.node == int(node)].avg_in_messages.values[0] for node in hops.keys()]
+
+        l = ax.plot(hops.keys(), hops_centrality, 'b', label="DPC centrality", zorder = 10, linewidth=0.7)
+        l2 = ax2.plot(hops.keys(), hops_conv_time, 'purple', label="# In messages to converge", zorder = 3, linewidth=0.6)
+        
+        # Set the tick positions
+        ax.set_xticks(list(hops.keys()))
+    
+        actual_dist = 0
+        groups = [[]]
+        for node in hops:
+            if hops[node] > actual_dist:
+                ax.axvline(x=str(node), color='orange', ls='--', zorder=5)
+                actual_dist = hops[node]
+                groups.append([])
+            groups[-1].append(node)
+
+        groups_limits = []
+        for group in groups:
+            groups_limits.append(group[0])
+
+        avg_msg = []
+        avg_centr = []
+        for i in range(len(groups_limits)):
+            group_avg_msg = self.df[self.df["node"].isin(groups[i])]["avg_in_messages"].mean()
+            avg_msg.append(group_avg_msg)
+            gr1 = groups_limits[i]
+
+            avg_centrality = 0
+            for node in groups[i]:
+                avg_centrality += self.centrality[node]
+            avg_centrality /= len(groups[i])
+            avg_centr.append(avg_centrality)
+
+            if i == len(groups_limits) -1:
+                ax.hlines(y = avg_centrality, xmin = gr1, xmax = groups[i][-1], color="blue", ls='--', zorder=4)
+                ax2.hlines(y = group_avg_msg, xmin = gr1, xmax = groups[i][-1], color="magenta", ls='--', zorder=4)
+            else:
+                ax.hlines(y = avg_centrality, xmin = gr1, xmax = groups_limits[i+1], color="blue", ls='--', zorder=4)
+                ax2.hlines(y = group_avg_msg, xmin = gr1, xmax = groups_limits[i+1], color="magenta", ls='--', zorder=4)
+
+        custom_lines = [Line2D([0], [0], color="orange", ls = '--', label = "Hop group separator"),
+                        Line2D([0], [0], color="blue", ls = '--', label = "AVG centrality in the group"),
+                        Line2D([0], [0], color="magenta", ls = '--', label = "AVG in messages in the group")]
+    
+        lns = l + l2 + custom_lines
+        labs = [l.get_label() for l in lns]
+        # Shrink current axis's height by 10% on the bottom
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.15,
+                         box.width, box.height * 0.9])
+        ax2.set_position([box.x0, box.y0 + box.height * 0.15,
+                         box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        lgd = ax.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                  fancybox=True, ncol=2)
+
+        ax.set_yscale("log")
+        ax.set_ylabel("Centrality normalized (log scale)")
+        ax.set_xlabel("Nodes ordered by the shortest hop distance \n by the source and by centrality")
+        ax2.set_ylabel("# Input messages necessary to converge")
+
+        if limit is not None and limit > 0:
+            ax2.set_ylim(ax2.get_ylim()[0], limit)
+
+        ax.set_zorder(2)
+        ax2.set_zorder(1)
+        ax.patch.set_visible(False)
+
+        ax.tick_params(
+            axis='x',          # changes apply to the x-axis
+            which='both',      # both major and minor ticks are affected
+            bottom=False,      # ticks along the bottom edge are off
+            top=False,         # ticks along the top edge are off
+            labelbottom=False) # labels along the bottom edge are off
+        ax2.tick_params(
+            axis='x',          # changes apply to the x-axis
+            which='both',      # both major and minor ticks are affected
+            bottom=False,      # ticks along the bottom edge are off
+            top=False,         # ticks along the top edge are off
+            labelbottom=False) # labels along the bottom edge are off
+
+        fig.savefig(output_file_name.rsplit('.', 1)[0] + "_centVSmsg.pdf", format="pdf",
+                    bbox_extra_artists=(lgd,), bbox_inches='tight')
+
+        plt.close()
+
+        fig, ax = plt.subplots()
+        ax2 = ax.twinx()
+
+        l = ax.plot(range(len(groups)), avg_centr, 'b', label="DPC centrality group trend")
+        l2 = ax2.plot(range(len(groups)), avg_msg, 'purple', label="Input messages group trend")
+
+        lns = l + l2
+        labs = [l.get_label() for l in lns]
+        # Shrink current axis's height by 10% on the bottom
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.15,
+                         box.width, box.height * 0.9])
+        ax2.set_position([box.x0, box.y0 + box.height * 0.15,
+                         box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        lgd = ax.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                  fancybox=True, ncol=2)
+
+        # ax.set_yscale("log")
+        ax.set_ylabel("Centrality normalized")
+        ax.set_xlabel("Hop distance groups")
+        ax2.set_ylabel("Input messages to converge")
+
+        if limit is not None and limit > 0:
+            ax2.set_ylim(ax2.get_ylim()[0], limit)
+
+        ax.set_zorder(2)
+        ax2.set_zorder(1)
+        ax.patch.set_visible(False)
+
+        fig.savefig(output_file_name.rsplit('.', 1)[0] + "_centVSmsg_trend.pdf", format="pdf",
+                    bbox_extra_artists=(lgd,), bbox_inches='tight')
+
+        plt.close()
+
+        return avg_msg 
+
+class simple_plotter:
+    
+    def legends(lns, axes):
+        labs = [l.get_label() for l in lns]
+        # Shrink current axis's height by 10% on the bottom
+        box = axes[0].get_position()
+        for ax in axes:
+            ax.set_position([box.x0, box.y0 + box.height * 0.15,
+                             box.width, box.height * 0.9])
+        # Put a legend below current axis
+        lgd = axes[0].legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                  fancybox=True, ncol=2)
+        return lgd
+    
+    def plot_line(x, y, color, label="label", ax=None, marker=None):
+        l = ax.plot(x, y, color, label=label, marker=marker)
+        return l
+    
+    def get_axes():
+        fig, ax = plt.subplots()
+        return (fig, ax)
+
+    def ax_set_labels(ax, ylabel=None,xlabel=None, title=None):
+        if ylabel is not None:
+            ax.set_ylabel(ylabel)
+        if xlabel is not None:
+            ax.set_xlabel(xlabel)
+        if title is not None:
+            ax.set_title(title)

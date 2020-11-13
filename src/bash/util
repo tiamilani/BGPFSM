@@ -1,0 +1,15 @@
+# Create dpc and reverse dpc directories, given the graphs sequence and copy the graphs
+for i in $(seq 0 11); do mkdir dpc-$i; mkdir reverse_dpc-$i; cp graphs/graph-$i* dpc-$i/; cp graphs/graph-$i* reverse_dpc-$i/; done
+
+# for cicle on an different mrai strategies 
+for name in dpc reverse_dpc; do for i in $(seq 0 11); do mkdir different_levels/$name-l$i; cp different_destinations/$name-d$i/internet_like.json different_levels/$name-l$i/; done; done
+
+# Sed in a for
+for name in DPC; do for i in $(seq 0 11); do sed -i "s|$name-d$i|$name-l$i|g" dpc-l$i/internet_like.json; done; done
+
+# Grep around the match
+grep -B 4 "d2"
+
+# Vim, replace -d[0-9]+ with -l<previous number>, \+ means + in regex, \(\) defines a space in the match registered and pasted in the replacement with \1
+%s/-d\([0-9]\+\)/-l\1/g
+

@@ -52,7 +52,7 @@ def mrai_strategy(func):
     Strategy name *must not* include an underscore and the function *must* be
     called "apply_<strategyname>_strategy".
     """
-    mrai_strategies.append(func.__qualname__.split('_')[1])
+    mrai_strategies.append(func.__qualname__.rsplit('_', 1)[0].split('_', 1)[1])
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
@@ -62,7 +62,7 @@ def mrai_strategyfy(strategy:str, G: nx.DiGraph, value: float) -> nx.DiGraph:
     if strategy in mrai_strategies:
         eval("apply_" + strategy + "_strategy")(G, value)
     else:
-        raise ValueError(f"Strategy \"{strategy}\" not available")
+        raise ValueError(f"Strategy \"{strategy}\" not available in {mrai_strategies}")
 
 def set_node_mrai(G, node, mrai):
     for j in nx.neighbors(G, node):
@@ -102,9 +102,9 @@ def apply_dpc_strategy(G: nx.DiGraph, value:float) -> None:
             # Case j is the customer
             if str(e['policy']) == '2, 2, 2':  # we are in phase 3
                 set_node_mrai(G, j, T*cent[j]/2)
-            elif G.nodes[j]['type'] == 'T':  # we are in phase 2
+            elif G.nodes[j]['type'] == 'T':  # we are in phase 1
                 set_node_mrai(G, j, T/2)
-                set_node_mrai(G, j, T*cent[j]/2)
+                # set_node_mrai(G, j, T*cent[j]/2)
             else:  # we are in phase 3
                 set_node_mrai(G, j, T*(2-cent[j])/2)
             visited_nodes.add(j)
@@ -138,11 +138,11 @@ def apply_dpc2_strategy(G: nx.DiGraph, value:float) -> None:
         if j not in visited_nodes:
             e = G.edges[(i,j)]
             # Case j is the customer
-            if str(e['policy']) == '2, 2, 2':  # we are in phase 3
+            if str(e['policy']) == '2, 2, 2':  # we are in phase 1
                 set_node_mrai(G, j, T*cent[j]/2)
             elif G.nodes[j]['type'] == 'T':  # we are in phase 2
                 set_node_mrai(G, j, T/2)
-                set_node_mrai(G, j, T*cent[j]/2)
+                # set_node_mrai(G, j, T*cent[j]/2)
             else:  # we are in phase 3
                 set_node_mrai(G, j, T*(2-cent[j])/2)
             visited_nodes.add(j)
@@ -156,6 +156,88 @@ def apply_dpc2_strategy(G: nx.DiGraph, value:float) -> None:
                 for z in nx.neighbors(G, j):
                     if str(G.edges[(j, z)]['policy']) == '2, 2, 2' and z not in visited_nodes:
                         fifo.add((j, z))
+
+@mrai_strategy
+def apply_reverse_dpc_strategy(G: nx.DiGraph, value:float) -> None:
+    T = value  # max mrai in seconds
+    adv_node = find_adv_node(G)
+    cent = {i[0]: i[1]['centrality'] for i in G.nodes(data=True) }
+    ss = max(cent.values())
+    cent = {i: v/ss for i,v in cent.items()}
+
+    visited_nodes = set()
+    set_node_mrai(G, adv_node, T*cent[adv_node]/2)
+    fifo = set()
+    for j in nx.neighbors(G, adv_node):
+        fifo.add((adv_node, j))
+
+    while len(fifo) > 0:
+        i, j = fifo.pop()
+        if j not in visited_nodes:
+            e = G.edges[(i,j)]
+            # Case j is the customer
+            if str(e['policy']) == '2, 2, 2':  # we are in phase 1
+                set_node_mrai(G, j, T*(2-cent[j])/2)
+            elif G.nodes[j]['type'] == 'T':  # we are in phase 2
+                set_node_mrai(G, j, T/2)
+                # Strange row removed
+            else:  # we are in phase 3
+                set_node_mrai(G, j, T*cent[j]/2)
+            visited_nodes.add(j)
+
+            # Case i is the customer
+            if str(e['policy']) == '0, inf, inf':
+                for z in nx.neighbors(G, j):
+                    if z != i and z not in visited_nodes:
+                        fifo.add((j, z))
+            else:
+                for z in nx.neighbors(G, j):
+                    if str(G.edges[(j, z)]['policy']) == '2, 2, 2' and z not in visited_nodes:
+                        fifo.add((j, z))
+
+@mrai_strategy
+def apply_centrality_strategy(G: nx.DiGraph, value:float) -> None:
+    T = value  # max mrai in seconds
+    adv_node = find_adv_node(G)
+    cent = {i[0]: i[1]['centrality'] for i in G.nodes(data=True) }
+    ss = max(cent.values())
+    cent = {i: v/ss for i,v in cent.items()}
+
+    for node in G.nodes:
+        set_node_mrai(G, node, T*cent[node])
+
+@mrai_strategy
+def apply_banded_centrality_strategy(G: nx.DiGraph, value:float) -> None:
+    T = value  # max mrai in seconds
+    adv_node = find_adv_node(G)
+    cent = {i[0]: i[1]['centrality'] for i in G.nodes(data=True) }
+    ss = max(cent.values())
+    cent = {i: v/ss for i,v in cent.items()}
+
+    for node in G.nodes:
+        set_node_mrai(G, node, T*round(cent[node], 1))
+
+@mrai_strategy
+def apply_reverse_centrality_strategy(G: nx.DiGraph, value:float) -> None:
+    T = value  # max mrai in seconds
+    adv_node = find_adv_node(G)
+    cent = {i[0]: i[1]['centrality'] for i in G.nodes(data=True) }
+    ss = max(cent.values())
+    cent = {i: v/ss for i,v in cent.items()}
+
+    for node in G.nodes:
+        set_node_mrai(G, node, T*(1-cent[node]))
+
+@mrai_strategy
+def apply_reverse_banded_centrality_strategy(G: nx.DiGraph, value:float) -> None:
+    T = value  # max mrai in seconds
+    adv_node = find_adv_node(G)
+    cent = {i[0]: i[1]['centrality'] for i in G.nodes(data=True) }
+    ss = max(cent.values())
+    cent = {i: v/ss for i,v in cent.items()}
+
+    for node in G.nodes:
+        set_node_mrai(G, node, T*(round(cent[node], 1)))
 
 def adapt_to_mean(G, expected_mean):
     mean = 0.0
