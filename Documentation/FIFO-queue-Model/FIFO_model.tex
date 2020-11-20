@@ -1,0 +1,320 @@
+\documentclass[10pt,conference,letterpaper]{IEEEtran}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{silence}\WarningsOff[latexfont]
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+
+\usepackage{graphicx}
+\graphicspath{images/}
+\usepackage{cite}
+\usepackage{url}
+% \usepackage{subfig}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+\SetKwProg{Fn}{Event}{}{}
+\SetKw{And}{and}
+\usepackage[binary-units,per-mode=symbol]{siunitx}
+\sisetup{list-final-separator = {, and },detect-weight=true, detect-family=true}
+\usepackage{booktabs}
+\usepackage{pifont}
+\usepackage{microtype}
+\usepackage{textcomp}
+\usepackage[american]{babel}
+\usepackage[capitalise]{cleveref}
+\def\figname{\csname cref@figure@name\endcsname\xspace}
+\def\tabname{\csname cref@table@name\endcsname\xspace}
+\def\secname{\csname cref@section@name\endcsname\xspace}
+\def\eqpname{\csname cref@equation@name@plural\endcsname\xspace}
+\crefname{algorithm}{Listing}{Lists.}
+\Crefname{algorithm}{Listing}{Listings}
+\SetAlgorithmName{Listing}{Listing}{List of Listings}
+\crefname{lstlisting}{listing}{listings}
+\Crefname{lstlisting}{Listing}{Listings}
+\usepackage{xspace}
+\usepackage{hyphenat}
+\usepackage[draft,inline,nomargin,index]{fixme}
+\fxsetup{theme=color}
+\usepackage{grffile}
+\usepackage{xfrac}
+\usepackage{multirow}
+%\usepackage[para]{footmisc}
+\usepackage[font={small}]{caption}
+
+\usepackage{tikz}
+\usetikzlibrary{calc,shapes,arrows,fit,positioning}
+
+\usepackage{listings}
+\lstset{
+   language=sh,
+   columns=fixed,
+   breaklines=true,
+   breakatwhitespace=true,
+   prebreak=\textbackslash,
+   basicstyle=\ttfamily\small,
+   showstringspaces=false,
+   upquote=true,
+   keywordstyle=\ttfamily\small
+}
+
+\usepackage{color}
+\definecolor{gray}{rgb}{0.4,0.4,0.4}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.6}
+\definecolor{cyan}{rgb}{0.0,0.6,0.6}
+
+
+\lstdefinelanguage{XML}
+{
+  morestring=[b]",
+  morestring=[s]{>}{<},
+  morecomment=[s]{<?}{?>},
+  stringstyle=\color{black},
+  identifierstyle=\color{darkblue},
+  keywordstyle=\color{cyan},
+  morekeywords={xmlns,version,type}% list your attributes here
+}
+
+
+% fix cleveref and breqn
+\makeatletter
+\let\cref@old@eq@setnumberOld\eq@setnumber
+\def\eq@setnumber{%
+\cref@old@eq@setnumberOld%
+\cref@constructprefix{equation}{\cref@result}%
+\protected@xdef\cref@currentlabel{%
+[equation][\arabic{equation}][\cref@result]\p@equation\eq@number}}
+\makeatother
+
+% reduce verbatim font size
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\@verbatim}
+  %%%{\verbatim@font} %% blow up TexMaker formatting ???!!! 
+  {\verbatim@font\small}
+  {}{}
+\makeatother
+
+\RequirePackage{xstring}
+\RequirePackage{xparse}
+\RequirePackage[index=true]{acro}
+\NewDocumentCommand\acrodef{mO{#1}mG{}}{\DeclareAcronym{#1}{short={#2}, long={#3}, #4}}
+\NewDocumentCommand\acused{m}{\acuse{#1}}
+
+
+\acrodef{ADV}{advertisement}
+\acrodef{AS}{Autonomous System}{short-plural=es}
+\acrodef{BGP}{Border Gateway Protocol}
+\acrodef{BIRD}{BGP Internet Routing Daemon}
+\acrodef{DPC}{Destination Partial Centrality}
+\acrodef{eBGP}{Exterior BGP}
+\acrodef{ERP}{Exterior Routing Protocol}
+\acrodef{IoF}{Internet on FIRE}
+\acrodef{IP}{Internet Protocol}
+\acrodef{MRAI}{Minimum Route Advertisement Interval}
+\acrodef{NH}{Next Hop}
+\acrodef{RFC}{Request For Comment} 
+\acrodef{TCP}{Transmission Control Protocol}
+\acrodef{FSM}{Finite State Machine}
+\acrodef{SR}{SemiRings}
+
+\newcommand\useallac{
+\acused{IP}
+\acused{TCP}
+\acused{RFC}
+}
+
+\useallac
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+
+\newcommand{\figwidthfour}{0.78}
+\newcommand{\figwidth}{0.78}
+\newcommand{\figvspace}{-1.5em}
+\newcommand{\update}{\texttt{UPDATE}\xspace}
+\newcommand{\nodeset}{\ensuremath{\mathcal{V}}\xspace}
+\newcommand{\edgeset}{\ensuremath{\mathcal{E}}\xspace}
+\newcommand{\graphg}{\ensuremath{\mathcal{G}}\xspace}
+\newcommand{\graph}{\ensuremath{\mathcal{\graphg(\nodeset,\edgeset)}}\xspace}
+\newcommand{\natpernat}{\ensuremath{\mathcal{\mathbb{N} \times \mathbb{N}}}\xspace}
+
+\newcommand{\semiringset}{\ensuremath{\matchal{S}}\xspace}
+\newcommand{\semiringchoice}{\ensuremath{\matchal{\oplus}}\xspace}
+\newcommand{\semiringfunctions}{\ensuremath{\matchal{F}}\xspace}
+\newcommand{\semiringempty}{\ensuremath{\matchal{\overline{\rm 0}}}\xspace}
+\newcommand{\semiringinvalid}{\ensuremath{\matchal{\overline{\rm \infty}}}\xspace}
+\newcommand{\semiring}{\ensuremath{\mathcal{(\semiringset, \semiringchoice, \semiringfunctions, \semiringempty, \semiringinvalid)}}\xspace}
+\newcommand{\invalidfunction}{\ensuremath{f_\semiringinvalid}\xspace}
+
+\newcommand{\Amatrix}{\ensuremath{\mathcal{A}}\xspace}
+\newcommand{\Amatrixelem}{\ensuremath{\Amatrix_{ij}}\xspace}
+
+\newcommand{\invalidpath}{\ensuremath{\mathcal{\bot}}\xspace}
+\newcommand{\pathset}{\ensuremath{\mathcal{P}}\xspace}
+
+\newcommand{\pathalgebra}[1]{\ensuremath{\mathcal{\mathbb{P}\mathbb{A}(#1)} = (((\semiringset - \{\infty\})
+	\times \pathset) \cup \{\infty^{'}\}, \semiringchoice^{'}, \semiringfunctions^{'}, 
+	(\semiringempty, []), \infty^{'})}\xspace}
+\newcommand{\pathalgebrashort}[1]{\ensuremath{\mathcal{\mathbb{P}\mathbb{A}(#1)}}\xspace}
+
+\newcommand{\concatenation}{\ensuremath{\mathcal{\hat{::}}}\xspace}
+
+\newcommand{\semiringpath}{\ensuremath{\mathcal{(\semiringset, \semiringchoice, \semiringfunctions, \semiringempty, \semiringinvalid, \text{\textit{path}})}}\xspace}
+
+\newcommand{\bufferset}{\ensuremath{\mathcal{B}}\xpsace}
+
+\newcommand{\bufferalgebra}[1]{\ensuremath{\mathcal{\mathbb{B}\mathbb{A}(#1)} = (((\semiringset - \{\infty\})
+	\times \bufferset) \cup \{\infty^{'}\}, \semiringchoice^{'}, \semiringfunctions^{'}, 
+	(\semiringempty, []), \infty^{'})}\xspace}
+\newcommand{\bufferalgebrashort}[1]{\ensuremath{\mathcal{\mathbb{B}\mathbb{A}(#1)}}\xspace}
+\newcommand{\semiringbuffer}{\ensuremath{\mathcal{(\semiringset, \semiringchoice, \semiringfunctions, \semiringempty, \semiringinvalid, \text{\textit{buffer}})}}\xspace}
+
+\newcommand{\setofmatrixes}{\ensuremath{\mathcal{\mathbb{M}}_n(\semiringset)}\xspace}
+
+\newcommand{\sigmaop}[1]{\ensuremath{\mathcal{\sigma}(#1)_{ij}}\xspace}
+
+\newcommand{\highlevelmodel}{\ensuremath{\Gamma_0}\xspace}
+
+\newcommand{\resultmatrix}{\ensuremath{\mathcal{X}}\xspace}
+\newcommand{\currentstatematrix}{\ensuremath{\mathcal{Y}}\xspace}
+\newcommand{\Imatrix}{\ensuremath{\mathcal{I}}\xspace}
+
+\IEEEoverridecommandlockouts
+
+\begin{document}
+
+\title{(draft) FIFO queues Model}
+\author{
+	\IEEEauthorblockN{Mattia Milani\IEEEauthorrefmark{1}}
+    \IEEEauthorblockA{\IEEEauthorrefmark{1}Dept. of Information Engineering and Computer Science, University of Trento, Italy}
+    \texttt{mattia.milani@studenti.unitn.it}
+}
+
+
+\maketitle
+
+\section{Main Idea}
+\label{sec:mainIdea}
+
+Take an already proven model that defines hard-state protocols and implement
+on it FIFO queues on the edges.
+
+This document uses models and demonstration from \cite{AgdaHardStateVectoringRouting}.
+
+This document assumes the knowledge of semirings as \semiring to model routing
+problems.
+
+\section{Goals}
+\label{sec:goals}
+
+The goal of this document is to amplify what demonstrated in \cite{AgdaHardStateVectoringRouting}
+introducing a FIFO queue on the edges.
+
+The second goal of this work is to introduce an asynchoronus formalization of this
+fourth model.
+
+\section{Network}
+\label{sec:network}
+
+A network is represented by a directed graph \graph where \nodeset is a set of
+$n$ nodes $\nodeset=\{0,1, ... , n-1\}$ and \edgeset is a set of arcs.
+A configuration of \graphg with respect to a routing algebra \semiring is a mapping
+from \edgeset to \semiringfunctions.
+
+Such mappings will be represented by an $n \times n$ adjacency matrix \Amatrix where
+$\Amatrixelem \in \semiringfunctions$. 
+
+I assume the constant function $\invalidfunction \in \semiringfunctions$ exists that always returns the invalid
+weight, function used to represent missing edges.
+
+For example we can have the following graph:
+
+\begin{center}
+\begin{tikzpicture}[scale=0.2]
+\tikzstyle{every node}+=[inner sep=0pt]
+\draw [black] (18.3,-25.7) circle (3);
+\draw (18.3,-25.7) node {$0$};
+\draw [black] (35.3,-25.7) circle (3);
+\draw (35.3,-25.7) node {$2$};
+\draw [black] (52,-25.7) circle (3);
+\draw (52,-25.7) node {$4$};
+\draw [black] (35.3,-40.5) circle (3);
+\draw (35.3,-40.5) node {$3$};
+\draw [black] (35.3,-10.8) circle (3);
+\draw (35.3,-10.8) node {$1$};
+\draw [black] (20.56,-23.72) -- (33.04,-12.78);
+\fill [black] (33.04,-12.78) -- (32.11,-12.93) -- (32.77,-13.68);
+\draw (25.28,-17.76) node [above] {$f_{1}$};
+\draw [black] (35.3,-13.8) -- (35.3,-22.7);
+\fill [black] (35.3,-22.7) -- (35.8,-21.9) -- (34.8,-21.9);
+	\draw (34.8,-18.25) node [left] {$f_{3}$};
+\draw [black] (21.3,-25.7) -- (32.3,-25.7);
+\fill [black] (32.3,-25.7) -- (31.5,-25.2) -- (31.5,-26.2);
+	\draw (26.8,-26.2) node [below] {$f_{2}$};
+\draw [black] (38.3,-25.7) -- (49,-25.7);
+\fill [black] (49,-25.7) -- (48.2,-25.2) -- (48.2,-26.2);
+	\draw (43.65,-25.2) node [above] {$f_{4}$};
+\draw [black] (49.75,-27.69) -- (37.55,-38.51);
+\fill [black] (37.55,-38.51) -- (38.48,-38.35) -- (37.81,-37.61);
+	\draw (45.17,-33.59) node [below] {$f_{6}$};
+\draw [black] (35.3,-37.5) -- (35.3,-28.7);
+\fill [black] (35.3,-28.7) -- (34.8,-29.5) -- (35.8,-29.5);
+	\draw (35.8,-33.1) node [right] {$f_{5}$};
+\end{tikzpicture}
+\end{center}
+
+That has as \Amatrix the one in \cref{matrix:simple_graph_edgematrix}
+
+\begin{equation}
+	  \Amatrix=
+	  \left[ {\begin{array}{ccccc}
+		   \invalidfunction & f_{1} & f_{2} & \invalidfunction & \invalidfunction\\
+		   \invalidfunction & \invalidfunction & f_{3} & \invalidfunction & \invalidfunction\\
+		   \invalidfunction & \invalidfunction & \invalidfunction & \invalidfunction & f_{4}\\
+		   \invalidfunction & \invalidfunction & f_{5} & \invalidfunction & \invalidfunction\\
+		   \invalidfunction & \invalidfunction & \invalidfunction & f_{6} & \invalidfunction\\
+	  \end{array} } \right]
+	  \label{matrix:simple_graph_edgematrix}
+\end{equation}
+
+\section{Background}
+\label{sec:background}
+
+Brief recap of the models in \cite{AgdaHardStateVectoringRouting}.
+
+In that document are formalized three new models that amplify what represent the
+basic high level model that is compleatly abstracted from network concepts.
+This model is represented by \highlevelmodel.
+In this model the solution to the routing path problem is given by a matrix \resultmatrix
+where each element $\resultmatrix_{ij}$ represent the best path from $i$ to $j$.
+The solution is computed by iteratively appling the adjacent matrix \Amatrix to
+the actual routing state \currentstatematrix (Every router synchrounously chose
+the best path extension from it's neighbourhood in state \currentstatematrix).
+
+\begin{equation}
+	\highlevelmodel ( \currentstatematrix ) = \Amatrix ( \currentstatematrix) \semiringchoice \Imatrix 
+	\label{eq:highlevelround}
+\end{equation}
+
+\begin{equation}
+	\resultmatrix = \Amatrix ( \resultmatrix ) \semiringchoice \Imatrix 
+	\label{eq:highlevelsolution}
+\end{equation}
+
+\Cref{eq:highlevelsolution} represent the solution to the routing problem using
+the high level model, one single round of the model is defined by \Cref{eq:highlevelround}.
+
+The 
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

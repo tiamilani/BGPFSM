@@ -572,8 +572,8 @@ class ADJ_RIB_out(BaseRib): # pylint: disable=invalid-name, too-many-ancestors
 
         :rtype: str
         """
-        return "ADJ_RIB_out:\n" + super().__str__() + "\nWithdraw List: " \
-               + str([str(self.withdraws[x]) for x in self.withdraws]) + "\n"
+        return "ADJ_RIB_out:\n" + super().__str__() + "Withdraw List: " \
+               + str([[str(route) for route in self.withdraws[x]] for x in self.withdraws]) + "\n"
 
 class BGP_RIB_handler(): # pylint: disable=invalid-name
     """BGP_RIB_handler.

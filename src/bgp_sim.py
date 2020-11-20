@@ -59,6 +59,8 @@ class Sim:
     PAR_VERBOSE = "verbose"
     # Destnations param
     PAR_NETWORK = "destinations"
+    # MRAI_affects_withdraws param
+    PAR_MRAI_WITHDRAW = "MRAI_affects_withdraws"
 
     def __init__(self):
         """__init__
@@ -156,6 +158,9 @@ class Sim:
             if self.PAR_NETWORK in vert[1]:
                 for net in vert[1][self.PAR_NETWORK].split(','):
                     node.add_destination(net, [], None)
+            if self.PAR_MRAI_WITHDRAW in vert[1]:
+                if int(vert[1][self.PAR_MRAI_WITHDRAW]) > 0:
+                    node.mrai_withdraw = True
             sharing_nodes.append(node)
 
         for edge in graph.edges(data=True):

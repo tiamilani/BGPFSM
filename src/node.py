@@ -123,6 +123,8 @@ class Node(Module):
         self.tx_res = simpy.Resource(self._env, capacity=1)
         self.processing_res = simpy.Resource(self._env, capacity=1)
         self.__already_scheduled_decision_process = False
+        # MRAI for withdraws flag
+        self.mrai_withdraw = False
 
     def _print(self, msg: str) -> None:
         """_print.
@@ -353,8 +355,6 @@ class Node(Module):
         # If the packet contains a withdrow it will be evaluated by the
         # Withdraw handler
         if packet.packet_type == Packet.WITHDRAW:
-            # self.withdraw_handler(event, packet)
-            # route = deepcopy(packet.content)
             self.rib_handler.receive_withdraw(route, event)
         if not self.__already_scheduled_decision_process:
             proc_time = self.proc_time.get_value()
@@ -426,6 +426,12 @@ class Node(Module):
                 self.send_msg_to_dst(packet, event, neigh_node)
                 share_flag = True
                 adj_rib_out.remove(route)
+                # TODO check if exists withdraws 
+                if self.implicit_withdraw and adj_rib_out.exists_withdraws(route):
+                    print("I have to remove the existing withdraws")
+                    key = hash(route.addr)
+                    for route in adj_rib_out.get_withdraws(key):
+                        adj_rib_out.remove_from_withdraws(route)
             # Remove the corresponding element in the table
             del adj_rib_out[tmp_route]
         return share_flag
@@ -438,6 +444,7 @@ class Node(Module):
         :type event: Event
         :rtype: bool Returns if something has been shared
         """
+        self._print("Check for withdraws")
         share_flag = False
         neigh = event.obj
         neigh_node = self._neighbors[neigh].node
@@ -451,7 +458,8 @@ class Node(Module):
                     self._print("rib_out transmitting withdraw {}".format(route))
                     self.send_msg_to_dst(packet, event, neigh_node)
                     share_flag = True
-                adj_rib_out.remove_from_withdraws(route)
+                    self._print("Removed route from the list")
+                    adj_rib_out.remove_from_withdraws(route)
             if len(adj_rib_out.get_withdraws(key)) == 0:
                 adj_rib_out.del_withdraws(key)
         return share_flag
@@ -493,7 +501,9 @@ class Node(Module):
         link = self._neighbors[node_id]
         # Look if there is something to propagate
         # Send advertisement or withdraw and evaluate if something changed
-        w_result = self.__evaluate_withdraw_rib_out(event)
+        w_result = False
+        if not self.mrai_withdraw:
+            w_result = self.__evaluate_withdraw_rib_out(event)
         a_result = self.__evaluate_advertisement_rib_out(event)
         # If nothing has been shared reset the flag
         # Otherwise wait for another timer cicle
@@ -532,8 +542,14 @@ class Node(Module):
         self.rib_handler.decision_process()
         # Evaluate the routing table
         self.__evaluate_routing_table()
+        print(self.rib_handler)
         for neigh in self._neighbors:
             link = self._neighbors[neigh]
+            # TODO if the nodes is enable check here for possible withdraws
+            if self.mrai_withdraw:
+                tmp_mrai_event = Event(0, event.event_cause, Events.MRAI, self, self,
+                                   obj=neigh)
+                self.__evaluate_withdraw_rib_out(tmp_mrai_event)
             # Require an MRAI execution if there isn't one already triggered
             if not link.mrai_state:
                 mrai_time = link.mrai
