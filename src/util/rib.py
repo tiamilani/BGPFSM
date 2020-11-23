@@ -628,7 +628,10 @@ class BGP_RIB_handler(): # pylint: disable=invalid-name
         :rtype: None
         """
         if event is not None:
-            rib_change_event = Event(0, event.id, Events.RIB_CHANGE,
+            val = event.event_cause
+            if event.event_cause is None:
+                val = event.id
+            rib_change_event = Event(0, val, Events.RIB_CHANGE,
                                      None, None, obj=self.local_state)
         else:
             rib_change_event = Event(0, None, Events.RIB_CHANGE,

@@ -110,6 +110,21 @@ class Log:
                                             Events.RIB_CHANGE,
                                             self.sim.env.now, node_id, event.obj))
 
+    def log_start_packet_tx(self, node, event):
+        """
+        Logs a packet tx.
+        :param node: source node
+        :param packet: the packet to log
+        """
+        if self.log_packets:
+            self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id,
+                                                event.event_cause if event.event_cause is not None \
+                                                        else -1,
+                                                Events.START_TX,
+                                                self.sim.env.now,
+                                                node.id,
+                                                event.obj))
+
     def log_packet_tx(self, node, event):
         """
         Logs a packet tx.

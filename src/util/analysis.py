@@ -517,7 +517,6 @@ class NodeAnalyzer():
                                         events_before[NodeAnalyzer.EVALUATION_COLUMNS[5]]):
             # If the event is a change in the state, I update the local
             # variable that keeps the state
-            # TODO search for the rib changes caused by the reception instead of this
             if row_event == Events.RIB_CHANGE:
                 if rx_value is not None:
                     if new_state is None:

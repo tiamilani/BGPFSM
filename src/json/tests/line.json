@@ -17,7 +17,7 @@
 		// Implicit withdraw of routes
 		"implicit_withdraw": "True",
 		// Withdraw signaling 
-		"withdraw": "False",
+		"withdraw": "True",
 		// Reannouncement of a destination after a withdraw
 		"reannouncement": "False",
 		// Withdraw interval distribution from the announcement

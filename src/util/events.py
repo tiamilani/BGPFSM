@@ -29,8 +29,8 @@ class Events: # pylint: disable=too-few-public-methods
     Defines event types for the simulation
     """
 
-    # Change state event
-    STATE_CHANGE = 0
+    # process event
+    PROCESS = 0
     # Transmission event
     TX = 1
     # Reception event
@@ -53,3 +53,13 @@ class Events: # pylint: disable=too-few-public-methods
     REMOVE_NETWORKS = 10
     # MRAI timer events
     MRAI = 11
+    # start receptio event
+    START_RX = 12
+    # Start pkt evaluation
+    START_PKT_EVAL = 13
+    # End pkt evaluation
+    END_PKT_EVAL = 14
+    # Start tx event
+    START_TX = 15
+    # Start update send process
+    START_UPDATE_SEND_PROCESS = 16

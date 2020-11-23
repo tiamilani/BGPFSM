@@ -136,6 +136,15 @@ class Event:
         """
         return self._obj
 
+    @obj.setter
+    def obj(self, obj):
+        """
+        set the object attached to the event
+
+        :param obj: object to set
+        """
+        self._obj = obj
+
     @property
     def sent_time(self):
         """

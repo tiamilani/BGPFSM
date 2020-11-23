@@ -250,18 +250,21 @@ class Node(Module):
         :rtype: None
         """
         waiting_time = event.event_duration
-        # Waiting for the reception
+        # Waiting for the event to be triggered
         yield self._env.timeout(waiting_time)
 
         # Reintroduce each network
+        # TODO don't introduce all the networks at the same time, make them an event
         for network, dst_event in self._destinations:
             self.new_network(network, dst_event)
 
         # Evaluate the networks
-        proc_time = self.proc_time.get_value()
-        decision_process = Event(proc_time, event.id, Events.UPDATE_SEND_PROCESS,
-                              self, self, obj=None)
-        self.event_store.put(decision_process)
+        if not self.__already_scheduled_decision_process:
+            proc_time = self.proc_time.get_value()
+            decision_process = Event(proc_time, event.id, Events.START_UPDATE_SEND_PROCESS,
+                                  self, self, obj=None)
+            self.event_store.put(decision_process)
+            self.__already_scheduled_decision_process = True
 
         # If the configuration permits it then schedule the withdraw of the routes
         if not self.signaling and self.withdraw:
@@ -285,14 +288,17 @@ class Node(Module):
         yield self._env.timeout(waiting_time)
 
         # Remove each network previously shared
+        # TODO don't remove all the network at the same moment, make them an event
         for network, dst_event in self._destinations:
             self.remove_network(network, dst_event)
 
         # Schedule an evaluation
-        proc_time = self.proc_time.get_value()
-        decision_process = Event(proc_time, event.id, Events.UPDATE_SEND_PROCESS,
-                              self, self, obj=None)
-        self.event_store.put(decision_process)
+        if not self.__already_scheduled_decision_process:
+            proc_time = self.proc_time.get_value()
+            decision_process = Event(proc_time, event.id, Events.START_UPDATE_SEND_PROCESS,
+                                  self, self, obj=None)
+            self.event_store.put(decision_process)
+            self.__already_scheduled_decision_process = True
 
         # If configured to do so reannounce the destinations
         if not self.signaling and self.reannounce:
@@ -323,12 +329,12 @@ class Node(Module):
         intro_event = Event(0, None, Events.DST_ADD, self, self)
         self._destinations.append((new_route, intro_event))
 
-    def change_state(self, waiting_time):
+    def change_state(self, new_state: int):
         """change_state.
             Change the state of a node, test function
         """
-        yield self._env.timeout(waiting_time)
-        self._state = Node.STATE_CHANGING
+        self._print("Change state {} -> {}".format(self._state, new_state))
+        self._state = new_state
         self.logger.log_state(self)
 
     def rx_pkt(self, event):
@@ -337,15 +343,61 @@ class Node(Module):
 
         :param event: receiving event that triggered the reception
         """
-        packet = event.obj
         waiting_time = event.event_duration
         # Waiting for the reception
         request = self.processing_res.request()
-        yield request 
-        yield self._env.timeout(waiting_time) 
+        yield self._env.timeout(waiting_time) & request
         # Log the reception
-        self._print("Packet_RX: " + str(packet))
+        self._print("Start packet reception")
+        
+        data_rate = self.rate.get_value()
+        end_rx = Event(data_rate, event.event_cause, Events.RX, self, self, 
+                       obj=(request, event.obj))
+        self.event_store.put(end_rx)
+
+    def end_rx_pkt(self, event: Event) -> None:
+        request = event.obj[0]
+        packet = event.obj[1]
+        event.obj = packet
+        waiting_time = event.event_duration
+        yield self._env.timeout(waiting_time)
+
+        # Log the end of the reception
+        self._print("End packet reception: {}".format(packet))
         self.logger.log_packet_rx(self, event)
+
+        proc_time = self.proc_time.get_value()
+        start_pkt_evaluation = Event(proc_time, event.id, Events.START_PKT_EVAL,
+                                     self, self, obj=packet)
+        self.event_store.put(start_pkt_evaluation)
+
+        # Release the resource
+        self.processing_res.release(request)
+
+    def start_pkt_eval(self, event: Event) -> None:
+        waiting_time = event.event_duration
+        # Waiting for the reception
+        request = self.processing_res.request()
+        yield self._env.timeout(waiting_time) & request
+
+        self._print("Start pkt evalution {}".format(event.obj))
+        self._print("Packet evaluation event {} caused by: {}".format(event.id, event.event_cause))
+
+        # Schedule the end of the evaluation
+        proc_time = self.proc_time.get_value()
+        end_pkt_evaluation = Event(proc_time, event.event_cause, Events.END_PKT_EVAL,
+                                   self, self, obj=(request, event.obj))
+        self.event_store.put(end_pkt_evaluation)
+
+    def end_pkt_eval(self, event: Event) -> None:
+        request = event.obj[0]
+        packet = event.obj[1]
+        waiting_time = event.event_duration
+        yield self._env.timeout(waiting_time)
+
+        self._print("End pkt evaluation: {}".format(packet))
+        self._print("Packet evaluation event {} caused by: {}".format(event.id, event.event_cause))
+
         # Get the route
         route = packet.content
         route.mine = False
@@ -356,17 +408,19 @@ class Node(Module):
         # Withdraw handler
         if packet.packet_type == Packet.WITHDRAW:
             self.rib_handler.receive_withdraw(route, event)
+
         if not self.__already_scheduled_decision_process:
             proc_time = self.proc_time.get_value()
-            decision_process = Event(proc_time, event.id, Events.UPDATE_SEND_PROCESS,
+            decision_process = Event(proc_time, event.event_cause, Events.START_UPDATE_SEND_PROCESS,
                                   self, self, obj=None)
             self.event_store.put(decision_process)
             self.__already_scheduled_decision_process = True
+
         # Release the resource
-        wait = self.proc_time.get_value()
-        yield self._env.timeout(wait)
         self.processing_res.release(request)
 
+
+    # TODO split it in start_tx and end_tx
     def tx_pkt(self, event):
         """
         tx_pkt.
@@ -377,13 +431,30 @@ class Node(Module):
         # to avoid the transmission of messages in reverse order
         # Evaluation of the time necessary for the transmission
         waiting_time = event.event_duration
-        request = self.tx_res.request()
+        request = self.processing_res.request()
         yield self._env.timeout(waiting_time) & request
+
+        self._print("Start TX packet: {}".format(event.obj))
+        # Log the transmission
+        self.logger.log_start_packet_tx(self, event)
+
+        data_rate = self.rate.get_value()
+        end_tx = Event(data_rate, event.event_cause, Events.TX, self, event.destination, 
+                       obj=(request, event.obj))
+        self.event_store.put(end_tx)
+
+    def end_tx_pkt(self, event: Event) -> None:
+        request = event.obj[0]
+        packet = event.obj[1]
         dst = event.destination
-        packet = event.obj
+        event.obj = packet
+        waiting_time = event.event_duration
+        yield self._env.timeout(waiting_time)
+
         # Get the link that will handle the transmission
         link = self._neighbors[dst.id]
-        self._print("Packet_TX: " + str(packet))
+        self._print("End TX packet: {}".format(packet))
+
         # Evaluate the delay necessary for the transfer
         if link.delay is not None:
             delay = link.delay.get_value()
@@ -391,15 +462,13 @@ class Node(Module):
             delay = self.delay.get_value()
         # Generate the reception event and pass it to the link
         evaluation = self.proc_time.get_value()
-        reception_event = Event(evaluation, event.id, Events.RX, self, dst,
+        reception_event = Event(evaluation, event.id, Events.START_RX, self, dst,
                                 obj=packet, sent_time=self._env.now)
         link.tx(reception_event, delay)
         # Log the transmission
         self.logger.log_packet_tx(self, event)
         # Release the resource
-        wait = self.proc_time.get_value()
-        yield self._env.timeout(wait)
-        self.tx_res.release(request)
+        self.processing_res.release(request)
 
     def __evaluate_advertisement_rib_out(self, event: Event) -> bool:
         """evaluate_advertisement_rib_out.
@@ -496,7 +565,7 @@ class Node(Module):
         waiting_time = event.event_duration
         yield self._env.timeout(waiting_time)
         self.logger.mrai_cicle(self, event)
-        self._print("MRAI cicle ended, now is time to check")
+        self._print("MRAI cicle ended, now is time to check if there is something to send")
         node_id = event.obj
         link = self._neighbors[node_id]
         # Look if there is something to propagate
@@ -519,7 +588,7 @@ class Node(Module):
                                obj=node_id)
             self.event_store.put(mrai_event)
         else:
-            self._print("Nothing has been sent, so I deactivate MRAI")
+            self._print("Nothing to send")
             link.mrai_not_active()
 
     def update_send_process(self, event: Event) -> None:
@@ -534,21 +603,36 @@ class Node(Module):
         """
         waiting_time = event.event_duration
         request = self.processing_res.request()
-        yield request 
-        yield self._env.timeout(waiting_time)
+        yield self._env.timeout(waiting_time) & request
         self.__already_scheduled_decision_process = False
+
         # Execute the decision process
-        self._print("Decision process execution")
+        self._print("Start decision process execution")
+
+        data_rate = self.proc_time.get_value()
+        end_update_send_process = Event(data_rate, event.event_cause, 
+                                        Events.UPDATE_SEND_PROCESS, self, event.destination, 
+                                        obj=(request, event.obj))
+        self.event_store.put(end_update_send_process)
+
+    def end_update_send_process(self, event: Event) -> None:
+        request = event.obj[0]
+        event.obj = event.obj[1]
+        waiting_time = event.event_duration
+        yield self._env.timeout(waiting_time)
+
+        self._print("Decision process terminated")
+
+        # Evaluate the rib process
         self.rib_handler.decision_process()
         # Evaluate the routing table
         self.__evaluate_routing_table()
-        print(self.rib_handler)
         for neigh in self._neighbors:
             link = self._neighbors[neigh]
-            # TODO if the nodes is enable check here for possible withdraws
             if self.mrai_withdraw:
-                tmp_mrai_event = Event(0, event.event_cause, Events.MRAI, self, self,
-                                   obj=neigh)
+                proc_time = self.proc_time.get_value()
+                tmp_mrai_event = Event(proc_time, event.event_cause, Events.MRAI, self, self,
+                                       obj=neigh)
                 self.__evaluate_withdraw_rib_out(tmp_mrai_event)
             # Require an MRAI execution if there isn't one already triggered
             if not link.mrai_state:
@@ -556,9 +640,7 @@ class Node(Module):
                 mrai_event = Event(mrai_time, event.event_cause, Events.MRAI, self, self,
                                    obj=neigh)
                 self.event_store.put(mrai_event)
-        # Release the resource
-        wait = self.proc_time.get_value()
-        yield self._env.timeout(wait)
+
         self.processing_res.release(request)
 
     def send_msg_to_dst(self, packet: Packet, event: Event, dst_node) -> None:
@@ -593,10 +675,10 @@ class Node(Module):
                          of the route")
             return
 
-        packet_time = self.rate.get_value()
+        packet_time = self.proc_time.get_value()
 
         transmission_event = Event(packet_time, event.id,
-                                   Events.TX, self, dst_node,
+                                   Events.START_TX, self, dst_node,
                                    obj=packet)
         self.event_store.put(transmission_event)
 
@@ -640,20 +722,30 @@ class Node(Module):
             # Pop the event
             event = yield self.event_store.get()
             # Check if the event is known
-            if event.event_type == Events.TX:
+            if event.event_type == Events.START_TX:
                 self._env.process(self.tx_pkt(event))
-            elif event.event_type == Events.RX:
+            elif event.event_type == Events.TX:
+                self._env.process(self.end_tx_pkt(event))
+            elif event.event_type == Events.START_RX:
                 self._env.process(self.rx_pkt(event))
+            elif event.event_type == Events.RX:
+                self._env.process(self.end_rx_pkt(event))
             elif event.event_type == Events.REANNOUNCE:
                 self._env.process(self.reannounce_handler(event))
-            elif event.event_type == Events.UPDATE_SEND_PROCESS:
+            elif event.event_type == Events.START_UPDATE_SEND_PROCESS:
                 self._env.process(self.update_send_process(event))
+            elif event.event_type == Events.UPDATE_SEND_PROCESS:
+                self._env.process(self.end_update_send_process(event))
             elif event.event_type == Events.INTRODUCE_NETWORKS:
                 self._env.process(self.share_destinations(event))
             elif event.event_type == Events.REMOVE_NETWORKS:
                 self._env.process(self.remove_destinations(event))
             elif event.event_type == Events.MRAI:
                 self._env.process(self.mrai_waiting(event))
+            elif event.event_type == Events.START_PKT_EVAL:
+                self._env.process(self.start_pkt_eval(event))
+            elif event.event_type == Events.END_PKT_EVAL:
+                self._env.process(self.end_pkt_eval(event))
             else:
                 raise ValueError("{} is not a valid event type".format(event.event_type))
             # Delete the processed event
