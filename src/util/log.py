@@ -41,7 +41,8 @@ class Log:
     """
 
     def __init__(self, output_file, log_routing_change=True, log_rib_change=True, # pylint: disable=too-many-arguments
-            log_packets=False, log_paths=False, log_states=False, log_mrai=True):
+            log_packets=False, log_paths=False, log_states=False, log_mrai=True,
+            log_rfd = True):
         """
         Constructor.
         :param output_file: output file name. will be overwritten if already
@@ -60,6 +61,7 @@ class Log:
         self.log_paths = log_paths
         self.log_rib = log_rib_change
         self.log_mrai = log_mrai
+        self.log_rfd = log_rfd
 
     def __delete__(self, instance):
         self.log_file.close()
@@ -151,6 +153,46 @@ class Log:
                                                 event.event_cause if event.event_cause is not None \
                                                         else -1,
                                                 Events.RX,
+                                                self.sim.env.now,
+                                                node.id,
+                                                event.obj))
+
+    def log_figure_of_merit(self, node, event):
+        if self.log_rfd:
+            self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id,
+                                                event.event_cause if event.event_cause is not None \
+                                                        else -1,
+                                                Events.FIGURE_OF_MERIT_VARIATION,
+                                                self.sim.env.now,
+                                                node.id,
+                                                event.obj))
+
+    def log_route_reusable(self, node, event):
+        if self.log_rfd:
+            self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id,
+                                                event.event_cause if event.event_cause is not None \
+                                                        else -1,
+                                                Events.ROUTE_REUSABLE,
+                                                self.sim.env.now,
+                                                node.id,
+                                                event.obj))
+
+    def log_t_hold_expiration(self, node, event):
+        if self.log_rfd:
+            self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id,
+                                                event.event_cause if event.event_cause is not None \
+                                                        else -1,
+                                                Events.END_T_HOLD,
+                                                self.sim.env.now,
+                                                node.id,
+                                                event.obj))
+
+    def log_route_suppressed(self, node, event):
+        if self.log_rfd:
+            self.log_file.write("{}|{}|{}|{}|{}|{}\n".format(event.id,
+                                                event.event_cause if event.event_cause is not None \
+                                                        else -1,
+                                                Events.ROUTE_SUPPRESSED,
                                                 self.sim.env.now,
                                                 node.id,
                                                 event.obj))

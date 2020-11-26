@@ -38,6 +38,7 @@ from singleton import Singleton
 from link import Link
 from log import Log
 from node import Node
+from RFD import RFD_2438
 
 
 @Singleton
@@ -61,6 +62,8 @@ class Sim:
     PAR_NETWORK = "destinations"
     # MRAI_affects_withdraws param
     PAR_MRAI_WITHDRAW = "MRAI_affects_withdraws"
+    # RFD param
+    PAR_RFD = "RFD"
 
     def __init__(self):
         """__init__
@@ -158,10 +161,13 @@ class Sim:
             if self.PAR_NETWORK in vert[1]:
                 for net in vert[1][self.PAR_NETWORK].split(','):
                     node.add_destination(net, [], None)
+                sharing_nodes.append(node)
             if self.PAR_MRAI_WITHDRAW in vert[1]:
                 if int(vert[1][self.PAR_MRAI_WITHDRAW]) > 0:
                     node.mrai_withdraw = True
-            sharing_nodes.append(node)
+            if self.PAR_RFD in vert[1]:
+                rfd = RFD_2438(vert[1][self.PAR_RFD])
+                node.rfd = rfd
 
         for edge in graph.edges(data=True):
             link_res = simpy.Resource(self._env, capacity=1)

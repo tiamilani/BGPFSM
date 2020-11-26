@@ -63,3 +63,11 @@ class Events: # pylint: disable=too-few-public-methods
     START_TX = 15
     # Start update send process
     START_UPDATE_SEND_PROCESS = 16
+    # Route reusable event
+    ROUTE_REUSABLE = 17
+    # T-hold endup event
+    END_T_HOLD = 18
+    # Figure of merit changed
+    FIGURE_OF_MERIT_VARIATION = 19
+    # Route suppressed event
+    ROUTE_SUPPRESSED = 20

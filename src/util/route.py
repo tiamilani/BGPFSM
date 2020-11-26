@@ -57,6 +57,16 @@ class Route():
 
         self._mine = mine
         self._policy_value = policy_value
+        
+        # RFD parameters
+        self._figure_of_merit = 0
+        self._last_time_updated = None
+        self._usable = True
+        self._reachable = True
+        self._reusable_event = None
+        self._flaps = 0
+        self._first_suppressed_time = None
+        self._t_hold_event = None
 
     @classmethod
     def fromString(cls, string: str): # pylint: disable=invalid-name
@@ -125,6 +135,106 @@ class Route():
         :type value: PolicyValue
         """
         self._policy_value = value
+
+    @property
+    def figure_of_merit(self) -> int:
+        """figure of merit.
+        :return: the actual figure of merit of the route
+        """
+        return self._figure_of_merit
+
+    @figure_of_merit.setter
+    def figure_of_merit(self, value: int) -> None:
+        """figure of merit.
+
+        :param value: New figure of merit value
+        :type value: int
+        :return: None
+        """
+        self._figure_of_merit = value
+
+    @property
+    def last_time_updated(self) -> float:
+        """last_time_updated
+        :return: the time of the last update received for this route
+        """
+        return self._last_time_updated
+
+    @last_time_updated.setter
+    def last_time_updated(self, value: float) -> None:
+        """last_time_updated.
+
+        :param value: Value of the last time has been updated to set
+        :type value: float 
+        :return: None
+        """
+        self._last_time_updated = value
+
+    @property
+    def usable(self) -> bool:
+        """usable
+        :return: if the route is usable
+        """
+        return self._usable
+
+    @usable.setter
+    def usable(self, value: bool) -> None:
+        """usable.
+
+        :param value: new usable value
+        :type value: bool 
+        :return: None
+        """
+        self._usable = value
+
+    @property
+    def reachable(self) -> bool:
+        """usable
+        :return: if the route is reachable 
+        """
+        return self._reachable
+
+    @reachable.setter
+    def reachable(self, value: bool) -> None:
+        """reachable.
+
+        :param value: new reachable value
+        :type value: bool 
+        :return: None
+        """
+        self._reachable = value
+
+    @property
+    def reusable_event(self):
+        return self._reusable_event
+
+    @reusable_event.setter
+    def reusable_event(self, value) -> None:
+        self._reusable_event= value
+
+    @property
+    def flaps(self):
+        return self._flaps
+
+    @flaps.setter
+    def flaps(self, value) -> None:
+        self._flaps = value
+
+    @property
+    def first_suppressed_time(self):
+        return self._first_suppressed_time
+
+    @first_suppressed_time.setter
+    def first_suppressed_time(self, value) -> None:
+        self._first_suppressed_time = value
+
+    @property
+    def t_hold_event(self):
+        return self._t_hold_event
+
+    @t_hold_event.setter
+    def t_hold_event(self, value) -> None:
+        self._t_hold_event = value
 
     @property
     def mine(self):

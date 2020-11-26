@@ -432,6 +432,100 @@ class LOC_rib(BaseRib): # pylint: disable=invalid-name, too-many-ancestors
         """
         return "LOC_rib:\n" + super().__str__()
 
+class HISTORY_rib(BaseRib): # pylint: disable=invalid-name, too-many-ancestors
+    """LOC_rib.
+    Class used to controll the route history implementation.
+    used for RFD purposes
+    """
+
+
+    def __init__(self, node_id: str):
+        """__init__.
+
+        :param node_id: Id of the node that controls this LOC rib
+        :type node_id: str
+        """
+        BaseRib.__init__(self)
+        self.node_id = node_id
+
+    def __getitem__(self, i: Route) -> Route:
+        """__getitem__.
+        Returns the first item in the list of objects of this RIB.
+
+        :param i: Route which ipaddress will be used for the lookup
+        :type i: Route
+        :rtype: Route
+        :raise: KeyError
+        """
+        i = hash(str(i.addr) + str(i.nh))
+        if i in self._destinations:
+            return self._destinations[i][0]
+        raise KeyError("{} key not found in the RIB".format(i))
+
+    def insert(self, v: Route) -> BaseRib.insertion_response:
+        """insert.
+        Insertion function for the HISTORY-rib
+        This insertion function will delete the previous item that was
+        previously saved at that address in the rib.
+        The the passed route will be inserted.
+        If the Route has already been in the loc rib it wont be inserted
+        and the function will return None
+
+        :param v: Route to introduce
+        :type v: Route
+        :rtype: BaseRib.insertion_response See the rib insertion function
+        to see the possible value
+        """
+        i = hash(str(v.addr) + str(v.nh))
+        if i in self._destinations:
+            del self._destinations[i]
+
+        if i not in self._destinations:
+            self._destinations[i] = [v]
+        elif v not in self._destinations[i]:
+            self._destinations[i].append(v)
+        else:
+            # If it was not possible to enter the path then return None
+            return None
+        return v
+
+    def exists(self, v: Route) -> bool:
+        i = hash(str(v.addr) + str(v.nh))
+        return i in self._destinations
+        
+    def remove(self, v: Route): # pylint: disable=arguments-differ, undefined-variable
+        """remove.
+        Remove a single route from the dictionary
+
+        :param v: Route to remove
+        :type v: Route
+        :rtype: insertion_response, None if the route has been removed, the route
+        itself otherwise
+
+        :raise: KeyError if the destination address is not in the dictionary
+        """
+        i = hash(str(v.addr) + str(v.nh))
+        if i not in self._destinations:
+            raise KeyError("{} key not found in the history RIB".format(i))
+        if v in self._destinations[i]:
+            self._destinations[i].remove(v)
+            if len(self._destinations[i]) == 0:
+                del self._destinations[i]
+            return None
+        return v
+
+    def __str__(self) -> str:
+        """__str__.
+        Returns the LOC_rib in a human readable format
+
+        :rtype: str
+        """
+        dest_table = sorted(self._destinations)
+        res = "HISTORY_rib:\n"
+        for route in dest_table:
+            res += str([str(x) + ", " + str(x.last_time_updated) for x in self._destinations[route]]) + "\n"
+        return res
+
 class ADJ_RIB_out(BaseRib): # pylint: disable=invalid-name, too-many-ancestors
     """ADJ_RIB_out.
     Class used to controll an ADJ_RIB_out object
@@ -601,6 +695,7 @@ class BGP_RIB_handler(): # pylint: disable=invalid-name
         self.logger = logger
         self.adj_rib_in = ADJ_RIB_in(self.node_id, implicit_withdraw)
         self.loc_rib = LOC_rib(self.node_id)
+        self.history_rib = HISTORY_rib(self.node_id)
         self.nodes_rib_out = {}
         self.rib_knowledge = {}
         self.local_state = set()
@@ -682,7 +777,7 @@ class BGP_RIB_handler(): # pylint: disable=invalid-name
         The route will be inserted in the ADJ-RIB-in.
         If the result is positive the local state will be updated and the event
         will be registered.
-        It is also possible to substitute the knowledge when the route substitute
+        It is also p lossible to substitute the knowledge when the route substitute
         another route in the ADJ-RIB-in
 
         :param a_route: Route to insert
