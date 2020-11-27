@@ -236,6 +236,106 @@ class GeneralPlotter():
         plt.savefig(output_file_name, format="pdf")
         plt.close()
 
+class RFDPlotter():
+    """
+    RFDPlotter
+    ----------
+
+    Class used to plot data from the RFD history
+    """
+
+    COLUMNS = ["id", "time", "route", "figure_of_merit", "suppressed"]
+
+    def __init__(self, rfd_df: pd.DataFrame):
+        self.rfd_df = rfd_df
+
+    def line_evolution(self, output_file_name):
+        _id_levels = set(self.rfd_df.id.values)
+        r = 1
+        for _id in _id_levels:
+
+            #route_evolution = self.rfd_df.loc[(self.rfd_df.index.get_level_values(RFDPlotter.COLUMNS[0]) == _id)]
+            #route = route_evolution.head(1)[RFDPlotter.COLUMNS[2]].values[0]
+
+            #route_evolution = route_evolution.astype({str(RFDPlotter.COLUMNS[4]): str})
+            #route_evolution[RFDPlotter.COLUMNS[4]] = route_evolution[RFDPlotter.COLUMNS[4]].map({'False': 'blue', 'True': 'red'}) 
+
+            #route_evolution['change'] = route_evolution.suppressed.ne(route_evolution.suppressed.shift().bfill()).astype(int)
+            #route_evolution['subgroup'] = route_evolution['change'].cumsum()
+            #route_evolution = route_evolution.reset_index()
+
+            #route_evolution.index += route_evolution['subgroup'].values
+            #first_i_of_each_group = route_evolution[route_evolution['change'] == 1].index
+
+            #for i in first_i_of_each_group:
+            #    # Copy next group's first row to current group's last row
+            #    route_evolution.loc[i-1] = route_evolution.loc[i]
+            #    # But make this new row part of the current group
+            #    route_evolution.loc[i-1, 'subgroup'] = route_evolution.loc[i-2, 'subgroup']
+            #    route_evolution.loc[i-1, 'time'] = route_evolution.loc[i-2, 'time']
+            ## Don't need the change col anymore
+            #route_evolution.drop('change', axis=1, inplace=True)
+            #route_evolution.sort_index(inplace=True)
+            ## Create duplicate indexes at each subgroup border to ensure the plot is continuous.
+            #route_evolution.index -= route_evolution['subgroup'].values
+
+            #fig, ax = plt.subplots()
+            #for k, g in route_evolution.groupby('time'):
+            #    g.plot(ax=ax, kind='line', x='time', y='figure_of_merit', color=g['suppressed'].values[0], marker='o', label="Figure of merit")
+            #
+            #cmap = plt.cm.coolwarm
+            #custom_lines = [Line2D([0], [0], color=cmap(0.), label="Not suppressed"),
+            #                Line2D([0], [0], color=cmap(1.), label="Suppressed")]
+            #lns = custom_lines
+            #labs = [l.get_label() for l in lns]
+            ## Shrink current axis's height by 10% on the bottom
+            #box = ax.get_position()
+            #ax.set_position([box.x0, box.y0 + box.height * 0.15,
+            #                 box.width, box.height * 0.9])
+
+            ## Put a legend below current axis
+            #ax.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+            #          fancybox=True, ncol=2)
+
+            #ax.set_xlabel("Time from the experiment start[s]")
+            #ax.set_ylabel("Figure of merit")
+            #ax.set_title("RFD evolution for route {} nh {}".format(route.addr, route.nh))
+
+            #fig.savefig(output_file_name + "_R"+str(r) + ".pdf", format="pdf")
+            #plt.close()
+
+            #########################
+
+            route_evolution = self.rfd_df[self.rfd_df.id == _id]
+            time = route_evolution[RFDPlotter.COLUMNS[1]].tolist()
+            figure_of_merit = route_evolution[RFDPlotter.COLUMNS[3]].tolist() 
+            route = route_evolution.head(1)[RFDPlotter.COLUMNS[2]].values[0]
+
+            fig, ax = plt.subplots() # pylint: disable=invalid-name
+            l = ax.plot(time, figure_of_merit, 'b', label="Figure of merit")
+            ax.hlines(2.0, 0, 7000, colors='r', linestyle='--')
+            ax.hlines(0.75,0, 7000, colors='g', linestyle='--')
+
+            lns = l
+            labs = [l.get_label() for l in lns]
+            # Shrink current axis's height by 10% on the bottom
+            box = ax.get_position()
+            ax.set_position([box.x0, box.y0 + box.height * 0.15,
+                             box.width, box.height * 0.9])
+
+            # Put a legend below current axis
+            ax.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                      fancybox=True, ncol=2)
+
+            ax.set_xlabel("Time from the experiment start[s]")
+            ax.set_ylabel("Figure of merit")
+            ax.set_title("RFD evolution for route {} nh {}".format(route.addr, route.nh))
+
+            fig.savefig(output_file_name + "_R"+str(r) + ".pdf", format="pdf")
+            plt.close()
+            r += 1
+
+
 class NodeConvergencePlotter():
     """
     Node Convergence plotter

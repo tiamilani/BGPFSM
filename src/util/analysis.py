@@ -121,6 +121,7 @@ class NodeAnalyzer():
     SIGNAL_COLUMNS = ['id', 'signal', 'advertisements', 'withdraws',
                       'total_messages', 'counter']
     CONVERGENCE_COLUMNS = ['convergence_time', 'in_messages']
+    RFD_COLUMNS = ['id', 'time', 'route', 'figure_of_merit', 'suppressed']
 
     # File names for load and save
     STATES_FILE_NAME = "_states"
@@ -128,6 +129,7 @@ class NodeAnalyzer():
     ROUTES_FILE_NAME = "_routes"
     SIGNAL_FILE_NAME = "_signal"
     CONVERGENCE_FILE_NAME = "_convergence"
+    RFD_FILE_NAME = "_rfd"
 
     # Evaluation dataframe columns expected
     # NEVER CHANGE THE POSITION OF THE ELEMENTS ALREADY IN THE LIST
@@ -147,6 +149,7 @@ class NodeAnalyzer():
         self.signaling = pd.DataFrame(columns=NodeAnalyzer.SIGNAL_COLUMNS)
         self.signaling = self.signaling.set_index(NodeAnalyzer.SIGNAL_COLUMNS[0])
         self.convergence = pd.DataFrame(columns=NodeAnalyzer.CONVERGENCE_COLUMNS)
+        self.rfd = pd.DataFrame(columns=NodeAnalyzer.RFD_COLUMNS)
         self.actual_state = set()
         self.experiment_actual_state = set()
         self.route_counter = 0
@@ -183,7 +186,12 @@ class NodeAnalyzer():
         else:
             return False
         if os.path.isfile(input_file + NodeAnalyzer.CONVERGENCE_FILE_NAME + _format):
-            self.signaling = pickle.load(open(input_file + NodeAnalyzer.CONVERGENCE_FILE_NAME\
+            self.convergence = pickle.load(open(input_file + NodeAnalyzer.CONVERGENCE_FILE_NAME\
+                                      + _format, "rb"))
+        else:
+            return False
+        if os.path.isfile(input_file + NodeAnalyzer.RFD_FILE_NAME + _format):
+            self.rfd = pickle.load(open(input_file + NodeAnalyzer.RFD_FILE_NAME \
                                       + _format, "rb"))
         else:
             return False
@@ -207,6 +215,7 @@ class NodeAnalyzer():
         self.signaling.to_csv(output_file + NodeAnalyzer.SIGNAL_FILE_NAME + _format, '|')
         self.convergence.to_csv(output_file + NodeAnalyzer.CONVERGENCE_FILE_NAME + _format, '|',
                 index=False)
+        self.rfd.to_csv(output_file + NodeAnalyzer.RFD_FILE_NAME + _format, '|')
 
         if pickling:
             _format = ".pkl"
@@ -219,6 +228,8 @@ class NodeAnalyzer():
             pickle.dump(self.signaling, open(output_file + NodeAnalyzer.SIGNAL_FILE_NAME \
                         + _format, "wb"))
             pickle.dump(self.convergence, open(output_file + NodeAnalyzer.CONVERGENCE_FILE_NAME\
+                        + _format, "wb"))
+            pickle.dump(self.rfd, open(output_file + NodeAnalyzer.RFD_FILE_NAME\
                         + _format, "wb"))
 
     def __get_route_data(self, route: Route) -> Dict:
@@ -609,7 +620,53 @@ class NodeAnalyzer():
         messages_rx = len(conv_df[(conv_df.event == Events.RX)].index)
         self.convergence.loc[len(self.convergence.index)] = [conv_time, messages_rx]
         
+    def __evaluate_figure_of_merit_event(self, time: str, value: str) -> None:
+        obj = ast.literal_eval(value)
+        route = Route.fromString(obj[0])
+        figure_of_merit = obj[1]
+        _id = hash(str(route.addr) + str(route.nh))
+        self.rfd = self.rfd.append(dict(zip(NodeAnalyzer.RFD_COLUMNS, 
+                            [_id, time, route, figure_of_merit, False])), ignore_index=True)
 
+    def __assign_suppressed(self, idx, value):
+        self.rfd.loc[idx, NodeAnalyzer.RFD_COLUMNS[4]] = value
+
+    def __evaluate_rfd_state(self, time: float, event: int, value: str) -> None:
+        route = Route.fromString(value)
+
+        if event == Events.ROUTE_REUSABLE or event == Events.END_T_HOLD:
+            # The route is now usable again, set every element after as suppressed False
+            suppressed = False
+        else:
+            # The route has been suppressed
+            suppressed = True
+
+        _id = hash(str(route.addr) + str(route.nh))
+        
+        self.rfd.suppressed[(self.rfd.id == _id) & (self.rfd.time >= time)] = suppressed
+
+    def evaluate_rfd(self, data_frame: pd.DataFrame) -> None:
+        """evaluate_rfd.
+        Evaluate the RFD history
+
+        :param data_frame: Dataframe to evaluate
+        :type data_frame: pd.DataFrame
+        :rtype: None
+        """
+
+        figure_of_merit_evolution = data_frame[(data_frame.event == Events.FIGURE_OF_MERIT_VARIATION)]
+        figure_of_merit_evolution.apply(lambda row: self.__evaluate_figure_of_merit_event(row.time,
+                                            row.value), axis=1)
+
+        route_state = data_frame[(data_frame.event == Events.ROUTE_REUSABLE) |
+                                 (data_frame.event == Events.END_T_HOLD) |
+                                 (data_frame.event == Events.ROUTE_SUPPRESSED)]
+        route_state.apply(lambda row: self.__evaluate_rfd_state(row.time, row.event,
+                                                                row.value),
+                          axis=1)
+
+        print(self.rfd)
+        
     def __delitem__(self, value):
         """__delitem__
         Ensure to delete all the local dataframes
@@ -753,6 +810,29 @@ class FileAnalyzer():
             node_df = self.__select_node(node)
             node_filtered_df = self.__filter_events([Events.TX, Events.RX, Events.RIB_CHANGE], dataframe = node_df)
             self.nodes[node].evaluate_convergence(node_filtered_df, start_time)
+
+    def study_rfd(self, nodes: List[str]) -> None:
+        """study_rfd
+        Study the RFD history evolution for each node in the list of nodes
+
+        :param nodes: list of nodes passed
+        :type nodes: List[str]
+        :rtype: None
+        :raise KeyError: If one of the passed nodes is not in the dictionary
+        """
+        rfd_events_df = self.__filter_events([Events.ROUTE_REUSABLE, Events.END_T_HOLD,
+                                              Events.FIGURE_OF_MERIT_VARIATION,
+                                              Events.ROUTE_SUPPRESSED], dataframe=self._df)
+
+        for node in nodes:
+            if node not in self.nodes.keys():
+                raise KeyError("{} Not found in the nodes dictionary".format(node))
+
+            node_df = self.__select_node(node)
+            node_filtered_df = self.__filter_events([Events.ROUTE_REUSABLE, Events.END_T_HOLD,
+                                                  Events.FIGURE_OF_MERIT_VARIATION,
+                                                  Events.ROUTE_SUPPRESSED], dataframe = node_df)
+            self.nodes[node].evaluate_rfd(node_filtered_df)
 
     def general_file_study(self) -> pd.DataFrame:
         tx_df = self.__filter_events([Events.TX], dataframe=self._df)

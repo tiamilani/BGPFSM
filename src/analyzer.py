@@ -60,7 +60,7 @@ from graphviz import Digraph
 
 sys.path.insert(1, 'util')
 from analysis import FileAnalyzer, NodeAnalyzer
-from plotter import Plotter, GeneralPlotter
+from plotter import Plotter, GeneralPlotter, RFDPlotter
 from tqdm import tqdm
 
 # Setup command line parameters
@@ -103,6 +103,9 @@ parser.add_argument("-s", "--signaling", dest="signaling", default=False,
                             of the output signals")
 parser.add_argument("-F", "--fsm", dest="fsm", default=True, action="store_false", \
                     help="Use this argument to disable the fsm study of the nodes")
+parser.add_argument("--rfd", "--RFD", dest="rfd", default=False, action="store_true", \
+                    help="Use this argument to enable the study of the RFD evolution\
+                          for the selected nodes")
 
 def load_pickle(general_file_study: pd.DataFrame, input_file: str) -> pd.DataFrame:
     _format = ".pkl"
@@ -238,6 +241,10 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
             if nodes is not None and len(nodes) > 0:
                 file_analyzer.study_node_convergence(nodes)
 
+            if options.rfd:
+                if nodes is not None and len(nodes) > 0:
+                    file_analyzer.study_rfd(nodes)
+
             if options.time:
                 print("The general study time has been:", timeit.default_timer() - \
                                                           general_study)
@@ -260,6 +267,11 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
                                     + "convergence_time_boxplot.pdf", "convergence_time")
         gfs_plt.ges_boxplot('/'.join(output_file_path.split("/")[:-1]) + "/" \
                                 + "messages_boxplot.pdf", "total_messages")
+
+        if options.rfd:
+            for node in node_analyzers:
+                rfd_plt = RFDPlotter(node_analyzers[node].rfd)
+                rfd_plt.line_evolution(output_file_path + "_" + str(node) + "_rfd")
     
     # Save results
     average_nodes_convergence = pd.DataFrame(columns=['node', 'avg_conv_time', 

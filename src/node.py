@@ -276,6 +276,9 @@ class Node(Module):
                 index = round(t_diff / delta_t)
                 history_route.figure_of_merit = \
                         history_route.figure_of_merit * self.rfd.rfd_ng.decay_mult(index)
+            # Log the actual figure of merit
+            event.obj = (str(history_route), history_route.figure_of_merit)
+            self.logger.log_figure_of_merit(self, event)
             # Add the reannouncement penalty
             if history_route.path != route.path:
                 self._print("It's an attribute change")
@@ -413,6 +416,11 @@ class Node(Module):
                 index = round(t_diff / delta_t)
                 history_route.figure_of_merit = \
                         history_route.figure_of_merit * self.rfd.rfd_ng.decay_mult(index)
+
+            # Log the actual figure of merit
+            event.obj = (str(history_route), history_route.figure_of_merit)
+            self.logger.log_figure_of_merit(self, event)
+
             # Add the reannouncement penalty
             history_route.figure_of_merit += self.rfd.w_penalty
             history_route.reachable = False
@@ -748,6 +756,7 @@ class Node(Module):
         self.event_store.put(start_pkt_evaluation)
 
         # Release the resource
+        yield self._env.timeout(self.proc_time.get_value())
         self.processing_res.release(request)
 
     def start_pkt_eval(self, event: Event) -> None:
@@ -793,6 +802,7 @@ class Node(Module):
             self.__already_scheduled_decision_process = True
 
         # Release the resource
+        yield self._env.timeout(self.proc_time.get_value())
         self.processing_res.release(request)
 
 
@@ -843,6 +853,7 @@ class Node(Module):
         # Log the transmission
         self.logger.log_packet_tx(self, event)
         # Release the resource
+        yield self._env.timeout(self.proc_time.get_value())
         self.processing_res.release(request)
 
     def __evaluate_advertisement_rib_out(self, event: Event) -> bool:
