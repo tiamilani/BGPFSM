@@ -522,8 +522,12 @@ class HISTORY_rib(BaseRib): # pylint: disable=invalid-name, too-many-ancestors
         """
         dest_table = sorted(self._destinations)
         res = "HISTORY_rib:\n"
+        res += "Route   NH  reachable  Figure_of_merit  Usable flaps    Last_time_updated\n" 
         for route in dest_table:
-            res += str([str(x) + ", " + str(x.last_time_updated) for x in self._destinations[route]]) + "\n"
+            for x in self._destinations[route]:
+                res += str(x.addr) + "\t" + str(x.nh) + "\t" + str(x.reachable) \
+                        + "\t" + str(x.figure_of_merit) + "\t" + str(x.usable)  \
+                        + "\t" + str(x.flaps) + "\t" + str(x.last_time_updated) + "\n"
         return res
 
 class ADJ_RIB_out(BaseRib): # pylint: disable=invalid-name, too-many-ancestors

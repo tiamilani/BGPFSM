@@ -275,14 +275,17 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
     
     # Save results
     average_nodes_convergence = pd.DataFrame(columns=['node', 'avg_conv_time', 
-                                    'std_conv_time', 'avg_in_messages', 'std_in_messages'])
+                                    'std_conv_time', 'avg_in_messages', 'std_in_messages',
+                                    'avg_suppressed_routes', 'std_suppressed_routes'])
     average_nodes_convergence = average_nodes_convergence.set_index('node')
     for node in node_analyzers:
         node_analyzers[node].save_df(output_file_path + "_" + str(node) + "_",
                                      pickling=options.pickle)
         mean = node_analyzers[node].convergence.mean()
         std = node_analyzers[node].convergence.std()
-        average_nodes_convergence.loc[node] = [mean[0], std[0], mean[1], std[1]]
+        average_nodes_convergence.loc[node] = [mean[0], std[0],
+                                               mean[1], std[1],
+                                               mean[2], std[2]]
 
     average_nodes_convergence.to_csv(output_file_path + "_average_node_convergence.csv", '|')
 

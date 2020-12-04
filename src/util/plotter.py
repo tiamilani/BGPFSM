@@ -254,69 +254,42 @@ class RFDPlotter():
         r = 1
         for _id in _id_levels:
 
-            #route_evolution = self.rfd_df.loc[(self.rfd_df.index.get_level_values(RFDPlotter.COLUMNS[0]) == _id)]
-            #route = route_evolution.head(1)[RFDPlotter.COLUMNS[2]].values[0]
-
-            #route_evolution = route_evolution.astype({str(RFDPlotter.COLUMNS[4]): str})
-            #route_evolution[RFDPlotter.COLUMNS[4]] = route_evolution[RFDPlotter.COLUMNS[4]].map({'False': 'blue', 'True': 'red'}) 
-
-            #route_evolution['change'] = route_evolution.suppressed.ne(route_evolution.suppressed.shift().bfill()).astype(int)
-            #route_evolution['subgroup'] = route_evolution['change'].cumsum()
-            #route_evolution = route_evolution.reset_index()
-
-            #route_evolution.index += route_evolution['subgroup'].values
-            #first_i_of_each_group = route_evolution[route_evolution['change'] == 1].index
-
-            #for i in first_i_of_each_group:
-            #    # Copy next group's first row to current group's last row
-            #    route_evolution.loc[i-1] = route_evolution.loc[i]
-            #    # But make this new row part of the current group
-            #    route_evolution.loc[i-1, 'subgroup'] = route_evolution.loc[i-2, 'subgroup']
-            #    route_evolution.loc[i-1, 'time'] = route_evolution.loc[i-2, 'time']
-            ## Don't need the change col anymore
-            #route_evolution.drop('change', axis=1, inplace=True)
-            #route_evolution.sort_index(inplace=True)
-            ## Create duplicate indexes at each subgroup border to ensure the plot is continuous.
-            #route_evolution.index -= route_evolution['subgroup'].values
-
-            #fig, ax = plt.subplots()
-            #for k, g in route_evolution.groupby('time'):
-            #    g.plot(ax=ax, kind='line', x='time', y='figure_of_merit', color=g['suppressed'].values[0], marker='o', label="Figure of merit")
-            #
-            #cmap = plt.cm.coolwarm
-            #custom_lines = [Line2D([0], [0], color=cmap(0.), label="Not suppressed"),
-            #                Line2D([0], [0], color=cmap(1.), label="Suppressed")]
-            #lns = custom_lines
-            #labs = [l.get_label() for l in lns]
-            ## Shrink current axis's height by 10% on the bottom
-            #box = ax.get_position()
-            #ax.set_position([box.x0, box.y0 + box.height * 0.15,
-            #                 box.width, box.height * 0.9])
-
-            ## Put a legend below current axis
-            #ax.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
-            #          fancybox=True, ncol=2)
-
-            #ax.set_xlabel("Time from the experiment start[s]")
-            #ax.set_ylabel("Figure of merit")
-            #ax.set_title("RFD evolution for route {} nh {}".format(route.addr, route.nh))
-
-            #fig.savefig(output_file_name + "_R"+str(r) + ".pdf", format="pdf")
-            #plt.close()
-
-            #########################
-
-            route_evolution = self.rfd_df[self.rfd_df.id == _id]
-            time = route_evolution[RFDPlotter.COLUMNS[1]].tolist()
-            figure_of_merit = route_evolution[RFDPlotter.COLUMNS[3]].tolist() 
+            route_evolution = self.rfd_df[(self.rfd_df.id == _id)]
+            route_evolution = route_evolution.reset_index()
             route = route_evolution.head(1)[RFDPlotter.COLUMNS[2]].values[0]
 
-            fig, ax = plt.subplots() # pylint: disable=invalid-name
-            l = ax.plot(time, figure_of_merit, 'b', label="Figure of merit")
-            ax.hlines(2.0, 0, 7000, colors='r', linestyle='--')
-            ax.hlines(0.75,0, 7000, colors='g', linestyle='--')
+            route_evolution = route_evolution.astype({str(RFDPlotter.COLUMNS[4]): str})
+            route_evolution[RFDPlotter.COLUMNS[4]] = route_evolution[RFDPlotter.COLUMNS[4]].map({'False': 'blue', 'True': 'red'}) 
+    
+            route_evolution['change'] = route_evolution.suppressed.ne(route_evolution.suppressed.shift().bfill()).astype(int)
+            route_evolution['subgroup'] = route_evolution['change'].cumsum()
 
-            lns = l
+            route_evolution.index += route_evolution['subgroup'].values
+            first_i_of_each_group = route_evolution[route_evolution['change'] == 1].index
+
+            for i in first_i_of_each_group:
+                # Copy next group's first row to current group's last row
+                route_evolution.loc[i-1] = route_evolution.loc[i]
+                # But make this new row part of the current group
+                route_evolution.loc[i-1, 'subgroup'] = route_evolution.loc[i-2, 'subgroup']
+            # Don't need the change col anymore
+            route_evolution.drop('change', axis=1, inplace=True)
+            route_evolution.sort_index(inplace=True)
+            # Create duplicate indexes at each subgroup border to ensure the plot is continuous.
+            route_evolution.index -= route_evolution['subgroup'].values
+
+            fig, ax = plt.subplots()
+            for k, g in route_evolution.groupby('subgroup'):
+                g.plot(ax=ax, x='time', y='figure_of_merit', color=g['suppressed'].values[0], marker='o')
+            ax.legend_.remove()
+
+            # ax.hlines(2.0, 0, 7200, colors='r', linestyle='--')
+            # ax.hlines(0.75,0, 7200, colors='g', linestyle='--')
+
+            cmap = plt.cm.coolwarm
+            custom_lines = [Line2D([0], [0], color='blue', marker='o', label="Not suppressed"),
+                            Line2D([0], [0], color='red', marker='o', label="Suppressed")]
+            lns = custom_lines
             labs = [l.get_label() for l in lns]
             # Shrink current axis's height by 10% on the bottom
             box = ax.get_position()
@@ -333,6 +306,36 @@ class RFDPlotter():
 
             fig.savefig(output_file_name + "_R"+str(r) + ".pdf", format="pdf")
             plt.close()
+
+            #########################
+
+            #route_evolution = self.rfd_df[self.rfd_df.id == _id]
+            #time = route_evolution[RFDPlotter.COLUMNS[1]].tolist()
+            #figure_of_merit = route_evolution[RFDPlotter.COLUMNS[3]].tolist() 
+            #route = route_evolution.head(1)[RFDPlotter.COLUMNS[2]].values[0]
+
+            #fig, ax = plt.subplots() # pylint: disable=invalid-name
+            #l = ax.plot(time, figure_of_merit, 'b', label="Figure of merit")
+            #ax.hlines(2.0, 0, 7000, colors='r', linestyle='--')
+            #ax.hlines(0.75,0, 7000, colors='g', linestyle='--')
+
+            #lns = l
+            #labs = [l.get_label() for l in lns]
+            ## Shrink current axis's height by 10% on the bottom
+            #box = ax.get_position()
+            #ax.set_position([box.x0, box.y0 + box.height * 0.15,
+            #                 box.width, box.height * 0.9])
+
+            ## Put a legend below current axis
+            #ax.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+            #          fancybox=True, ncol=2)
+
+            #ax.set_xlabel("Time from the experiment start[s]")
+            #ax.set_ylabel("Figure of merit")
+            #ax.set_title("RFD evolution for route {} nh {}".format(route.addr, route.nh))
+
+            #fig.savefig(output_file_name + "_R"+str(r) + ".pdf", format="pdf")
+            #plt.close()
             r += 1
 
 
@@ -642,6 +645,138 @@ class NodeConvergencePlotter():
         plt.close()
 
         return avg_msg 
+
+    def plot_centrality_vs_suppressions(self, output_file_name, hops, limit=None):
+
+        fig, ax = plt.subplots()
+        ax2 = ax.twinx()
+
+        hops_centrality = [self.centrality[node] for node in hops.keys()]
+        hops_conv_time = [self.df[self.df.node == int(node)].avg_suppressed_routes.values[0] for node in hops.keys()]
+
+        l = ax.plot(hops.keys(), hops_centrality, 'b', label="DPC centrality", zorder = 10, linewidth=0.7)
+        l2 = ax2.plot(hops.keys(), hops_conv_time, 'r', label="# suppressed routes", zorder = 3, linewidth=0.6)
+        
+        # Set the tick positions
+        ax.set_xticks(list(hops.keys()))
+    
+        actual_dist = 0
+        groups = [[]]
+        for node in hops:
+            if hops[node] > actual_dist:
+                ax.axvline(x=str(node), color='orange', ls='--', zorder=5)
+                actual_dist = hops[node]
+                groups.append([])
+            groups[-1].append(node)
+
+        groups_limits = []
+        for group in groups:
+            groups_limits.append(group[0])
+
+        avg_sup = []
+        avg_centr = []
+        for i in range(len(groups_limits)):
+            group_avg_sup = self.df[self.df["node"].isin(groups[i])]["avg_suppressed_routes"].mean()
+            avg_sup.append(group_avg_sup)
+            gr1 = groups_limits[i]
+
+            avg_centrality = 0
+            for node in groups[i]:
+                avg_centrality += self.centrality[node]
+            avg_centrality /= len(groups[i])
+            avg_centr.append(avg_centrality)
+
+            if i == len(groups_limits) -1:
+                ax.hlines(y = avg_centrality, xmin = gr1, xmax = groups[i][-1], color="blue", ls='--', zorder=4)
+                ax2.hlines(y = group_avg_sup, xmin = gr1, xmax = groups[i][-1], color="r", ls='--', zorder=4)
+            else:
+                ax.hlines(y = avg_centrality, xmin = gr1, xmax = groups_limits[i+1], color="blue", ls='--', zorder=4)
+                ax2.hlines(y = group_avg_sup, xmin = gr1, xmax = groups_limits[i+1], color="r", ls='--', zorder=4)
+
+        custom_lines = [Line2D([0], [0], color="orange", ls = '--', label = "Hop group separator"),
+                        Line2D([0], [0], color="blue", ls = '--', label = "AVG centrality in the group"),
+                        Line2D([0], [0], color="magenta", ls = '--', label = "AVG suppressions in the group")]
+    
+        lns = l + l2 + custom_lines
+        labs = [l.get_label() for l in lns]
+        # Shrink current axis's height by 10% on the bottom
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.15,
+                         box.width, box.height * 0.9])
+        ax2.set_position([box.x0, box.y0 + box.height * 0.15,
+                         box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        lgd = ax.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                  fancybox=True, ncol=2)
+
+        ax.set_yscale("log")
+        ax.set_ylabel("Centrality normalized (log scale)")
+        ax.set_xlabel("Nodes ordered by the shortest hop distance \n by the source and by centrality")
+        ax2.set_ylabel("# route suppressed before convergence")
+
+        if limit is not None and limit > 0:
+            ax2.set_ylim(ax2.get_ylim()[0], limit)
+
+        ax.set_zorder(2)
+        ax2.set_zorder(1)
+        ax.patch.set_visible(False)
+
+        ax.tick_params(
+            axis='x',          # changes apply to the x-axis
+            which='both',      # both major and minor ticks are affected
+            bottom=False,      # ticks along the bottom edge are off
+            top=False,         # ticks along the top edge are off
+            labelbottom=False) # labels along the bottom edge are off
+        ax2.tick_params(
+            axis='x',          # changes apply to the x-axis
+            which='both',      # both major and minor ticks are affected
+            bottom=False,      # ticks along the bottom edge are off
+            top=False,         # ticks along the top edge are off
+            labelbottom=False) # labels along the bottom edge are off
+
+        fig.savefig(output_file_name.rsplit('.', 1)[0] + "_centVSsup.pdf", format="pdf",
+                    bbox_extra_artists=(lgd,), bbox_inches='tight')
+
+        plt.close()
+
+        fig, ax = plt.subplots()
+        ax2 = ax.twinx()
+
+        l = ax.plot(range(len(groups)), avg_centr, 'b', label="DPC centrality group trend")
+        l2 = ax2.plot(range(len(groups)), avg_sup, 'r', label="Route suppression group trend")
+
+        lns = l + l2
+        labs = [l.get_label() for l in lns]
+        # Shrink current axis's height by 10% on the bottom
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.15,
+                         box.width, box.height * 0.9])
+        ax2.set_position([box.x0, box.y0 + box.height * 0.15,
+                         box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        lgd = ax.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                  fancybox=True, ncol=2)
+
+        # ax.set_yscale("log")
+        ax.set_ylabel("Centrality normalized")
+        ax.set_xlabel("Hop distance groups")
+        ax2.set_ylabel("Route suppression to converge")
+
+        if limit is not None and limit > 0:
+            ax2.set_ylim(ax2.get_ylim()[0], limit)
+
+        ax.set_zorder(2)
+        ax2.set_zorder(1)
+        ax.patch.set_visible(False)
+
+        fig.savefig(output_file_name.rsplit('.', 1)[0] + "_centVSsup_trend.pdf", format="pdf",
+                    bbox_extra_artists=(lgd,), bbox_inches='tight')
+
+        plt.close()
+
+        return avg_sup 
 
 class simple_plotter:
     

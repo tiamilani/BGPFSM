@@ -36,8 +36,8 @@ parser.add_argument("-o", "--output", dest="outputFile", default="multi_folder.p
 parser.add_argument("-r", "--render", dest="render", default=True,
                     action='store_false', help="Render the results on a pdf file in")
 
-COLUMNS=["id", "mrai" ,"avg_time", "avg_msg", "n95_perc_time", "n05_perc_time", "std_time",
-         "n95_perc_msg", "n05_perc_msg", "std_msg"]
+COLUMNS=["id", "mrai" ,"avg_time", "avg_msg", "avg_suppressions", "n95_perc_time", "n05_perc_time", "std_time",
+         "n95_perc_msg", "n05_perc_msg", "std_msg", "n95_perc_sup", "n05_perc_sup", "std_sup"]
 
 def main():
     options = parser.parse_args()
@@ -170,6 +170,67 @@ def main():
     fig.savefig(out_name + "_mean.pdf", format="pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
     #plt.savefig(out_name + "_mean.pdf", format="pdf")
     plt.close()
+
+    ax = None
+    fig = None
+    l_list = {}
+    colors = plt.rcParams["axes.prop_cycle"]()
+    markers = list(Line2D.markers.keys())
+    types = {}
+    marks = {}
+    # RFD comparison plot
+    for folder in options.inputFolder:
+        file_path = folder + "/" + options.file_name
+        folder_name = folder.split('/')[-1]
+        _type = folder_name.rsplit('-', 1)[0].rsplit('-', 1)[-1]
+        rfd_column = _type + "_rfd"
+        if _type not in types:
+            types[_type] = next(colors)["color"]
+            marks[_type] = markers[0]
+            markers.remove(marks[_type])
+            mean_df[rfd_column] = None
+
+        df = pd.read_csv(file_path, sep="|", index_col=COLUMNS[0])
+        df = df.drop(COLUMNS[5::], axis=1)
+        df = df.drop(COLUMNS[2:4], axis=1)
+        df = df.rename(columns = {COLUMNS[1]:"MRAI", COLUMNS[4]: rfd_column}) 
+
+        if options.render:
+            if ax is None:
+                fig, ax = plotter.get_axes()
+                l1 = plotter.plot_line(df["MRAI"], df[rfd_column], types[_type],
+                                       label="Suppressed routes " + _type, ax=ax, 
+                                       marker = marks[_type])
+                if str(_type) not in l_list.keys():
+                    l_list[_type + "_sup"] = l1 
+            else:
+                l1 = plotter.plot_line(df["MRAI"], df[rfd_column], types[_type],
+                                       label="Suppressed routes " + _type, ax=ax,
+                                       marker = marks[_type])
+                if str(l1) not in l_list.keys():
+                    l_list[_type + "_sup"] = l1 
+
+    lns = None
+    l_keys = l_list.keys()
+    l_keys = [x[::-1] for x in l_keys]
+    l_keys = sorted(l_keys)
+    l_keys = [x[::-1] for x in l_keys]
+    for l in l_keys:
+        if lns is None:
+            lns = l_list[l]
+        else:
+            lns += l_list[l] 
+
+    lgd = plotter.legends(lns, [ax])
+
+    ax.set_xlabel("MRAI value")
+    ax.set_ylabel("Suppressed routes")
+    plt.title("MRAI suppression evolution")
+
+    out_name = options.outputFile.rsplit('.', 1)[0]
+    fig.savefig(out_name + "_rfd_all.pdf", format="pdf", bbox_extra_artists=(lgd,), bbox_inches='tight')
+    plt.close()
+
 
 
 if __name__ == "__main__":

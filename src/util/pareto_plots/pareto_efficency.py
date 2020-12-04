@@ -35,8 +35,10 @@ parser.add_argument("-r", "--render", dest="render", default=True,
 parser.add_argument("-m", "--mrai_type", dest="mrai_type", default="random",
                     action='store', help="type of mrai used in the experiments")
 
-COLUMNS=["id", "mrai" ,"avg_time", "avg_msg", "n95_perc_time", "n05_perc_time", "std_time",
-         "n95_perc_msg", "n05_perc_msg", "std_msg"]
+COLUMNS=["id", "mrai" ,"avg_time", "avg_msg", "avg_suppressions", "n95_perc_time", 
+         "n05_perc_time", "std_time",
+         "n95_perc_msg", "n05_perc_msg", "std_msg", 
+         "n95_perc_sup", "n05_perc_sup", "std_sup"]
 xmin=200
 ymin=0
 xmax=450
@@ -115,6 +117,12 @@ def main():
                                                   df[COLUMNS[2]].values, df[COLUMNS[3]].values,
                                                   title="MRAI " + options.mrai_type + " performances",
                                                   output_file_name=out_name+"_mrai_evolution.pdf")
+
+            plotter.plot_messages_suppression_time_comparison(df[COLUMNS[1]].values,
+                                                  df[COLUMNS[2]].values, df[COLUMNS[3]].values,
+                                                  df[COLUMNS[4]].values,
+                                                  title="MRAI + RFD " + options.mrai_type + " performances",
+                                                  output_file_name=out_name+"_mrai_rfd_evolution.pdf")
 
             plotter.plot_messages_time_comparison_error_bars(df[COLUMNS[1]].values,
                     df[COLUMNS[2]].values, df[COLUMNS[3]].values, df[COLUMNS[6]].values,

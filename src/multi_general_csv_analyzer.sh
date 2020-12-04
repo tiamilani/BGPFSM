@@ -32,13 +32,17 @@ study_folder(){
 	file_exists $file
 	avg_time=$(tail -n +2 $file | awk -F '|' '{x+=$3; next} END{printf "%.3f", x/NR}')
 	avg_msg=$(tail -n +2 $file | awk -F '|' '{x+=$4; next} END{printf "%.3f", x/NR}')
+	avg_suppressions=$(tail -n +2 $file | awk -F '|' '{x+=$5; next} END{printf "%.3f", x/NR}')
 	n95_perc_time=$(tail -n +2 $file | sort -t '|' -g -k 3 | awk -F '|' '{all[NR] = $3} END{printf "%.3f", all[int(NR*0.95 - 0.5)]}')
 	n05_perc_time=$(tail -n +2 $file | sort -t '|' -g -k 3 | awk -F '|' '{all[NR] = $3} END{printf "%.3f", all[int(NR*0.05 + 0.5)]}')
 	n95_perc_msg=$(tail -n +2 $file | sort -t '|' -g -k 4 | awk -F '|' '{all[NR] = $4} END{printf "%.3f", all[int(NR*0.95 - 0.5)]}')
 	n05_perc_msg=$(tail -n +2 $file | sort -t '|' -g -k 4 | awk -F '|' '{all[NR] = $4} END{printf "%.3f", all[int(NR*0.05 + 0.5)]}')
+	n95_perc_sup=$(tail -n +2 $file | sort -t '|' -g -k 5 | awk -F '|' '{all[NR] = $5} END{printf "%.3f", all[int(NR*0.95 - 0.5)]}')
+	n05_perc_sup=$(tail -n +2 $file | sort -t '|' -g -k 5 | awk -F '|' '{all[NR] = $5} END{printf "%.3f", all[int(NR*0.05 + 0.5)]}')
 	std_time=$(tail -n +2 $file | awk -F '|' '{ sum+=$3; sumsq+=($3)^2 } END{ printf "%.3f", sqrt((sumsq - sum^2/NR)/NR)}')
 	std_msg=$(tail -n +2 $file | awk -F '|' '{ sum+=$4; sumsq+=($4)^2 } END{ printf "%.3f", sqrt((sumsq - sum^2/NR)/NR)}')
-	echo "$file|${MRAI_VALUE}|$avg_time|$avg_msg|$n95_perc_time|$n05_perc_time|$std_time|$n95_perc_msg|$n05_perc_msg|$std_msg" >> $2
+	std_sup=$(tail -n +2 $file | awk -F '|' '{ sum+=$5; sumsq+=($5)^2 } END{ printf "%.3f", sqrt((sumsq - sum^2/NR)/NR)}')
+	echo "$file|${MRAI_VALUE}|$avg_time|$avg_msg|$avg_suppressions|$n95_perc_time|$n05_perc_time|$std_time|$n95_perc_msg|$n05_perc_msg|$std_msg|$n95_perc_sup|$n05_perc_sup|$std_sup" >> $2
 }
 
 known_folders(){
@@ -104,7 +108,7 @@ do
 		sleep 5
 		rm -if ${OUTPUT_FILE} 2> /dev/null
 		touch ${OUTPUT_FILE}
-		echo "id|mrai|avg_time|avg_msg|n95_perc_time|n05_perc_time|std_time|n95_perc_msg|n05_perc_msg|std_msg" >> ${OUTPUT_FILE}
+		echo "id|mrai|avg_time|avg_msg|avg_suppressions|n95_perc_time|n05_perc_time|std_time|n95_perc_msg|n05_perc_msg|std_msg|n95_perc_sup|n05_perc_sup|std_sup" >> ${OUTPUT_FILE}
 		AGGREGATE_FLAG=true
 	fi
 	study_folder $folder ${OUTPUT_FILE}

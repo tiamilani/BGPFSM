@@ -64,6 +64,8 @@ class Sim:
     PAR_MRAI_WITHDRAW = "MRAI_affects_withdraws"
     # RFD param
     PAR_RFD = "RFD"
+    # ADAPTIVE_RFD
+    PAR_ADAPTIVE_RFD = "adaptive_rfd"
 
     def __init__(self):
         """__init__
@@ -165,6 +167,9 @@ class Sim:
             if self.PAR_MRAI_WITHDRAW in vert[1]:
                 if int(vert[1][self.PAR_MRAI_WITHDRAW]) > 0:
                     node.mrai_withdraw = True
+            if self.PAR_ADAPTIVE_RFD in vert[1]:
+                if int(vert[1][self.PAR_ADAPTIVE_RFD]) > 0:
+                    node.adaptive_rfd = True
             if self.PAR_RFD in vert[1]:
                 rfd = RFD_2438(vert[1][self.PAR_RFD])
                 node.rfd = rfd
@@ -196,8 +201,8 @@ class Sim:
         # Register the end time and do the subtraction
         end_time = time.time()
         total_time = round(end_time - start_time)
-        for node in self.nodes:
-            print(self.nodes[node])
+        # for node in self.nodes:
+        #    print(self.nodes[node])
         print("\nMaximum simulation time reached. Terminating")
         print("Total simulation time: %d hours, %d minutes, %d seconds" %
               (total_time // 3600, total_time % 3600 // 60,

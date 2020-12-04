@@ -120,7 +120,7 @@ class NodeAnalyzer():
     ROUTES_COLUMNS = ['id', 'value', 'addr', 'nh', 'path', 'policy_value']
     SIGNAL_COLUMNS = ['id', 'signal', 'advertisements', 'withdraws',
                       'total_messages', 'counter']
-    CONVERGENCE_COLUMNS = ['convergence_time', 'in_messages']
+    CONVERGENCE_COLUMNS = ['convergence_time', 'in_messages', 'suppressed_routes']
     RFD_COLUMNS = ['id', 'time', 'route', 'figure_of_merit', 'suppressed']
 
     # File names for load and save
@@ -618,7 +618,9 @@ class NodeAnalyzer():
         conv_time = last_rib - start_time
         conv_df = data_frame[(data_frame.time <= last_rib)]
         messages_rx = len(conv_df[(conv_df.event == Events.RX)].index)
-        self.convergence.loc[len(self.convergence.index)] = [conv_time, messages_rx]
+        suppressed_routes = len(conv_df[(conv_df.event == Events.ROUTE_SUPPRESSED)].index)
+        self.convergence.loc[len(self.convergence.index)] = [conv_time, messages_rx,
+                    suppressed_routes]
         
     def __evaluate_figure_of_merit_event(self, time: str, value: str) -> None:
         obj = ast.literal_eval(value)
@@ -645,6 +647,9 @@ class NodeAnalyzer():
         
         self.rfd.suppressed[(self.rfd.id == _id) & (self.rfd.time >= time)] = suppressed
 
+        if len(self.rfd[(self.rfd.time == time)].index) > 1:
+            self.rfd.suppressed.loc[self.rfd[(self.rfd.time == time)].index[0]] = not suppressed
+
     def evaluate_rfd(self, data_frame: pd.DataFrame) -> None:
         """evaluate_rfd.
         Evaluate the RFD history
@@ -664,8 +669,6 @@ class NodeAnalyzer():
         route_state.apply(lambda row: self.__evaluate_rfd_state(row.time, row.event,
                                                                 row.value),
                           axis=1)
-
-        print(self.rfd)
         
     def __delitem__(self, value):
         """__delitem__
@@ -708,7 +711,7 @@ class FileAnalyzer():
                                 'time': float,
                                 'node': str,
                                 'value': str}
-    GENERAL_STUDY_COLUMNS = ['id', 'file_name', 'convergence_time', 'total_messages']
+    GENERAL_STUDY_COLUMNS = ['id', 'file_name', 'convergence_time', 'total_messages', 'suppressions']
     GENERAL_STUDY_FILE_NAME = "general_study"
 
     NODE_STUDY_COLUMNS = ['node', 'convergence_time', 'convergence_time_std', 
@@ -808,7 +811,9 @@ class FileAnalyzer():
                 raise KeyError("{} Not found in the nodes dictionary".format(node))
 
             node_df = self.__select_node(node)
-            node_filtered_df = self.__filter_events([Events.TX, Events.RX, Events.RIB_CHANGE], dataframe = node_df)
+            node_filtered_df = self.__filter_events([Events.TX, Events.RX, 
+                                                     Events.RIB_CHANGE, Events.ROUTE_SUPPRESSED],
+                                                     dataframe = node_df)
             self.nodes[node].evaluate_convergence(node_filtered_df, start_time)
 
     def study_rfd(self, nodes: List[str]) -> None:
@@ -837,10 +842,12 @@ class FileAnalyzer():
     def general_file_study(self) -> pd.DataFrame:
         tx_df = self.__filter_events([Events.TX], dataframe=self._df)
         rx_df = self.__filter_events([Events.RX], dataframe=self._df)
+        suppress_df = self.__filter_events([Events.ROUTE_SUPPRESSED], dataframe=self._df)
         start_time = tx_df.head(1)[FileAnalyzer.EVALUATION_COLUMNS[3]].values[0]
         endup_time = rx_df.tail(1)[FileAnalyzer.EVALUATION_COLUMNS[3]].values[0]
         convergence_time = endup_time - start_time
         number_of_messages = len(self.__filter_events([Events.TX]).index)
+        number_of_suppressions = len(suppress_df.index)
         self.general_study.loc[hash(self.file_name)] = (self.file_name, convergence_time, 
-                                                        number_of_messages)
+                                                        number_of_messages, number_of_suppressions)
         return self.general_study

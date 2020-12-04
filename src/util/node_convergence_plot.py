@@ -44,7 +44,8 @@ parser.add_argument("-g", "--graph", dest="graph", default=None,
                                           used to plot the node convergence \
                                           time in relation of the centrality")
 
-COLUMNS=["avg_conv_time", "std_conv_time", "avg_in_messages", "std_in_messages"]
+COLUMNS=["avg_conv_time", "std_conv_time", "avg_in_messages", "std_in_messages",
+         "avg_suppressed_routes", "std_suppressed_routes"]
 
 def get_all_paths(G, src, dst, cutoff):
     return nx.all_simple_paths(G, source=src, target=dst, cutoff=cutoff)
@@ -98,7 +99,9 @@ def main():
                     dtype={COLUMNS[0]: float,
                            COLUMNS[1]: float,
                            COLUMNS[2]: float,
-                           COLUMNS[3]: float})
+                           COLUMNS[3]: float,
+                           COLUMNS[4]: float,
+                           COLUMNS[5]: float})
 
     G = nx.read_graphml(options.graph)
     centrality=nx.get_node_attributes(G, 'centrality')
@@ -147,9 +150,10 @@ def main():
     p.plot(options.outputFile, limit=options.limits)
     avg_time, avg_cent = p.plot_centrality_vs_convergence(options.outputFile, ordered_hops, limit=options.limits)
     avg_msg = p.plot_centrality_vs_messages(options.outputFile, ordered_hops, limit=options.limit_msg)
+    avg_sup = p.plot_centrality_vs_suppressions(options.outputFile, ordered_hops, limit=options.limit_msg)
 
-    data = list(zip(group_hops, avg_cent, avg_time, avg_msg))
-    df = pd.DataFrame(data, columns = ['group', 'avg_centr', 'avg_time', 'avg_msg'])
+    data = list(zip(group_hops, avg_cent, avg_time, avg_msg, avg_sup))
+    df = pd.DataFrame(data, columns = ['group', 'avg_centr', 'avg_time', 'avg_msg', 'avg_sup'])
     df = df.set_index('group')
     df.to_csv(outp_path + out_name.rsplit('_',2)[0] + ".csv", index = True)
 

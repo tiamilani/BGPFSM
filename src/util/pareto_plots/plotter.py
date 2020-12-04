@@ -82,6 +82,43 @@ def plot_messages_time_comparison(x, time, messages, title="title",
     fig.savefig(output_file_name, format="pdf")
     plt.close()
 
+def make_patch_spines_invisible(ax):
+    ax.set_frame_on(True)
+    ax.patch.set_visible(False)
+    for sp in ax.spines.values():
+        sp.set_visible(False)
+
+
+def plot_messages_suppression_time_comparison(x, time, messages, suppression, 
+                                  title="title", 
+                                  output_file_name="mrai_evolution.pdf"):
+
+    fig, ax = plt.subplots()
+    fig.subplots_adjust(right=0.75)
+    ax2 = ax.twinx()
+    ax3 = ax.twinx()
+
+    ax3.spines["right"].set_position(("axes", 1.2))
+    make_patch_spines_invisible(ax3)
+    ax3.spines["right"].set_visible(True)
+
+    l1 = plot_line(x, time, 'g', label="Convergence time", ax=ax)
+    l2 = plot_line(x, messages, 'r', label="# Messages", ax=ax2)
+    l3 = plot_line(x, suppression, 'b', label="Suppressions", ax=ax3)
+
+    lns = l1 + l2 + l3
+    legends(lns, [ax, ax2, ax3])
+
+    ax.set_xlabel("MRAI value")
+    ax.set_ylabel("Convergence time [s]")
+    ax2.set_ylabel("# Packets")
+    ax3.set_ylabel("# Suppressions")
+    ax.set_title(title)
+
+    fig.savefig(output_file_name, format="pdf")
+    plt.close()
+
+
 def plot_messages_time_comparison_error_bars(x, time, messages, std_time, std_messages,
         title="Title", output_file_name="mrai_evolution_errorBars.pdf"):
 

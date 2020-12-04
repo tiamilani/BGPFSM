@@ -125,6 +125,7 @@ class Node(Module):
         # MRAI for withdraws flag
         self.mrai_withdraw = False
         self.rfd = None
+        self.adaptive_rfd = False
 
     def _print(self, msg: str) -> None:
         """_print.
@@ -220,137 +221,174 @@ class Node(Module):
         :type event: Event
         :rtype: None
         """
-        #RFD evaluation of an announcement
+        if self.rfd is not None:
+            #RFD evaluation of an announcement
 
-        # Check if I lost memory of that route in the history_rib
-        if self.rib_handler.history_rib.exists(route):
-            # The route exists in the history, I have to check since when is in the history
-            history_route = self.rib_handler.history_rib[route]
-            t_diff = self._env.now - history_route.last_time_updated
-            # Check both decading rates
-            if history_route.reachable:
-                delta_t = self.rfd.rfd_ok.delta_t
-                index = round(t_diff / delta_t)
-                # If the index is larger than the max size of the vector I can remove
-                # the route from the history because I don't have any memory
-                # of it's flaps
-                if index > self.rfd.rfd_ok.decay_array_size:
-                    self._print("{} removed from the history because stable enough")
-                    self.rib_handler.history_rib.remove(history_route)
-            else:
-                delta_t = self.rfd.rfd_ng.delta_t
-                index = round(t_diff / delta_t)
-                if index > self.rfd.rfd_ng.decay_array_size:
-                    self.rib_handler.history_rib.remove(history_route)
-                    self._print("{} removed from the history because stable enough")
+            # Check if I lost memory of that route in the history_rib
+            if self.rib_handler.history_rib.exists(route):
+                # The route exists in the history, I have to check since when is in the history
+                history_route = self.rib_handler.history_rib[route]
+                t_diff = self._env.now - history_route.last_time_updated
+                # Check both decading rates
+                if history_route.reachable:
+                    delta_t = self.rfd.rfd_ok.delta_t
+                    index = math.floor(t_diff / delta_t)
+                    # If the index is larger than the max size of the vector I can remove
+                    # the route from the history because I don't have any memory
+                    # of it's flaps
+                    if index >= self.rfd.rfd_ok.decay_array_size:
+                        self._print("{} removed from the history because stable enough")
+                        self.rib_handler.history_rib.remove(history_route)
+                        if history_route.reusable_event is not None:
+                            history_route.reusable_event.interrupt()
+                            history_route.reusable_event = None
+                        if history_route.t_hold_event is not None:
+                            history_route.t_hold_event.interrupt()
+                            history_route.t_hold_event = None
+                else:
+                    delta_t = self.rfd.rfd_ng.delta_t
+                    index = math.floor(t_diff / delta_t)
+                    if index >= self.rfd.rfd_ng.decay_array_size:
+                        self.rib_handler.history_rib.remove(history_route)
+                        if history_route.reusable_event is not None:
+                            history_route.reusable_event.interrupt()
+                            history_route.reusable_event = None
+                        if history_route.t_hold_event is not None:
+                            history_route.t_hold_event.interrupt()
+                            history_route.t_hold_event = None
+                        self._print("{} removed from the history because stable enough")
 
-        # If I don't have flaps history about this route I can use it without
-        # problems
-        if route.mine or not self.rib_handler.history_rib.exists(route):
-            route.usable = True
-            route.figure_of_merit = 0
-            event.obj = (str(route), route.figure_of_merit)
-            self.logger.log_figure_of_merit(self, event)
-            route.flaps = 0
-            route.last_time_updated = self._env.now
-            self.rib_handler.receive_advertisement(route, event)
-        else:
-            history_route = self.rib_handler.history_rib[route]
-            # if history_route and route are not equal then treat the new 
-            # route arrived as a withdraw but with the correct penalty
-            # if history_route and the route are equal then treat it as a
-            # reannouncement
-            t_diff = self._env.now - history_route.last_time_updated
-            memory = True
-            if history_route.reachable:
-                # The route was already reachable so I have to use the
-                # decay function appropriated
-                delta_t = self.rfd.rfd_ok.delta_t
-                index = round(t_diff / delta_t)
-                history_route.figure_of_merit = \
-                        history_route.figure_of_merit * self.rfd.rfd_ok.decay_mult(index)
-            else:
-                # The route was un reachable so I have to use the other
-                # figure of merit decay function
-                delta_t = self.rfd.rfd_ng.delta_t
-                index = round(t_diff / delta_t)
-                history_route.figure_of_merit = \
-                        history_route.figure_of_merit * self.rfd.rfd_ng.decay_mult(index)
-            # Log the actual figure of merit
-            event.obj = (str(history_route), history_route.figure_of_merit)
-            self.logger.log_figure_of_merit(self, event)
-            # Add the reannouncement penalty
-            if history_route.path != route.path:
-                self._print("It's an attribute change")
-                history_route.figure_of_merit += self.rfd.ac_penalty
-                history_route.flaps += 1
-                self.rib_handler.receive_withdraw(history_route, event)
-            else:
-                self._print("It's a reannouncement")
-                history_route.figure_of_merit += self.rfd.ra_penalty
-                history_route.flaps += 1
-            self._print("{} New figure of merit: {}, flapped: {}".format(route, history_route.figure_of_merit, history_route.flaps))
-            event.obj = (str(history_route), history_route.figure_of_merit)
-            self.logger.log_figure_of_merit(self, event)
-    
-            # Substitute the old route with the new one, with the updated
-            # variables
-            route.figure_of_merit = history_route.figure_of_merit 
-            route.last_time_updated = self._env.now
-            route.usable = history_route.usable
-            route.reachable = True 
-            route.reusable_event = history_route.reusable_event
-            route.flaps = history_route.flaps
-            route.first_suppressed_time = history_route.first_suppressed_time
-            route.t_hold_event = history_route.t_hold_event
-            res = self.rib_handler.history_rib.insert(route)
-
-            # Evaluate if it is possible to use the route
-            if route.usable and route.figure_of_merit < self.rfd.cut:
-                self.rib_handler.receive_advertisement(route, event)
-            elif not route.usable and route.figure_of_merit < self.rfd.reuse:
-                self._print("{} the route is now usable".format(route))
-                event.obj = route
-                self.logger.log_route_reusable(self, event)
+            # If I don't have flaps history about this route I can use it without
+            # problems
+            if route.mine or not self.rib_handler.history_rib.exists(route):
                 route.usable = True
-                # Remove route from a reuse list
-                # not sure it's correct, it should be enough to set it as usable
-                # and leave it to finish it's merit
-                # self.rib_handler.history_rib.remove(route)
-                # Use the route
-                if route.t_hold_event is not None:
-                    route.t_hold_event.interrupt()
-                    route.t_hold_event = None
+                route.figure_of_merit = 0
+                event.obj = (str(route), route.figure_of_merit)
+                self.logger.log_figure_of_merit(self, event)
+                route.flaps = 0
+                route.last_time_updated = self._env.now
                 self.rib_handler.receive_advertisement(route, event)
             else:
-                route.usable = False
-                if route.t_hold_event is None:
-                    route.first_suppressed_time = self._env.now
-                    t = self.rfd.t_hold
-                    self._print("{} SUPPRESSED".format(route))
+                history_route = self.rib_handler.history_rib[route]
+                # if history_route and route are not equal then treat the new 
+                # route arrived as a withdraw but with the correct penalty
+                # if history_route and the route are equal then treat it as a
+                # reannouncement
+                t_diff = self._env.now - history_route.last_time_updated
+                memory = True
+                if history_route.reachable:
+                    # The route was already reachable so I have to use the
+                    # decay function appropriated
+                    delta_t = self.rfd.rfd_ok.delta_t
+                    index = math.floor(t_diff / delta_t)
+                    history_route.figure_of_merit = \
+                            history_route.figure_of_merit * self.rfd.rfd_ok.decay_mult(index)
+                else:
+                    # The route was un reachable so I have to use the other
+                    # figure of merit decay function
+                    delta_t = self.rfd.rfd_ng.delta_t
+                    index = math.floor(t_diff / delta_t)
+                    history_route.figure_of_merit = \
+                            history_route.figure_of_merit * self.rfd.rfd_ng.decay_mult(index)
+                # Log the actual figure of merit
+                event.obj = (str(history_route), history_route.figure_of_merit)
+                self.logger.log_figure_of_merit(self, event)
+                # Add the reannouncement penalty
+                if history_route.path != route.path:
+                    self._print("It's an attribute change")
+                    self._print("Adaptive: {}".format(self.adaptive_rfd))
+                    if not self.adaptive_rfd or len(route.path) == 0:
+                        history_route.figure_of_merit += self.rfd.ac_penalty
+                    else:
+                        self._print("Adatptive active")
+                        history_route.figure_of_merit += self.rfd.ac_penalty * \
+                                1/len(route.path)
+                    history_route.flaps += 1
+                    self.rib_handler.receive_withdraw(history_route, event)
+                else:
+                    self._print("It's a reannouncement")
+                    self._print("Adaptive: {}".format(self.adaptive_rfd))
+                    if not self.adaptive_rfd or len(route.path) == 0:
+                        history_route.figure_of_merit += self.rfd.ra_penalty
+                    else:
+                        self._print("Adatptive active")
+                        history_route.figure_of_merit += self.rfd.ra_penalty * \
+                                1/len(route.path)
+                    history_route.flaps += 1
+                self._print("{} New figure of merit: {}, flapped: {}".format(route, history_route.figure_of_merit, history_route.flaps))
+                event.obj = (str(history_route), history_route.figure_of_merit)
+                self.logger.log_figure_of_merit(self, event)
+    
+                # Substitute the old route with the new one, with the updated
+                # variables
+                route.figure_of_merit = history_route.figure_of_merit 
+                route.last_time_updated = self._env.now
+                route.usable = history_route.usable
+                route.reachable = True 
+                route.reusable_event = history_route.reusable_event
+                route.flaps = history_route.flaps
+                route.first_suppressed_time = history_route.first_suppressed_time
+                route.t_hold_event = history_route.t_hold_event
+                res = self.rib_handler.history_rib.insert(route)
+
+                # Evaluate if it is possible to use the route
+                if route.usable and route.figure_of_merit < self.rfd.cut:
+                    self.rib_handler.receive_advertisement(route, event)
+                elif not route.usable and route.figure_of_merit < self.rfd.reuse:
+                    self._print("{} the route is now usable".format(route))
                     event.obj = route
-                    self.logger.log_route_suppressed(self, event)
-                    t_hold_event = Event(t, event.id, Events.END_T_HOLD,
+                    self.logger.log_route_reusable(self, event)
+                    route.usable = True
+                    # Remove route from a reuse list
+                    # not sure it's correct, it should be enough to set it as usable
+                    # and leave it to finish it's merit
+                    # self.rib_handler.history_rib.remove(route)
+                    # Use the route
+                    if route.reusable_event is not None:
+                        route.reusable_event.interrupt()
+                        route.reusable_event = None
+                    if route.t_hold_event is not None:
+                        route.t_hold_event.interrupt()
+                        route.t_hold_event = None
+                    self.rib_handler.receive_advertisement(route, event)
+                else:
+                    route.usable = False
+                    if route.t_hold_event is None:
+                        route.first_suppressed_time = self._env.now
+                        t = self.rfd.t_hold
+                        self._print("{} SUPPRESSED".format(route))
+                        event.obj = route
+                        self.logger.log_route_suppressed(self, event)
+                        t_hold_event = Event(t, event.id, Events.END_T_HOLD,
+                                              self, self, obj=route)
+                        self.event_store.put(t_hold_event)
+
+                    decay_minutes = self.rfd.rfd_ok.decay / 60
+                    t = math.log2((self.rfd.reuse/route.figure_of_merit) ** -decay_minutes)
+                    t = t * 60
+                    index = math.ceil(t/self.rfd.rfd_ok.delta_t)
+
+                    if index >= self.rfd.rfd_ok.decay_array_size:
+                        t = self.rfd.rfd_ok.decay_memory_limit + self.rfd.rfd_ok.delta_t
+
+                    self._print("{} will be available again in {}s".format(route, t))
+
+                    reuse_process = Event(t, event.id, Events.ROUTE_REUSABLE,
                                           self, self, obj=route)
-                    self.event_store.put(t_hold_event)
-                decay_minutes = self.rfd.rfd_ok.decay / 60
-                t = math.log2((self.rfd.reuse/route.figure_of_merit) ** -decay_minutes)
-                t = t * 60
-                index = math.ceil(t/self.rfd.rfd_ok.delta_t)
-
-                if index > self.rfd.rfd_ok.decay_array_size:
-                    t = self.rfd.rfd_ok.decay_memory_limit + self.rfd.rfd_ok.delta_t
-
-                self._print("{} will be available again in {}s".format(route, t))
-
-                reuse_process = Event(t, event.id, Events.ROUTE_REUSABLE,
-                                      self, self, obj=route)
-                self.event_store.put(reuse_process)
-                self.rib_handler.history_rib.insert(route)
-            
-            if route.figure_of_merit == 0:
-                route.flaps = 0
-                self.rib_handler.history_rib.remove(route)
+                    self.event_store.put(reuse_process)
+                    self.rib_handler.history_rib.insert(route)
+                
+                if route.figure_of_merit == 0:
+                    route.flaps = 0
+                    self.rib_handler.history_rib.remove(route)
+                    if route.reusable_event is not None:
+                        route.reusable_event.interrupt()
+                        route.reusable_event = None
+                    if route.t_hold_event is not None:
+                        route.t_hold_event.interrupt()
+                        route.t_hold_event = None
+        else:
+            self.rib_handler.receive_advertisement(route, event)
 
     def remove_network(self, route: Route, event: Event) -> None:
         """remove_network.
@@ -363,131 +401,163 @@ class Node(Module):
         :type event: Event
         :rtype: None
         """
-        # RFD evaluation for the reception of a withdraw
+        if self.rfd is not None:
+            # RFD evaluation for the reception of a withdraw
 
-        # If there is no history of flapping
-        # Check if I lost memory of that route in the history_rib
-        if self.rib_handler.history_rib.exists(route):
-            # The route exists in the history, I have to check since when is in the history
-            history_route = self.rib_handler.history_rib[route]
-            t_diff = self._env.now - history_route.last_time_updated
-            # Check both decading rates
-            if history_route.reachable:
-                delta_t = self.rfd.rfd_ok.delta_t
-                index = round(t_diff / delta_t)
-                # If the index is larger than the max size of the vector I can remove
-                # the route from the history because I don't have any memory
-                # of it's flaps
-                if index > self.rfd.rfd_ok.decay_array_size:
-                    self.rib_handler.history_rib.remove(history_route)
-                    self._print("{} removed from the history because stable enough")
-            else:
-                delta_t = self.rfd.rfd_ng.delta_t
-                index = round(t_diff / delta_t)
-                if index > self.rfd.rfd_ng.decay_array_size:
-                    self.rib_handler.history_rib.remove(history_route)
-                    self._print("{} removed from the history because stable enough")
+            # If there is no history of flapping
+            # Check if I lost memory of that route in the history_rib
+            if self.rib_handler.history_rib.exists(route):
+                # The route exists in the history, I have to check since when is in the history
+                history_route = self.rib_handler.history_rib[route]
+                t_diff = self._env.now - history_route.last_time_updated
+                # Check both decading rates
+                if history_route.reachable:
+                    delta_t = self.rfd.rfd_ok.delta_t
+                    index = math.floor(t_diff / delta_t)
+                    # If the index is larger than the max size of the vector I can remove
+                    # the route from the history because I don't have any memory
+                    # of it's flaps
+                    if index >= self.rfd.rfd_ok.decay_array_size:
+                        self.rib_handler.history_rib.remove(history_route)
+                        if history_route.reusable_event is not None:
+                            history_route.reusable_event.interrupt()
+                            history_route.reusable_event = None
+                        if history_route.t_hold_event is not None:
+                            history_route.t_hold_event.interrupt()
+                            history_route.t_hold_event = None
+                        self._print("{} removed from the history because stable enough")
+                else:
+                    delta_t = self.rfd.rfd_ng.delta_t
+                    index = math.floor(t_diff / delta_t)
+                    if index >= self.rfd.rfd_ng.decay_array_size:
+                        self.rib_handler.history_rib.remove(history_route)
+                        if history_route.reusable_event is not None:
+                            history_route.reusable_event.interrupt()
+                            history_route.reusable_event = None
+                        if history_route.t_hold_event is not None:
+                            history_route.t_hold_event.interrupt()
+                            history_route.t_hold_event = None
+                        self._print("{} removed from the history because stable enough")
 
-        if route.mine or not self.rib_handler.history_rib.exists(route):
-            route.figure_of_merit = self.rfd.w_penalty
-            event.obj = (str(route), route.figure_of_merit)
-            self.logger.log_figure_of_merit(self, event)
-            route.last_time_updated = self._env.now
-            route.flaps = 0
-            route.usable = True
-            route.reachable = False
-            self.rib_handler.history_rib.insert(route)
-            self.rib_handler.receive_withdraw(route, event)
-        else:
-            self._print(str(self.rib_handler.history_rib))
-            history_route = self.rib_handler.history_rib[route]
-            t_diff = self._env.now - history_route.last_time_updated
-            if history_route.reachable:
-                # The route was already reachable so I have to use the
-                # decay function appropriated
-                delta_t = self.rfd.rfd_ok.delta_t
-                index = round(t_diff / delta_t)
-                history_route.figure_of_merit = \
-                        history_route.figure_of_merit * self.rfd.rfd_ok.decay_mult(index)
-            else:
-                # The route was un reachable so I have to use the other
-                # figure of merit decay function
-                delta_t = self.rfd.rfd_ng.delta_t
-                index = round(t_diff / delta_t)
-                history_route.figure_of_merit = \
-                        history_route.figure_of_merit * self.rfd.rfd_ng.decay_mult(index)
-
-            # Log the actual figure of merit
-            event.obj = (str(history_route), history_route.figure_of_merit)
-            self.logger.log_figure_of_merit(self, event)
-
-            # Add the reannouncement penalty
-            history_route.figure_of_merit += self.rfd.w_penalty
-            history_route.reachable = False
-            if history_route.figure_of_merit > self.rfd.rfd_ng.ceiling:
-                history_route.figure_of_merit = self.rfd.rfd_ng.ceiling
-            history_route.flaps += 1
-
-            self._print("{} New figure of merit: {}, flapped: {}".format(route, history_route.figure_of_merit, history_route.flaps))
-            event.obj = (str(history_route), history_route.figure_of_merit)
-            self.logger.log_figure_of_merit(self, event)
-
-            # Substitute the old route with the new one, with the updated
-            # variables
-            route.figure_of_merit = history_route.figure_of_merit 
-            route.last_time_updated = self._env.now
-            route.usable = history_route.usable
-            route.reachable = history_route.reachable
-            route.reusable_event = history_route.reusable_event
-            route.flaps = history_route.flaps
-            route.first_suppressed_time = history_route.first_suppressed_time
-            route.t_hold_event = history_route.t_hold_event
-            self.rib_handler.history_rib.insert(route)
-
-            # Evaluate if it is possible to use the route
-            if route.usable and route.figure_of_merit < self.rfd.cut:
-                self.rib_handler.receive_withdraw(route, event)
-            elif not route.usable and route.figure_of_merit < self.rfd.reuse:
-                # I want the route to stay in the history rib because for sure
-                # it has some figure of merit event if under self.rdf.reuse
+            if route.mine or not self.rib_handler.history_rib.exists(route):
+                self._print("Adaptive: {}".format(self.adaptive_rfd))
+                if not self.adaptive_rfd or len(route.path) == 0:
+                    route.figure_of_merit = self.rfd.w_penalty    
+                else:
+                    self._print("Adaptive present")
+                    route.figure_of_merit = self.rfd.w_penalty * 1/len(route.path)
+                event.obj = (str(route), route.figure_of_merit)
+                self.logger.log_figure_of_merit(self, event)
+                route.last_time_updated = self._env.now
+                route.flaps = 0
                 route.usable = True
-                self._print("{} the route is now usable".format(route))
-                event.obj = route
-                self.logger.log_route_reusable(self, event)
-                if route.t_hold_event is not None:
-                    route.t_hold_event.interrupt()
-                    route.t_hold_event = None
-
+                route.reachable = False
+                self.rib_handler.history_rib.insert(route)
                 self.rib_handler.receive_withdraw(route, event)
             else:
-                if route.usable:
-                    self.rib_handler.receive_withdraw(route, event)
-                route.usable = False
-                if route.t_hold_event is None:
-                    self._print("{} SUPPRESSED".format(route))
-                    event.obj = route
-                    self.logger.log_route_suppressed(self, event)
-                    route.first_suppressed_time = self._env.now
-                    t = self.rfd.t_hold
-                    t_hold_event = Event(t, event.id, Events.END_T_HOLD,
-                                          self, self, obj=route)
-                    self.event_store.put(t_hold_event)
+                self._print(str(self.rib_handler.history_rib))
+                history_route = self.rib_handler.history_rib[route]
+                t_diff = self._env.now - history_route.last_time_updated
+                if history_route.reachable:
+                    # The route was already reachable so I have to use the
+                    # decay function appropriated
+                    delta_t = self.rfd.rfd_ok.delta_t
+                    index = math.floor(t_diff / delta_t)
+                    history_route.figure_of_merit = \
+                            history_route.figure_of_merit * self.rfd.rfd_ok.decay_mult(index)
+                else:
+                    # The route was un reachable so I have to use the other
+                    # figure of merit decay function
+                    delta_t = self.rfd.rfd_ng.delta_t
+                    index = math.floor(t_diff / delta_t)
+                    history_route.figure_of_merit = \
+                            history_route.figure_of_merit * self.rfd.rfd_ng.decay_mult(index)
 
-                decay_minutes = self.rfd.rfd_ng.decay / 60
-                t = math.log2((self.rfd.reuse/route.figure_of_merit) ** -decay_minutes)
-                t = t * 60
-                index = math.ceil(t/self.rfd.rfd_ng.delta_t)
-                if index > self.rfd.rfd_ng.decay_array_size:
-                    t = self.rfd.rfd_ng.decay_memory_limit + self.rfd.rfd_ng.delta_t
+                # Log the actual figure of merit
+                event.obj = (str(history_route), history_route.figure_of_merit)
+                self.logger.log_figure_of_merit(self, event)
 
-                self._print("{} will be available again in {}s".format(route, t))
-                reuse_process = Event(t, event.id, Events.ROUTE_REUSABLE,
-                                      self, self, obj=route)
-                self.event_store.put(reuse_process)
+                # Add the reannouncement penalty
+                self._print("Adaptive: {}".format(self.adaptive_rfd))
+                if not self.adaptive_rfd or len(route.path) == 0:
+                    history_route.figure_of_merit += self.rfd.w_penalty
+                else:
+                    self._print("Adaptive present")
+                    history_route.figure_of_merit += self.rfd.w_penalty * \
+                            1/len(route.path)
+                history_route.reachable = False
+                if history_route.figure_of_merit > self.rfd.rfd_ng.ceiling:
+                    history_route.figure_of_merit = self.rfd.rfd_ng.ceiling
+                history_route.flaps += 1
+
+                self._print("{} New figure of merit: {}, flapped: {}".format(route, history_route.figure_of_merit, history_route.flaps))
+                event.obj = (str(history_route), history_route.figure_of_merit)
+                self.logger.log_figure_of_merit(self, event)
+
+                # Substitute the old route with the new one, with the updated
+                # variables
+                route.figure_of_merit = history_route.figure_of_merit 
+                route.last_time_updated = self._env.now
+                route.usable = history_route.usable
+                route.reachable = history_route.reachable
+                route.reusable_event = history_route.reusable_event
+                route.flaps = history_route.flaps
+                route.first_suppressed_time = history_route.first_suppressed_time
+                route.t_hold_event = history_route.t_hold_event
                 self.rib_handler.history_rib.insert(route)
-            self._print(str(self.rib_handler.history_rib))
 
-        # self.rib_handler.receive_withdraw(route, event)
+                # Evaluate if it is possible to use the route
+                if route.usable and route.figure_of_merit < self.rfd.cut:
+                    self.rib_handler.receive_withdraw(route, event)
+                elif not route.usable and route.figure_of_merit < self.rfd.reuse:
+                    # I want the route to stay in the history rib because for sure
+                    # it has some figure of merit event if under self.rdf.reuse
+                    route.usable = True
+                    self._print("{} the route is now usable".format(route))
+                    event.obj = route
+                    self.logger.log_route_reusable(self, event)
+
+                    if route.t_hold_event is not None:
+                        route.t_hold_event.interrupt()
+                        route.t_hold_event = None
+                    if route.reusable_event is not None:
+                        route.reusable_event.interrupt()
+                        route.reusable_event = None
+                    if route.t_hold_event is not None:
+                        route.t_hold_event.interrupt()
+                        route.t_hold_event = None
+
+                    self.rib_handler.receive_withdraw(route, event)
+                else:
+                    if route.usable:
+                        self.rib_handler.receive_withdraw(route, event)
+                    route.usable = False
+                    if route.t_hold_event is None:
+                        self._print("{} SUPPRESSED".format(route))
+                        event.obj = route
+                        self.logger.log_route_suppressed(self, event)
+                        route.first_suppressed_time = self._env.now
+                        t = self.rfd.t_hold
+                        t_hold_event = Event(t, event.id, Events.END_T_HOLD,
+                                              self, self, obj=route)
+                        self.event_store.put(t_hold_event)
+
+                    decay_minutes = self.rfd.rfd_ng.decay / 60
+                    t = math.log2((self.rfd.reuse/route.figure_of_merit) ** -decay_minutes)
+                    t = t * 60
+                    index = math.ceil(t/self.rfd.rfd_ng.delta_t)
+                    if index >= self.rfd.rfd_ng.decay_array_size:
+                        t = self.rfd.rfd_ng.decay_memory_limit + self.rfd.rfd_ng.delta_t
+
+                    self._print("{} will be available again in {}s".format(route, t))
+                    reuse_process = Event(t, event.id, Events.ROUTE_REUSABLE,
+                                          self, self, obj=route)
+                    self.event_store.put(reuse_process)
+                    self.rib_handler.history_rib.insert(route)
+                self._print(str(self.rib_handler.history_rib))
+        else:
+            self.rib_handler.receive_withdraw(route, event)
+
     def route_reusable(self, event: Event) -> None:
         waiting_time = event.event_duration
         route = event.obj
@@ -516,8 +586,8 @@ class Node(Module):
                 # The route was already reachable so I have to use the
                 # decay function appropriated
                 delta_t = self.rfd.rfd_ok.delta_t
-                index = round(t_diff / delta_t)
-                if index > self.rfd.rfd_ok.decay_array_size:
+                index = math.floor(t_diff / delta_t)
+                if index >= self.rfd.rfd_ok.decay_array_size:
                     route.figure_of_merit = 0
                     # I don't have any more memory of flaps of this route
                     # so I can remove it from the history
@@ -527,8 +597,6 @@ class Node(Module):
                             route.figure_of_merit * self.rfd.rfd_ok.decay_mult(index)
                 route.last_time_updated = self._env.now
                 route.usable = True
-                event.obj = (str(route), route.figure_of_merit)
-                self.logger.log_figure_of_merit(self, event)
 
                 if route.figure_of_merit > 0:
                     self.rib_handler.history_rib.insert(route)
@@ -537,8 +605,8 @@ class Node(Module):
                 # The route was un reachable so I have to use the other
                 # figure of merit decay function
                 delta_t = self.rfd.rfd_ng.delta_t
-                index = round(t_diff / delta_t)
-                if index > self.rfd.rfd_ng.decay_array_size:
+                index = math.floor(t_diff / delta_t)
+                if index >= self.rfd.rfd_ng.decay_array_size:
                     route.figure_of_merit = 0
                     # I don't have any more memory of flaps of this route
                     # so I can remove it from the history
@@ -879,11 +947,11 @@ class Node(Module):
                 self._print("rib_out transmitting advertisement {}".format(route))
                 # Share the packet and change the flag
                 self.send_msg_to_dst(packet, event, neigh_node)
-                share_flag = True
+                if not route.mine:
+                    share_flag = True
                 adj_rib_out.remove(route)
                 # TODO check if exists withdraws 
                 if self.implicit_withdraw and adj_rib_out.exists_withdraws(route):
-                    print("I have to remove the existing withdraws")
                     key = hash(route.addr)
                     for route in adj_rib_out.get_withdraws(key):
                         adj_rib_out.remove_from_withdraws(route)
@@ -912,7 +980,8 @@ class Node(Module):
                     packet = Packet(Packet.WITHDRAW, deepcopy(route))
                     self._print("rib_out transmitting withdraw {}".format(route))
                     self.send_msg_to_dst(packet, event, neigh_node)
-                    share_flag = True
+                    if not route.mine:
+                        share_flag = True
                     self._print("Removed route from the list")
                     adj_rib_out.remove_from_withdraws(route)
             if len(adj_rib_out.get_withdraws(key)) == 0:
@@ -962,14 +1031,14 @@ class Node(Module):
         a_result = self.__evaluate_advertisement_rib_out(event)
         # If nothing has been shared reset the flag
         # Otherwise wait for another timer cicle
-        if a_result or w_result:
+        if a_result or w_result :
             mrai_time = link.mrai
             # If the next mrai is 0 just return becase nothing can be happened
             # in a delta of 0
             if mrai_time == 0:
                 link.mrai_not_active()
                 return
-            self._print("I sent something, so I set another MRAI to {}".format(mrai_time))
+            self._print("next MRAI cicle in {}".format(mrai_time))
             mrai_event = Event(mrai_time, event.event_cause, Events.MRAI, self, self,
                                obj=node_id)
             self.event_store.put(mrai_event)

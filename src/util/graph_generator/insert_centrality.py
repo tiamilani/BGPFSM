@@ -20,6 +20,7 @@ from collections import defaultdict
 import random
 import matplotlib.pyplot as plt
 import ipaddress
+import os.path
 
 import milaniBGPLoad as DPC
 
@@ -78,7 +79,12 @@ def main():
     options = parser.parse_args()
     
     input_graph = nx.read_graphml(options.file)
-    output_graph = nx.read_graphml(options.out)
+    if os.path.isfile(options.out):
+        output_graph = nx.read_graphml(options.out)
+    else:
+        nx.write_graphml(input_graph, options.out)
+        output_graph = nx.read_graphml(options.out)
+
     centrality_strategyfy(options.type, input_graph, output_graph)
     nx.write_graphml(output_graph, options.out)
 
