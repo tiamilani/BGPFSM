@@ -18,8 +18,6 @@ usage () {
 	exit 1
 }
 
-sudo apt-get install python-virtualenv parallel graphviz
-
 ENV_NAME='env'
 PYTHON_PATH=$(which python3)
 RED='\033[0;31m'
@@ -44,6 +42,8 @@ if [ ! -f "${PYTHON_PATH}" ]; then
 	echo -e "${RED}Python interpreter not found, be sure to specify a valid path ${NC}"
 	exit 1
 fi
+
+sudo apt-get install python-virtualenv parallel graphviz
 
 rm -rf "${ENV_NAME}"
 
