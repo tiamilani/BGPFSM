@@ -1,0 +1,347 @@
+\documentclass[10pt,journal,onecolumn]{IEEEtran}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{silence}\WarningsOff[latexfont]
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+
+\usepackage{graphicx}
+\graphicspath{images/}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+\SetKwProg{Fn}{Event}{}{}
+\SetKw{And}{and}
+\usepackage[binary-units,per-mode=symbol]{siunitx}
+\sisetup{list-final-separator = {, and },detect-weight=true, detect-family=true}
+\usepackage{booktabs}
+\usepackage{pifont}
+\usepackage{microtype}
+\usepackage{textcomp}
+\usepackage[american]{babel}
+\usepackage[capitalise]{cleveref}
+\def\figname{\csname cref@figure@name\endcsname\xspace}
+\def\tabname{\csname cref@table@name\endcsname\xspace}
+\def\secname{\csname cref@section@name\endcsname\xspace}
+\def\eqpname{\csname cref@equation@name@plural\endcsname\xspace}
+\crefname{algorithm}{Listing}{Lists.}
+\Crefname{algorithm}{Listing}{Listings}
+\SetAlgorithmName{Listing}{Listing}{List of Listings}
+\crefname{lstlisting}{listing}{listings}
+\Crefname{lstlisting}{Listing}{Listings}
+\usepackage{xspace}
+\usepackage{hyphenat}
+\usepackage[draft,inline,nomargin,index]{fixme}
+\fxsetup{theme=color}
+\usepackage{grffile}
+\usepackage{xfrac}
+\usepackage{multirow}
+%\usepackage[para]{footmisc}
+\usepackage[font={small}]{caption}
+\usepackage{imakeidx}
+
+\usepackage{tikz}
+\usetikzlibrary{calc,shapes,arrows,fit,positioning}
+
+\usepackage{listings}
+\lstset{
+   language=sh,
+   columns=fixed,
+   breaklines=true,
+   breakatwhitespace=true,
+   prebreak=\textbackslash,
+   basicstyle=\ttfamily\small,
+   showstringspaces=false,
+   upquote=true,
+   keywordstyle=\ttfamily\small
+}
+
+\usepackage{color}
+\definecolor{gray}{rgb}{0.4,0.4,0.4}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.6}
+\definecolor{cyan}{rgb}{0.0,0.6,0.6}
+
+
+\lstdefinelanguage{XML}
+{
+  morestring=[b]",
+  morestring=[s]{>}{<},
+  morecomment=[s]{<?}{?>},
+  stringstyle=\color{black},
+  identifierstyle=\color{darkblue},
+  keywordstyle=\color{cyan},
+  morekeywords={xmlns,version,type}% list your attributes here
+}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{shell}{
+    backgroundcolor=\color{backcolour},
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+
+% fix cleveref and breqn
+\makeatletter
+\let\cref@old@eq@setnumberOld\eq@setnumber
+\def\eq@setnumber{%
+\cref@old@eq@setnumberOld%
+\cref@constructprefix{equation}{\cref@result}%
+\protected@xdef\cref@currentlabel{%
+[equation][\arabic{equation}][\cref@result]\p@equation\eq@number}}
+\makeatother
+
+% reduce verbatim font size
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\@verbatim}
+  %%%{\verbatim@font} %% blow up TexMaker formatting ???!!! 
+  {\verbatim@font\small}
+  {}{}
+\makeatother
+
+\RequirePackage{xstring}
+\RequirePackage{xparse}
+\RequirePackage[index=true]{acro}
+\NewDocumentCommand\acrodef{mO{#1}mG{}}{\DeclareAcronym{#1}{short={#2}, long={#3}, #4}}
+\NewDocumentCommand\acused{m}{\acuse{#1}}
+
+
+\acrodef{ADV}{advertisement}
+\acrodef{AS}{Autonomous System}{short-plural=es}
+\acrodef{BGP}{Border Gateway Protocol}
+\acrodef{BIRD}{BGP Internet Routing Daemon}
+\acrodef{DPC}{Destination Partial Centrality}
+\acrodef{eBGP}{Exterior BGP}
+\acrodef{ERP}{Exterior Routing Protocol}
+\acrodef{IoF}{Internet on FIRE}
+\acrodef{IP}{Internet Protocol}
+\acrodef{MRAI}{Minimum Route Advertisement Interval}
+\acrodef{NH}{Next Hop}
+\acrodef{RFC}{Request For Comment} 
+\acrodef{TCP}{Transmission Control Protocol}
+\acrodef{FSM}{Finite State Machine}
+\acrodef{DES}{Descrete Event Simulator}
+
+\newcommand\useallac{
+\acused{IP}
+\acused{TCP}
+\acused{RFC}
+}
+
+\useallac
+
+\newcommand{\figwidthfour}{0.78}
+\newcommand{\figwidth}{0.78}
+\newcommand{\figvspace}{-1.5em}
+\newcommand{\update}{\texttt{UPDATE}\xspace}
+\newcommand{\nodeset}{\ensuremath{\mathcal{V}}\xspace}
+\newcommand{\destinationset}{\ensuremath{\mathcal{C}}\xspace}
+\newcommand{\edgeset}{\ensuremath{\mathcal{E}}\xspace}
+\newcommand{\graph}{\ensuremath{\mathcal{G(\nodeset,\edgeset)}}\xspace}
+\newcommand{\pathset}{\ensuremath{\mathcal{C}}\xspace}
+\newcommand{\ascentg}{\ensuremath{\mathcal{G_{A}}\xspace}}
+\newcommand{\ascentnodeset}{\ensuremath{\mathcal{V^{\ascentg}}}\xspace}
+\newcommand{\ascentedgeset}{\ensuremath{\mathcal{E^{\ascentg}}}\xspace}
+\newcommand{\ascentgraph}{\ensuremath{\mathcal{\ascentg(\ascentnodeset,\ascentedgeset)}}\xspace}
+\newcommand{\dpc}{\ensuremath{\Delta}\xspace}
+\newcommand{\tr}{\ensuremath{T_{R}}\xspace}
+
+\newcommand{\tierg}{\ensuremath{\mathcal{G_{T}}\xspace}}
+\newcommand{\tiernodeset}{\ensuremath{\mathcal{V^{\tierg}}}\xspace}
+\newcommand{\tieredgeset}{\ensuremath{\mathcal{E^{\tierg}}}\xspace}
+\newcommand{\tiergraph}{\ensuremath{\mathcal{\tierg(\tiernodeset,\tieredgeset)}}\xspace}
+\newcommand{\descentg}{\ensuremath{\mathcal{G_{D}}\xspace}}
+\newcommand{\descentnodeset}{\ensuremath{\mathcal{V^{\descentg}}}\xspace}
+\newcommand{\descentedgeset}{\ensuremath{\mathcal{E^{\descentg}}}\xspace}
+\newcommand{\descentgraph}{\ensuremath{\mathcal{\descentg(\descentnodeset,\descentedgeset)}}\xspace}
+
+\IEEEoverridecommandlockouts
+\makeindex[columns=3, title=Alphabetical Index, intoc]
+
+\begin{document}
+
+\title{User Manual BGP simulator}
+\author{
+	\IEEEauthorblockN{Mattia Milani}\\
+    \IEEEauthorblockA{Dept. of Information Engineering and Computer Science, University of Trento, Italy}
+    \texttt{mattia.milani@studenti.unitn.it}
+}
+
+
+\maketitle
+
+\clearpage
+
+\tableofcontents
+
+\clearpage
+
+\section{Guide environment}
+\label{sec:guide_environment}
+
+This guide has been tested on a clean installation of ubuntu 18.04
+with python 3.6.9
+
+\section{Experiments general chain}
+\label{sec:general_chain}
+
+This environment is composed by different components, thats executed one after
+the other will produce the output expected.
+
+\begin{figure}[h]
+	\begin{center}
+		\begin{tikzpicture}[scale=0.2]
+			\tikzstyle{every node}+=[inner sep=0pt]
+			\draw [black] (0,0) rectangle (10,5);
+			\draw [black] (20,0) rectangle (30,5);
+			\draw [black] (40,0) rectangle (50,5);
+			\draw [thick, ->] (10,2.5) -- (20,2.5);
+			\draw [thick, ->] (30,2.5) -- (40,2.5);
+			\node [DES] at (5,2.5) {DES};
+			\node [Analyzer] at (25,2.5) {Analyzer};
+			\node [Plotter] at (45,2.5) {Plotter};
+		\end{tikzpicture}
+	\end{center}
+	\caption{General environment chain}
+	\label{fig:general_chain}
+\end{figure}
+
+\Cref{fig:general_chain} shows how in general an experiment is conducted.
+The first step is the \ac{DES} that takes in input some configuration files
+and runs each step of the simulation.
+The network simulated evolves producting some output files in \textit{CSV} format
+that would be the input for the next step.
+The second part of this environment is take by the analyzer, it's the main
+interpreter of the \ac{DES} output, it takes as input the CSVs files produced
+by the first step. The output of the analyzer is another set of CSVs that are
+easily plottable or that represent in a more clean way some aspectes of the simulations.
+The analyzer can take as input multiple \ac{DES} execution and produce mean
+results.
+The analyzer is a necessary step to merge multiple experiments, it is also
+necessary because from a single \ac{DES} execution is possible to study
+a lot of different aspects (Time convergence, number of messages, a single node
+evolution, etc.) and is not always necessary to study all this aspects.
+The last part of an experiment is the plotter.
+This part take as input CSV files created by the analyzer and simply plot what
+is in them.
+
+Each component is necessary to reach the goal of an experiment.
+
+\section{How to install}
+\label{sec:installation}
+
+This section contains an explanation on how to install in the correct
+way the software required by the environment.
+
+In the main folder of the project is present a bash file that will install
+everything you need, just use the following command:
+
+\lstset{style=shell}
+\begin{lstlisting}[language=bash]
+	./install.sh
+\end{lstlisting}
+
+\section{Experiments configuration files}
+\label{sec:exp_conf}
+
+\subsection{Graph file}
+\label{subsec:graph_file}
+
+\subsection{Json file}
+\label{subsec:json_file}
+
+\section{Discrete event simulation}
+\label{sec:des}
+
+\subsection{Simulator parameters}
+\label{subsec:des_param}
+
+\subsection{First experiment}
+\label{subsec:first_exp}
+
+\subsection{Output of the experiment}
+\label{subsec:des_output}
+
+\section{Analyzer}
+\label{sec:analyzer}
+
+\subsection{Analyzer parameters}
+\label{subsec:anal_param}
+
+\subsection{Analyzer execution}
+\label{subsec:anal_exec}
+
+\subsection{Analyzer output}
+\label{subsec:anal_output}
+
+\section{Plot results}
+\label{sec:plot_results}
+
+\section{Graph generator}
+\label{sec:graph_generator}
+
+\subsection{Propery generators}
+\label{sec:graph_propery_generators}
+
+\section{Multiple experiments in parallel}
+\label{sec:multiple_experiments}
+
+\subsection{Parallel experiments examples}
+\label{subsec:parallel_examples}
+
+\section{Parallel experiments with multiple MRAIs}
+\label{sec:parallel_mrais}
+
+\subsection{Different MRAIs}
+\label{subsec:MRAI_types}
+
+\section{Examples}
+\label{sec:examples}
+
+\subsection{Line}
+\label{subsec:ex_line}
+
+\subsection{Line with delays}
+\label{subsec:ex_line_delay}
+
+\subsection{Line signaling}
+\label{subsec:ex_line_signaling}
+
+\subsection{Simple graph with MRAI}
+\label{subsec:simple_graph_with_MRAI}
+
+\subsection{Clique MRAI evolution}
+\label{subsec:clique_evolution}
+
+\subsection{Clique with RFD}
+\label{subsec:clique_rfd}
+
+\subsection{Clique different MRAIs comparison}
+\label{subsec:clique_different_mrais}
+
+\subsection{Small Internet graph}
+\label{subsec:small_internet_graph}
+
+\subsection{Small Internet graph with different MRAIs strategies}
+\label{subsec:small_internet_graph_multiple_MRAIs}
+
+\printindex
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

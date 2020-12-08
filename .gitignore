@@ -15,6 +15,10 @@
 *.pyc
 *.gv
 *.synctex.gz
+*.idx
+*.ilg
+*.ind
+*.toc
 ignored/*
 src/results/*
 src/env/*

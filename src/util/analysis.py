@@ -668,7 +668,7 @@ class NodeAnalyzer():
                                  (data_frame.event == Events.ROUTE_SUPPRESSED)]
         route_state.apply(lambda row: self.__evaluate_rfd_state(row.time, row.event,
                                                                 row.value),
-                          axis=1)
+                            axis=1)
         
     def __delitem__(self, value):
         """__delitem__

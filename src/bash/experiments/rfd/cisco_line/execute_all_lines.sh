@@ -9,9 +9,9 @@ dpc_names=()
 #constant_names=("adaptiveRFD")
 #dpc_names=()
 
-#for name in ${names[*]}; do
-#	seq -s ' ' 0 50 1200 | ./${name}.sh
-#done
+for name in ${names[*]}; do
+	seq -s ' ' 0 50 1200 | ./${name}.sh
+done
 
 dir_path=$(pwd)/results/
 
