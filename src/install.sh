@@ -43,7 +43,7 @@ if [ ! -f "${PYTHON_PATH}" ]; then
 	exit 1
 fi
 
-sudo apt-get install -Y python-virtualenv parallel graphviz
+sudo apt-get -y install python-virtualenv parallel graphviz
 
 rm -rf "${ENV_NAME}"
 
