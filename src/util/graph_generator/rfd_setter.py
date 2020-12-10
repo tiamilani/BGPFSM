@@ -31,7 +31,9 @@ parser = argparse.ArgumentParser(usage="usage: %prog [options]",
                       description="Generate different possible graphs",
                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-t", "--type", dest="type", default="None",
-                  choices=['cisco', 'juniper'],
+                  choices=['cisco', 'juniper', 'cisco7196aggressive',
+                      'juniper7196aggressive', 'cisco7196conservative',
+                      'juniper7196conservative'],
                   action="store", help="define the type of rfd to apply")
 parser.add_argument("-f", "--file", dest="inputFile", default="graph.graphml",
                   action="store", help="define the input graph")
@@ -54,6 +56,18 @@ CISCO_CONF = [CISCO_W_PENALTY, CISCO_RA_PENALTY, CISCO_AC_PENALTY,
               CISCO_DECAY_NG, CISCO_DECAY_MEMORY_LIMIT_OK, CISCO_DECAY_MEMORY_LIMIT_NG,
               CISCO_DELTA_T]
 
+CISCO_7196_AGGRESSIVE_CUT = 6.0
+CISCO_7196_AGGRESSIVE = [CISCO_W_PENALTY, CISCO_RA_PENALTY, CISCO_AC_PENALTY,
+              CISCO_7196_AGGRESSIVE_CUT, CISCO_REUSE, CISCO_T_HOLD, CISCO_DECAY_OK,
+              CISCO_DECAY_NG, CISCO_DECAY_MEMORY_LIMIT_OK, CISCO_DECAY_MEMORY_LIMIT_NG,
+              CISCO_DELTA_T]
+
+CISCO_7196_CONSERVATIVE_CUT = 12.0
+CISCO_7196_CONSERVATIVE = [CISCO_W_PENALTY, CISCO_RA_PENALTY, CISCO_AC_PENALTY,
+              CISCO_7196_CONSERVATIVE_CUT, CISCO_REUSE, CISCO_T_HOLD, CISCO_DECAY_OK,
+              CISCO_DECAY_NG, CISCO_DECAY_MEMORY_LIMIT_OK, CISCO_DECAY_MEMORY_LIMIT_NG,
+              CISCO_DELTA_T]
+
 JUNIPER_W_PENALTY = 1.0
 JUNIPER_RA_PENALTY = 1.0
 JUNIPER_AC_PENALTY = 0.5
@@ -62,13 +76,26 @@ JUNIPER_REUSE = 0.75
 JUNIPER_T_HOLD = 3600
 JUNIPER_DECAY_OK = 900
 JUNIPER_DECAY_NG = 900
-JUNIPER_DECAY_MEMORY_LIMIT_OK = 900
-JUNIPER_DECAY_MEMORY_LIMIT_NG = 900
+JUNIPER_DECAY_MEMORY_LIMIT_OK = 3600
+JUNIPER_DECAY_MEMORY_LIMIT_NG = 3600
 JUNIPER_DELTA_T = 5
 JUNIPER_CONF = [JUNIPER_W_PENALTY, JUNIPER_RA_PENALTY, JUNIPER_AC_PENALTY,
               JUNIPER_CUT, JUNIPER_REUSE, JUNIPER_T_HOLD, JUNIPER_DECAY_OK,
               JUNIPER_DECAY_NG, JUNIPER_DECAY_MEMORY_LIMIT_OK, JUNIPER_DECAY_MEMORY_LIMIT_NG,
               JUNIPER_DELTA_T]
+
+JUNIPER_7196_AGGRESSIVE_CUT = 6.0
+JUNIPER_7196_AGGRESSIVE = [JUNIPER_W_PENALTY, JUNIPER_RA_PENALTY, JUNIPER_AC_PENALTY,
+              JUNIPER_7196_AGGRESSIVE_CUT, JUNIPER_REUSE, JUNIPER_T_HOLD, JUNIPER_DECAY_OK,
+              JUNIPER_DECAY_NG, JUNIPER_DECAY_MEMORY_LIMIT_OK, JUNIPER_DECAY_MEMORY_LIMIT_NG,
+              JUNIPER_DELTA_T]
+
+JUNIPER_7196_CONSERVATIVE_CUT = 12.0
+JUNIPER_7196_CONSERVATIVE = [JUNIPER_W_PENALTY, JUNIPER_RA_PENALTY, JUNIPER_AC_PENALTY,
+              JUNIPER_7196_CONSERVATIVE_CUT, JUNIPER_REUSE, JUNIPER_T_HOLD, JUNIPER_DECAY_OK,
+              JUNIPER_DECAY_NG, JUNIPER_DECAY_MEMORY_LIMIT_OK, JUNIPER_DECAY_MEMORY_LIMIT_NG,
+              JUNIPER_DELTA_T]
+
 
 rfd_strategies = []
 
@@ -97,6 +124,26 @@ def apply_cisco_strategy(G: nx.DiGraph) -> None:
 @rfd_strategy
 def apply_juniper_strategy(G: nx.DiGraph) -> None:
     conf = str(JUNIPER_CONF).replace('[', '').replace(']', '')
+    nx.set_node_attributes(G, conf, 'RFD')
+
+@rfd_strategy
+def apply_cisco7196aggressive_strategy(G: nx.DiGraph) -> None:
+    conf = str(CISCO_7196_AGGRESSIVE).replace('[', '').replace(']', '')
+    nx.set_node_attributes(G, conf, 'RFD')
+
+@rfd_strategy
+def apply_juniper7196aggressive_strategy(G: nx.DiGraph) -> None:
+    conf = str(JUNIPER_7196_AGGRESSIVE).replace('[', '').replace(']', '')
+    nx.set_node_attributes(G, conf, 'RFD')
+
+@rfd_strategy
+def apply_cisco7196conservative_strategy(G: nx.DiGraph) -> None:
+    conf = str(CISCO_7196_CONSERVATIVE).replace('[', '').replace(']', '')
+    nx.set_node_attributes(G, conf, 'RFD')
+
+@rfd_strategy
+def apply_juniper7196conservative_strategy(G: nx.DiGraph) -> None:
+    conf = str(JUNIPER_7196_CONSERVATIVE).replace('[', '').replace(']', '')
     nx.set_node_attributes(G, conf, 'RFD')
 
 def main():

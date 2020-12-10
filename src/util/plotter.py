@@ -267,11 +267,12 @@ class RFDPlotter():
             route_evolution.index += route_evolution['subgroup'].values
             first_i_of_each_group = route_evolution[route_evolution['change'] == 1].index
 
-            for i in first_i_of_each_group:
-                # Copy next group's first row to current group's last row
-                route_evolution.loc[i-1] = route_evolution.loc[i]
-                # But make this new row part of the current group
-                route_evolution.loc[i-1, 'subgroup'] = route_evolution.loc[i-2, 'subgroup']
+            if len(first_i_of_each_group) > 1:
+                for i in first_i_of_each_group:
+                    # Copy next group's first row to current group's last row
+                    route_evolution.loc[i-1] = route_evolution.loc[i]
+                    # But make this new row part of the current group
+                    route_evolution.loc[i-1, 'subgroup'] = route_evolution.loc[i-2, 'subgroup']
             # Don't need the change col anymore
             route_evolution.drop('change', axis=1, inplace=True)
             route_evolution.sort_index(inplace=True)

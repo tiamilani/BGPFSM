@@ -1,0 +1,42 @@
+{
+	"line" : {
+		// seed(s) to initialize PRNGs
+		"seed" : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+				  10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+				  20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+				  30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+				  40, 44, 42, 43, 44, 45, 46, 47, 48, 49],
+		// duration of each simulation in seconds
+		"duration" : 60000,
+		// Graph file to simulate
+		"graph": "graphs/rfd_tests/cisco_1000_MRAI30/cisco_1000_RFD_7196_conservative_DPC.graphml",
+		// log file name using configuration parameters, use {seed} or {date-time}
+		"output" : "results/rfd_tests/cisco/cisco_1000_MRAI30_RFD_7196_conservative_DPC/cisco_1000_MRAI30_RFD_7196_conservative_DPC/cisco_{seed}.csv",
+		// Verbose value
+		"verbose": "False",
+		// Signaling flag
+		"signaling": "True",
+		// Signaling sequence, ignored if signaling false
+		"signaling_sequence": "AWAWAWAWAWA",
+		// Implicit withdraw of routes
+		"implicit_withdraw": "True",
+		// Withdraw signaling 
+		"withdraw": "True",
+		// Reannouncement of a destination after a withdraw
+		"reannouncement": "False",
+		// Withdraw interval distribution from the announcement
+		"withdraw_dist": {"distribution": "const", "mean": 300},
+		// announcement interval distribution from the withdraw 
+		"reannouncement_dist": {"distribution": "const", "mean": 300},
+		// Transmission time required to start the actual message transmission 
+		"datarate": {"distribution": "exp", "lambda" : 100},
+		// Processing time distribution
+		"processing": {"distribution": "const", "mean": 0.00001},
+		// Network delay distribution
+		"delay": {"distribution": "unif", "min": 0.012, "max": 3, "int": 0.001}
+	}
+}
+
+
+
+

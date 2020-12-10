@@ -95,6 +95,20 @@
     tabsize=2
 }
 
+\lstdefinestyle{graphml}{
+    backgroundcolor=\color{backcolour},
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+
+\lstMakeShortInline[language=bash]|
+
 % fix cleveref and breqn
 \makeatletter
 \let\cref@old@eq@setnumberOld\eq@setnumber
@@ -136,6 +150,8 @@
 \acrodef{TCP}{Transmission Control Protocol}
 \acrodef{FSM}{Finite State Machine}
 \acrodef{DES}{Descrete Event Simulator}
+\acrodef{RFD}{Route Flap Damping}
+\acrodef{RNG}{Random Number Generator}
 
 \newcommand\useallac{
 \acused{IP}
@@ -248,24 +264,453 @@ Each component is necessary to reach the goal of an experiment.
 This section contains an explanation on how to install in the correct
 way the software required by the environment.
 
-In the main folder of the project is present a bash file that will install
-everything you need, just use the following command:
+In the main src folder of the project is present a bash file that will install
+everything you need, just use the following commands:
 
 \lstset{style=shell}
 \begin{lstlisting}[language=bash]
+	cd src/
 	./install.sh
 \end{lstlisting}
+
+This code will execute the default installation process, is possible to modify the default
+values using the install script arguments.
+
+use: 
+\begin{lstlisting}[language=bash]
+	./install.sh -h
+\end{lstlisting}
+to see the argument description.
+
+The installation script will automatically install the following packets:
+\begin{itemize}
+		\item python-virtualenv, permits the use of python virtual environment,
+			used to create the environment where all the python libraries and packages
+			will be installed
+		\item parallel, permits the execution of parallel commands/scripts and
+			a lot more things, used to run multiple experiments in parallel
+		\item graphviz, used to produce some graphs after the analysis part.
+		\item gcc, required by the pygraphviz package
+		\item python3-dev, required by some packages installed
+\end{itemize}
+The installation script will also create a virtual env for the python packages
+required and then install all the python packages necessary.
+use:
+\begin{lstlisting}[language=bash]
+	./install.sh -n <env-name>
+\end{lstlisting}
+to redefine the virtual environment default name (env).
+The second argument that is possible to pass to the installation script is
+the position of the python interpreter.
+The default is the output of the command |which python3|, is possible to modify
+it with:
+\begin{lstlisting}[language=bash]
+	./install.sh -p <path-to-python-interpreter>
+\end{lstlisting}
+
+The suggested python interpreter is the version 3.6.9, the one that has been tested.
+
+The list of python packages that will be installed is contained in the file
+|requirements.txt|.
+
+At the end of the installation will be possible to use the virtual environment
+just created, use the following command to activate the virtual environment:
+\begin{lstlisting}[language=bash]
+	source /<env-name>/bin/activate
+\end{lstlisting}
+To deactivate an environment use the command:
+\begin{lstlisting}[language=bash]
+	deactivate
+\end{lstlisting}
+
+For compatibilities problems with libraries versions and python versions
+please contact me.
 
 \section{Experiments configuration files}
 \label{sec:exp_conf}
 
+To execute an experiment are necessary some configuration files that define how
+the environment is setted and generated.
+For example is possible to define which nodes are in the network and the connections
+between one another, then is possible to configure the single node properties.
+Another configuration file permits to configure the general properties of the
+experiment, for example: the signal that the source nodes should share, the 
+maximum experiment duration ecc.
+
+All this parameters are divided in two files that are here presented.
+The approach to those files in this document is the following:
+in the \Cref{subsec:graph_file,subsec:json_file} all the configuration properties
+are presented.
+in the following sections all these properties are displayed in an 
+increasingly complete way until you see each of them.
+Some of them are not compatible one another.
+
 \subsection{Graph file}
 \label{subsec:graph_file}
+
+The graph file is the one that describes the network. though it is possible
+to define the nodes of the experiment and te relation between one another.
+The format chosen for this file is the graphml format, that gives enough liberty
+to define all the topological properties of the network.
+
+The common structure of the graphml file is the following:
+% TODO color the main arguments
+\begin{lstlisting}[language=bash]
+	<?xml version='1.0' encoding='utf-8'?>
+	<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdr    awing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+	  <attributes/>
+	  <graph edgedefault="directed">
+		< nodes section />
+	    <node id="0">
+			< node attributes />
+	    </node>
+		< edges section />
+	    <edge source="0" target="1">
+			< edge attributes />
+	    </edge>
+	  </graph>
+	</graphml> 
+\end{lstlisting}
+
+an example of simple graph is given by the following graphml code:
+\lstset{style=graphml}
+\renewcommand{\lstlistingname}{Conf file}
+\begin{lstlisting}[language=bash, caption=first graph file, label=graph:first_graphml]
+	<?xml version='1.0' encoding='utf-8'?>
+	<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdr    awing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+	  <key attr.name="destinations" attr.type="string" for="node" id="d0" />
+	  <key attr.name="delay" attr.type="string" for="edge" id="d1" />
+	  <graph edgedefault="directed">
+	    <node id="0">
+	        <data key="d0">10.0.0.0/24,10.0.1.0/24</data>
+	    </node>
+	    <node id="1">
+	        <data key="d0">10.0.2.0/24,10.0.3.0/24</data>
+	    </node>
+	    <node id="2">
+	    </node>
+	    <node id="3">
+	    </node>
+	    <edge source="0" target="1">
+	        <data key="d1">{"distribution": "unif", "min": 1, "max": 5, "int": 0.01}</data>
+	    </edge>
+	    <edge source="0" target="3">
+	    </edge>
+	    <edge source="1" target="0">
+	    </edge>
+	    <edge source="1" target="2">
+	    </edge>
+	    <edge source="2" target="1">
+	    </edge>
+	    <edge source="1" target="3">
+	    </edge>
+	    <edge source="3" target="1">
+	    </edge>
+	  </graph>
+	</graphml>
+\end{lstlisting}
+
+that represent the following graph:
+\begin{figure}[h]
+	\begin{center}
+		\begin{tikzpicture}[scale=0.2]
+			\tikzstyle{every node}+=[inner sep=0pt]
+			\draw [black] (24.9,-18.3) circle (3);
+			\draw (24.9,-18.3) node {$0$};
+			\draw [black] (43.6,-18.3) circle (3);
+			\draw (43.6,-18.3) node {$1$};
+			\draw [black] (43.6,-3.8) circle (3);
+			\draw (43.6,-3.8) node {$2$};
+			\draw [black] (43.6,-31.9) circle (3);
+			\draw (43.6,-31.9) node {$3$};
+			\draw [black] (27.9,-18.3) -- (40.6,-18.3);
+			\fill [black] (40.6,-18.3) -- (39.8,-17.8) -- (39.8,-18.8);
+			\draw (34.25,-17.8) node [above] {$delay$};
+			\draw [black] (27.33,-20.06) -- (41.17,-30.14);
+			\fill [black] (41.17,-30.14) -- (40.82,-29.26) -- (40.23,-30.07);
+			\draw [black] (40.6,-18.3) -- (27.9,-18.3);
+			\fill [black] (27.9,-18.3) -- (28.7,-18.8) -- (28.7,-17.8);
+			\draw [black] (43.6,-15.3) -- (43.6,-6.8);
+			\fill [black] (43.6,-6.8) -- (43.1,-7.6) -- (44.1,-7.6);
+			\draw [black] (43.6,-6.8) -- (43.6,-15.3);
+			\fill [black] (43.6,-15.3) -- (44.1,-14.5) -- (43.1,-14.5);
+			\draw [black] (43.6,-21.3) -- (43.6,-28.9);
+			\fill [black] (43.6,-28.9) -- (44.1,-28.1) -- (43.1,-28.1);
+			\draw [black] (43.6,-28.9) -- (43.6,-21.3);
+			\fill [black] (43.6,-21.3) -- (43.1,-22.1) -- (44.1,-22.1);
+		\end{tikzpicture}
+	\end{center}
+	\caption{Graphml graphical representation}
+	\label{fig:first_graph_representation}
+\end{figure}
+
+As we can notice in graphml file \ref{graph:first_graphml} nodes \num{0} and \num{1} uses the attribute $d0$ that
+defines a property of them (all the properties are listed below).
+In the edges section is alto noticable that a delay attribute is used between
+node \num{0} and \num{1}.
+
+The graph must be directed
+
+All the accepted properties for nodes are listed below:
+\begin{itemize}
+		\item destinations:  This attribute represent the networks that a node will share 
+			during the experiment, it is possible to intrudce multiple networs 
+			separated by a |,|;
+		\item MRAI\_affects\_withdraws: This attribute defines if the node does not 
+			applys the suggested RFC \fixme{insert citation} where is defined that
+			MRAI does not affect withdraws, insert a value higher than \num{0} to
+			activate this function;
+		\item RFD: Route flap damping, this attribute defines the parameters
+			that the node will use to configure its own route flap dampening
+			procedure;
+		\item centrality: Float value that defines the centrality of the node;
+		\item type: String attribute that defines the type of the node.
+\end{itemize}
+The type of a node could be one from the following:
+\begin{itemize}
+		\item T: tier one node;
+		\item M: Nodes that act as proveders for clients;
+		\item CP: Client providers nodes;
+		\item C: Client nodes.
+\end{itemize}
+The \ac{RFD} configuration parameters are described in \Cref{subsec:RFD}.
+
+All the accepted properties for edges are listed below:
+\begin{itemize}
+		\item delay: {distribution} is possible to introduce a delay distribution 
+			for a single edge, the distribution has to respect what said in the 
+			distribution section of the readme. This parameter will override the 
+			json delay parameter for the edge;
+		\item policy: is possible to define a policy function for every single edge, 
+			policy functions are applyied like explanied in \fixme{insert citation} 
+			see the section policy function for more deep explanations, default: pass everything;
+		\item mrai: is possible to define an \ac{MRAI} value for each edge, this 
+			float value would override the default one of
+			30.0 seconds, like defined in \fixme{citation rfc 4271}.
+\end{itemize}
+
+Refers respecively to \Cref{subsec:distribution,subsec:policies} for an explanation
+about distributions that can be used and how policies can be setted.
+
+Examples of complex graphs are contained in the |graphs| folder and some of them
+are exmplained in the next chapters.
 
 \subsection{Json file}
 \label{subsec:json_file}
 
-\section{Discrete event simulation}
+To define environment variables is possible to use a json file that must be 
+passed to the DES. 
+Examples of configuration file is available in: |/src/json/|
+
+The parameters that can be defined inside the json file are:
+\begin{itemize}
+    \item seed: this variable represents the seed that will be passed to 
+		the \ac{RNG} at the environment initialization
+    \item duration: Duration of each run in seconds
+    \item graph: Graphml file that will be used for all the runs
+    \item output: Represent the output file of each run. is possible to use 
+		other variables inside the string, for example |{date-time}| will be 
+		substituted by the actual dateTime of the experiment (up to ms) or 
+		is possible to use other variables like |{seed}| or |{withdraw_dist.min}|
+		to introduce more levels of details to recognize the output csv 
+		file among many of a multi run script
+    \item verbose: |[True/False]| variable, if true the experiment will 
+		print the evolution on standard output
+	\item signaling: |[True/False]| variable, if true the experiment will use 
+		the signaling sequence defined in |signaling_sequence|, nodes that contains
+		a destination will respect this sequence using the withdraw and reannouncement
+		distribution.
+		If false the evolution will be based on the \ac{RNG} and limited only
+		by the |duration|.
+	\item signaling\_sequence: |"AWAW..."| string variable composed by a 
+		sequence of announcements and withdraws, this will be the execution sequence
+		for nodes that share a destination.
+	\item implicit\_withdraw: |[True/False]| variable, if True nodes will 
+		use the implicit withdraw schema (a new path for a neighbour is the sum
+		of a withdraw of the previous path and the announcement of the new 
+		best path) if false nodes that change best path will send a withdraw 
+		followed by an announcement.
+    \item withdraw: |[True/False]| variable, if true a node that previusly 
+		shared a network it will produce a withdraw of the network after a delay 
+		time described by |withdraw_dist|
+    \item reannouncement: |[True/False]| variable, if true a node that previusly 
+		withdrawed a route will schedule a reannouncement of the route 
+		using the distribution described in |reannouncement_dist|
+    \item withdraw\_dist: Variable that describe a withdraw distribution, 
+		for a distributions explanation please see \Cref{subsec:distribution}
+    \item reannouncement\_dist: Like the withdraw distribution but for reannouncements
+    \item datarate: |{distribution}| Time required to start the actual 
+		transmission of a message after the scheduling
+    \item processing: |{distribution}| Processing time of any information, 
+		for example can be used after the reception of a packet to 
+		simulate the processing of it
+    \item delay: |{distrbution}| Network delay for the packets on links.
+\end{itemize}
+
+All parameters can be array of parameters, so is possible to run different 
+combinations of them.
+An array of parameters could be the following:
+|seed: [0, 1, 2, 3]| -> this defines multiple seeds that can be used
+
+\begin{lstlisting}[language=bash]
+	"withdraw_dist": [{"distribution": "unif", "min": 5, "max": 10, "int": 0.1}, 
+					  {"distribution": "unif", "min": 8, "max": 10, "int": 0.1}, 
+					  {"distribution": "unif", "min": 2, "max": 3, "int": 0.1}]
+\end{lstlisting}
+
+An example of compleate json file:
+\renewcommand{\lstlistingname}{Conf file}
+\begin{lstlisting}[language=bash, caption=Example of json file, label=json:line_example]
+	{                                                                               
+	    "line" : {                                                                  
+	        // seed(s) to initialize PRNGs                                          
+	        "seed" : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],                                
+	        // duration of each simulation in seconds                               
+	        "duration" : 60000,                                                     
+	        // Graph file to simulate                                               
+	        "graph": "graphs/tests/line.graphml",    
+	        // log file name using configuration parameters, use {seed} or {date-time}
+	        "output" : "results/line/line_{seed}.csv",
+	        // Verbose value                                                        
+	        "verbose": "True",                                                      
+	        // Signaling flag                                                       
+	        "signaling": "True",                                                    
+	        // Signaling sequence, ignored if signaling false                       
+	        "signaling_sequence": "AWAWAWA",                                        
+	        // Implicit withdraw of routes                                          
+	        "implicit_withdraw": "True",                                            
+	        // Withdraw signaling                                                   
+	        "withdraw": "True",                                                     
+	        // Reannouncement of a destination after a withdraw                     
+	        "reannouncement": "False",                                              
+	        // Withdraw interval distribution from the announcement                 
+	        "withdraw_dist": {"distribution": "const", "mean": 300},                
+	        // announcement interval distribution from the withdraw                 
+	        "reannouncement_dist": {"distribution": "const", "mean": 300},          
+	        // Transmission time required to start the actual message transmission  
+	        "datarate": {"distribution": "exp", "lambda" : 100},                    
+	        // Processing time distribution                                         
+	        "processing": {"distribution": "const", "mean": 0.00001},               
+	        // Network delay distribution                                           
+	        "delay": {"distribution": "unif", "min": 0.012, "max": 3, "int": 0.001} 
+	    }                                                                           
+	}   
+\end{lstlisting}
+In Conf file \ref{json:line_example} is possible to see that the the only vector
+parameter is the |seed|.
+The results of the simulations will be saved using the path given in the |output|
+command, plus substituting the seed used in the csv file name.
+the results folder is mandatory, it must already exists, while all the other 
+folders will be created on the fly by the software.
+From the signaling parameter is also possible to notice that this is a signaling
+experiment, this means that the nodes that contains at least one destination will
+only transmit messages respecting the given sequence.
+
+\subsection{Distributions}
+\label{subsec:distribution}
+
+Up to now the possible distributions that can be itroduced in the environment are the following:
+
+\begin{itemize}
+    \item Uniform: a uniform distribution will have like name unif and 3 parameters 
+		min that represent the minimum value that can be choose max the maximum 
+		value int that represent the precision used for all the values between 
+		min and max, all parameters can be float values
+    \item Exponential: an exponential distribution have like name exp and it has 
+		a parameter lambda, like for the uniform distribution the parameter can 
+		be a float value
+    \item Constant: a constant distribution have like name: const and it has one 
+		parameter named mean
+\end{itemize}
+
+All the values of the distributions are intended in seconds.
+
+An example of distribution: |{"distribution": "const", "mean" : 0.00001}|
+
+Distributions used in the graph to override the standard delay:
+\begin{lstlisting}[language=bash]
+ <edge source="0" target="1">
+     <data key="d1">{"distribution": "unif", "min": 1, "max": 5, "int": 0.01}</data>
+ </edge>
+\end{lstlisting}
+
+\subsection{Policies}
+\label{subsec:policies}
+
+A policy function is applied like exporter filter. If the value returned by the 
+function is not infinite the route will be sent with the value returned by f
+
+policy functions are formally explained in \fixme{insert citation} Sec IV-c
+
+An example of policy function could be this: |<1, inf, inf>|
+
+This policy can simulate the peer behaviour of a node. It can send only routes 
+that have a policy level of 0 and will substitute to the route the policy level 
+with 1 before the actual transmission.
+
+In the graphml file is mandatory to not use |<| and |>| simbols, so a function can 
+be easily defined with:
+
+|2, 2, 2|
+
+Rotues that are originated by nodes will receive a policy level of \num{0} automatically.
+
+Policy function used in a graphml file on an edge to define the relationship
+between nodes:
+\begin{lstlisting}[language=bash]
+  <edge source="5" target="2">
+      <data key="d2">0, inf, inf</data>
+  </edge>
+  <edge source="2" target="5">
+      <data key="d2">2, 2, 2</data>
+  </edge>
+\end{lstlisting}
+
+\subsection{RFD}
+\label{subsec:RFD}
+
+Refers to \fixme{insert citation} for a deep explanation about \ac{RFD} and its
+parameters.
+
+The \ac{RFD} system of a node is composed by multiple parameters:
+\begin{itemize}
+		\item Withdraw penalty: penalty applied to the figure of merit in case 
+			of a withdraw reception
+		\item Re-announcement penalty: penalty applied to the figure of merit
+			in case of a re-announcement
+		\item Attribute change penalty: penalty applied to the figure of merit
+			in case of an attribute change.
+		\item Suppression threshold (cut): threshold after which a route is 
+			suppressed
+		\item Reuse threshold: threshold after which a route is usable again
+		\item T-hold timer: maximum time that a route could be suppressed
+		\item Decay ok: decay time used if the route is reachable, half-life time
+		\item Decay ng: decay time used if the route is not reachable, half-life time
+		\item Decay memory limit ok: max time for which the memory of the figure
+			of merit is kept if the route is reachable
+		\item Decay memory limit ng: max time for which the memory of the figure
+			of merit is kept if the route is not reachable;
+		\item delta-t: time granularity in seconds used to perform all decay computations.
+\end{itemize}	
+
+An \ac{RFD} configuration is composed by all this attributes one after the other
+in the same line separated by a "|,|".
+The |rfd_setter.py| can be used to set an \ac{RFD} configuration for each node in 
+a graph, is described in \Cref{sec:graph_generator}.
+
+An example of \ac{RFD} configuration is the following:
+\begin{lstlisting}[language=bash]
+	1.0, 0.0, 0.5, 2.0, 0.75, 3600, 900, 900, 3600, 3600, 5
+\end{lstlisting}
+
+An example of \ac{RFD} configuration in a graphml file:
+\begin{lstlisting}[language=bash]
+	<node id="0">
+	  <data key="d0">1.0, 0.0, 0.5, 2.0, 0.75, 3600, 900, 900, 3600, 3600, 5</data>
+	</node> 
+\end{lstlisting}
+
+\section{Discrete event simulations}
 \label{sec:des}
 
 \subsection{Simulator parameters}

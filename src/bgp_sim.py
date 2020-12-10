@@ -55,7 +55,7 @@ class Sim:
     # seed for PRNgraphs
     PAR_SEED = "seed"
     # graphraph file
-    PAR_graphRAPH = "graph"
+    PAR_GRAPH = "graph"
     # Verbose param
     PAR_VERBOSE = "verbose"
     # Destnations param
@@ -154,7 +154,7 @@ class Sim:
             self.verbose = self._config.get_param(self.PAR_VERBOSE) in ("True", "true")
 
         # Setup the graph and nodes
-        graph_file = self._config.get_param(self.PAR_graphRAPH)
+        graph_file = self._config.get_param(self.PAR_GRAPH)
         graph = nx.read_graphml(graph_file)
         sharing_nodes = []
         for vert in graph.nodes(data=True):
@@ -217,7 +217,7 @@ class Sim:
         """
         plt.figure(figsize=(18,14))
         # Get the graph file
-        graph_file = self._config.get_param(self.PAR_graphRAPH)
+        graph_file = self._config.get_param(self.PAR_GRAPH)
         # Create the networkx graph object
         graph = nx.read_graphml(graph_file)
         # Get a layout

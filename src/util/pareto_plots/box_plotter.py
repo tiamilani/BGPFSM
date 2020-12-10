@@ -33,29 +33,34 @@ parser.add_argument("-o", "--output", dest="outputFile", default="paretoplot.pdf
 parser.add_argument("-r", "--render", dest="render", default=True,
                     action='store_false', help="Render the results on a pdf file in")
 
-COLUMNS=["id", "file_name", "convergence_time", "total_messages"]
+COLUMNS=["id", "file_name", "convergence_time", "total_messages", "suppressions"]
 
 def main():
     options = parser.parse_args()
     time_df = pd.DataFrame()
     messages_df = pd.DataFrame()
+    suppressions_df = pd.DataFrame()
 
     output_file = options.outputFile.split('.')[0]
     
     for _file in options.inputFile:
-        file_name=_file.split('/')[-1].split('-')[0]
+        file_name=_file.split('/')[-1].split('.')[0]
 
         df = pd.read_csv(_file, sep="|", index_col=COLUMNS[0])
 
         time_df[file_name] = df[COLUMNS[2]].values
         messages_df[file_name] = df[COLUMNS[3]].values
+        suppressions_df[file_name] = df[COLUMNS[4]].values
 
     plotter.plot_boxplot_pandasDataframe(time_df, title = "Convergence time comparison",
                                          ylabel="Convergence time [s]",
                                          output_file_name=output_file+"_time_boxplot.pdf")
-    plotter.plot_boxplot_pandasDataframe(messages_df, title = "Total messages comparison",
-                                         ylabel="# Messages",
+    plotter.plot_boxplot_pandasDataframe(messages_df, title = "total messages comparison",
+                                         ylabel="# messages",
                                          output_file_name=output_file+"_messages_boxplot.pdf")
+    plotter.plot_boxplot_pandasDataframe(suppressions_df, title = "total suppressions comparison",
+                                         ylabel="# suppressions",
+                                         output_file_name=output_file+"_suppressions_boxplot.pdf")
 
 if __name__ == "__main__":
     main()
