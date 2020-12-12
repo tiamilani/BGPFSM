@@ -758,8 +758,9 @@ class BGP_RIB_handler(): # pylint: disable=invalid-name
                     if len(self.adj_rib_in[route]) == 0:
                         del self.adj_rib_in[route]
         except KeyError:
-            print("{} - Error, I received a withdraw of a route that I don't \
-                  know, ignored".format(self.node_id))
+            # TODO find a better solution
+            # print("{} - Error, I received a withdraw of a route that I don't \
+            #      know, ignored".format(self.node_id))
             return
 
     def __add_to_knowledge(self, route: Route) -> None:

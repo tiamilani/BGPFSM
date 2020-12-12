@@ -713,6 +713,43 @@ An example of \ac{RFD} configuration in a graphml file:
 \section{Discrete event simulations}
 \label{sec:des}
 
+The simulator is the main component of the project, it permits to execute
+experiments with different environments with the predefined topology.
+
+\begin{figure}[h]
+	\begin{center}
+		\begin{tikzpicture}[scale=0.2]
+			\tikzstyle{every node}+=[inner sep=0pt]
+			\draw [black] (0,0) circle (4);
+			\draw [black] (14,0) circle (4);
+			\draw [black] (24,-2.5) rectangle (38,2.5);
+			\draw [black] (48,0) circle (4); 
+			\draw [thick, ->] (4,0) -- (10,0);
+			\draw [thick, ->] (18,0) -- (24,0);
+			\draw [thick, ->] (38,0) -- (44,0);
+			\node [Graphml] at (0,0) {Graphml};
+			\node [Json] at (14,0) {json};
+			\node [DES] at (31,0) {DES};
+			\node [Output] at (48,0) {Output};
+		\end{tikzpicture}
+	\end{center}
+	\caption{Discrete event simulator structure}
+	\label{fig:des_structure}
+\end{figure}
+
+The \ac{DES} receives as input a json file with all the environment parameters
+that will be used during the experiment.
+The output of the experiment could be divided in two category:
+\begin{itemize}
+	\item Standard output: The simulator will print messages on the standard
+		output if the verbose option of the configuration file is active
+	\item CSV files: the simulator will save events on the csv file
+		configured as output in the json file.
+\end{itemize}
+
+The CSV file is mandatory, so the simulator will at least print the events 
+sequence on that file.
+
 \subsection{Simulator parameters}
 \label{subsec:des_param}
 

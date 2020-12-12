@@ -842,10 +842,16 @@ class FileAnalyzer():
     def general_file_study(self) -> pd.DataFrame:
         tx_df = self.__filter_events([Events.TX], dataframe=self._df)
         rx_df = self.__filter_events([Events.RX], dataframe=self._df)
+        rib_df = self.__filter_events([Events.RIB_CHANGE], dataframe=self._df)
         suppress_df = self.__filter_events([Events.ROUTE_SUPPRESSED], dataframe=self._df)
+
         start_time = tx_df.head(1)[FileAnalyzer.EVALUATION_COLUMNS[3]].values[0]
-        endup_time = rx_df.tail(1)[FileAnalyzer.EVALUATION_COLUMNS[3]].values[0]
-        convergence_time = endup_time - start_time
+        if len(rib_df.index) > 0:
+            last_rib = rib_df.tail(1)[NodeAnalyzer.EVALUATION_COLUMNS[3]].values[0]
+        else:
+            last_rib = start_time 
+        convergence_time = last_rib - start_time
+
         number_of_messages = len(self.__filter_events([Events.TX]).index)
         number_of_suppressions = len(suppress_df.index)
         self.general_study.loc[hash(self.file_name)] = (self.file_name, convergence_time, 

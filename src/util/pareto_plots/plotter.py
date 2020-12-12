@@ -182,6 +182,9 @@ def plot_boxplot_pandasDataframe(df, title="Title", ylabel="ylabel", output_file
     ax.set_ylabel(ylabel)
 
     plt.xticks(ticks,labels)
+    plt.xticks(rotation=45)
+    plt.margins(0.2)
+    plt.subplots_adjust(bottom=0.30)
 
     fig.savefig(output_file_name, format="pdf")
     plt.close()
