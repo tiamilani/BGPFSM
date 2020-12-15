@@ -30,11 +30,12 @@ Arguments
 Please refer to the help and the README for a mroe compleate explanation
 of the arguments.
 
-`--list` to get the list of available simulations with the configuration file
-`--LIST` to have a compleate list of simulations with parameters
+`-l`,`--list` to get the list of available simulations with the configuration file
+`-L`,`--LIST` to have a compleate list of simulations with parameters
 `-r` used to define which run will be executed
 `-c` MANDATORY argument that defines which configuration file will be used
 `-s` Defines the section of the configuration file to use, default: simulation
+`-g` Disable the rendering of the graph in a pdf file at the end of the simulation
 
 """
 

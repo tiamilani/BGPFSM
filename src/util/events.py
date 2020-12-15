@@ -30,7 +30,7 @@ class Events: # pylint: disable=too-few-public-methods
     """
 
     # process event
-    PROCESS = 0
+    # PROCESS = 0
     # Transmission event
     TX = 1
     # Reception event

@@ -38,6 +38,7 @@ of this arguments also define the first part of the name of all the output files
 or saved at the end of the analysis if them does not exists
 `-s` option to study a signaling experiment
 `-F` option to disable the study of the FSM
+'--rfd' to analyze te RFD evolution of a network
 
 All this options can be combined in different commands for example:
 

@@ -254,7 +254,6 @@ class Node(Module):
         if not self.adaptive_rfd or len(route.path) == 0:
             history_route.figure_of_merit += value
         else:
-            self._print("Adatptive active")
             history_route.figure_of_merit += value * 1/len(route.path)
         if history_route.figure_of_merit > ceiling:
             history_route.figure_of_merit = ceiling
@@ -785,7 +784,6 @@ class Node(Module):
         yield self._env.timeout(waiting_time) & request
 
         self._print("Start pkt evalution {}".format(event.obj))
-        self._print("Packet evaluation event {} caused by: {}".format(event.id, event.event_cause))
 
         # Schedule the end of the evaluation
         proc_time = self.proc_time.get_value()
@@ -800,7 +798,6 @@ class Node(Module):
         yield self._env.timeout(waiting_time)
 
         self._print("End pkt evaluation: {}".format(packet))
-        self._print("Packet evaluation event {} caused by: {}".format(event.id, event.event_cause))
 
         # Get the route
         route = packet.content

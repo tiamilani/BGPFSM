@@ -1,30 +1,17 @@
 <?xml version='1.0' encoding='utf-8'?>
 <graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
   <key attr.name="destinations" attr.type="string" for="node" id="d0" />
-  <key attr.name="MRAI_affects_withdraws" attr.type="string" for="node" id="d1" />
-  <key attr.name="RFD" attr.type="string" for="node" id="d2" />
   <graph edgedefault="directed">
     <node id="0">
 		<data key="d0">10.0.0.0/24</data>
-		<data key="d1">1</data>
     </node>
-	<node id="0_1" >
-		<data key="d1">1</data>
-    </node>
-	<node id="0_2" >
-		<data key="d1">1</data>
-    </node>
-	<node id="1" >
-		<data key="d1">1</data>
-    </node>
-    <node id="2" >
-		<data key="d1">1</data>
-    </node>
+	<node id="0_1" />
+	<node id="0_2" />
+	<node id="1" />
+	<node id="2" />
 	<edge source="0" target="0_1" />
 	<edge source="0" target="0_2" />
-    <edge source="0_1" target="1">
-		<data key="d1">{"distribution": "unif", "min": 2, "max": 4, "int": 0.001}</data>
-	</edge>
+	<edge source="0_1" target="1" />
     <edge source="0_2" target="1" />
     <edge source="1" target="2" />
   </graph>

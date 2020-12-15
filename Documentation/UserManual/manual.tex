@@ -44,6 +44,15 @@
 %\usepackage[para]{footmisc}
 \usepackage[font={small}]{caption}
 \usepackage{imakeidx}
+\usepackage{longtable}
+\usepackage[table]{xcolor}
+\definecolor{lightgray}{gray}{0.9}
+\let\oldlongtable\longtable
+
+\let\endoldlongtable\endlongtable
+
+\renewenvironment{longtable}{\rowcolors{2}{white}{lightgray}\oldlongtable} 
+{\endoldlongtable}
 
 \usepackage{tikz}
 \usetikzlibrary{calc,shapes,arrows,fit,positioning}
@@ -152,6 +161,8 @@
 \acrodef{DES}{Descrete Event Simulator}
 \acrodef{RFD}{Route Flap Damping}
 \acrodef{RNG}{Random Number Generator}
+\acrodef{LID}{Link identifier}
+\acrodef{RIB}{Routing Information Base}{short-plural=s}
 
 \newcommand\useallac{
 \acused{IP}
@@ -750,20 +761,535 @@ The output of the experiment could be divided in two category:
 The CSV file is mandatory, so the simulator will at least print the events 
 sequence on that file.
 
-\subsection{Simulator parameters}
+The python file that act as entry point for the simulator is |src/fsm.py|.
+
+\subsection{Simulator arguments}
 \label{subsec:des_param}
+
+The command:
+
+\begin{lstlisting}[language=bash]
+	python3 fsm.py --help
+\end{lstlisting}
+
+If an error message of a missing library is displayed, rembember to source the 
+environment using |source env/bin/activate| before using the software of 
+the repository.
+Inside the folder |src/json/examples| there are some json examples that I will use
+now to explain the different arguments that the simulator requires.
+
+We will look to the file |line.json|.
+If you open the file you can notice that the file is composed by two json parts.
+The first one has as name |simulation| the second one |line|.
+
+\begin{lstlisting}[language=bash]
+{
+	"simulation" : {
+		....
+	},
+	"line" : {
+		....
+	}
+}
+\end{lstlisting}
+
+Now we will take a look to the argument |-l| or |--list|, this argument has
+the function to list all the available simulations in the standard output.
+
+Try to run:
+\begin{lstlisting}[language=bash]
+	python3 fsm.py -c json/examples/line.json -l
+\end{lstlisting}
+
+The |-c| attribute is mandatory and defines which json file should be used by the
+simulator.
+
+The output should be:
+\begin{lstlisting}[language=bash]
+./fsm.py -c json/tests/line.json -s simulation -r 0
+./fsm.py -c json/tests/line.json -s simulation -r 1	
+\end{lstlisting}
+
+This command has not executed the simulation, but it gives us some information
+about the environment.
+As default, if not specified the simulator will use the environment named 
+simulation.
+So it has looked into the json file, it has found the |simulation| environment
+and it has gives us the list of different runs that we can execute with that
+environment.
+
+As you have probably imanginated up to now the parameter |-s| can be used
+to pass the environment that we want to use in the simulation.
+Infact if we use the following command we will obtain the same output as before:
+
+\begin{lstlisting}[language=bash]
+	python3 fsm.py -c json/examples/line.json -s simulation -l
+\end{lstlisting}
+
+The simulator has retrieved two lines, the first one endup with |-r 0| and the
+second one with |-r 1|.
+Thats because in the |simulation| environment we have a single vector of two 
+elements, that is the seed.
+\begin{lstlisting}[language=bash]
+{
+	"simulation" : {
+		"seed" : [0, 1],
+		....
+	},
+	"line" : {
+		....
+	}
+}
+\end{lstlisting}
+The simulator recognize that we can run two different runs with the |simulation|
+environment and it gives us the option to decide wich one using the |-r| argument.
+It will assign a number to each combination of parameters that we have in
+the environment.
+
+With one single vector is easy to know which one correspond to which run number.
+but with a more complex one?
+For this purpose comes in help the |-L| or |--LIST| argument.
+
+The following command will gives us a lot of information about the parameters
+of the environment that we are using and the combination of values.
+
+\begin{lstlisting}[language=bash]
+	python3 fsm.py -c json/examples/line.json -s simulation -L
+\end{lstlisting}
+
+The ouput is:
+\begin{lstlisting}[language=bash]
+./fsm.py -c json/tests/line.json -s simulation -r 0: seed: 0
+./fsm.py -c json/tests/line.json -s simulation -r 1: seed: 1
+\end{lstlisting}
+
+Now we know that to the index of run 0 correspond the seed 0 and to the 
+index 1 correspond the seed 1.
+
+The last argument is a flag |-g| you will see the result of this flag in the next
+chapter where is explained the first experiment.
+This argument will disable the rendering of the graph at the end of the simulation
+if instad you leave this function untouched in the output folder will be
+present also a graph rendered using networkx in the output folder.
+
+Now lets take a look to a more complex environment.
+Instead of the simulation environment try the line one with the |-l| and |-L|
+parameters you will see that with more parameters vectors you will have a lot 
+more runs that are possible.
+The number of runs is always equal to the number of possible combination of 
+all the parameters.
+
+\begin{lstlisting}[language=bash]
+	python3 fsm.py -c json/examples/line.json -s line -l
+	python3 fsm.py -c json/examples/line.json -s line -L
+\end{lstlisting}
 
 \subsection{First experiment}
 \label{subsec:first_exp}
 
+For the first experiment we will use the |src/json/examples/line.json| with the
+|simulation| environment lets take a look at it.
+
+\begin{lstlisting}[language=json]
+	"simulation" : {
+		// seed(s) to initialize RNGs
+		"seed" : [0, 1],
+		// duration of each simulation in seconds
+		"duration" : 600,
+		// Graph file to simulate
+		"graph": "graphs/general_tests/simple_line.graphml",
+		// log file name using configuration parameters, use {seed} or {date-time}
+		"output" : "results/tests/line/line_{seed}.csv",
+		// Verbose value
+		"verbose": "True",
+		// Signaling flag
+		"signaling": "False",
+		// Signaling sequence, ignored if signaling false
+		"signaling_sequence": "",
+		// Implicit withdraw of routes
+		"implicit_withdraw": "True",
+		// Withdraw signaling
+		"withdraw": "True",
+		// Reannouncement of a destination after a withdraw
+		"reannouncement": "True",
+		// Withdraw interval distribution from the announcement
+		"withdraw_dist": {"distribution": "const", "mean": 300},
+		// announcement interval distribution from the withdraw
+		"reannouncement_dist": {"distribution": "const", "mean": 300},
+		// Transmission time required to start the actual message transmission
+		"datarate": {"distribution": "exp", "lambda" : 100},
+		// Processing time distribution
+		"processing": {"distribution": "const", "mean": 0.00001},
+		// Network delay distribution
+		"delay": {"distribution": "unif", "min": 0.012, "max": 3, "int": 0.001}
+	}
+\end{lstlisting}
+
+The graph that will be used could be represente by \Cref{fig:simple_line}
+\begin{figure}[h]
+	\begin{center}
+		\begin{tikzpicture}[scale=0.2]
+			\tikzstyle{every node}+=[inner sep=0pt]
+			\draw [black] (10.7,-26.5) circle (3);
+			\draw (10.7,-26.5) node {$0$};
+			\draw [black] (10.7,-26.5) circle (2.4);
+			\draw [black] (21.6,-17.5) circle (3);
+			\draw (21.6,-17.5) node {$0\_1$};
+			\draw [black] (21.6,-34.2) circle (3);
+			\draw (21.6,-34.2) node {$0\_2$};
+			\draw [black] (33.1,-26.5) circle (3);
+			\draw (33.1,-26.5) node {$1$};
+			\draw [black] (46.8,-26.5) circle (3);
+			\draw (46.8,-26.5) node {$2$};
+			\draw [black] (13.01,-24.59) -- (19.29,-19.41);
+			\fill [black] (19.29,-19.41) -- (18.35,-19.53) -- (18.99,-20.31);
+			\draw [black] (13.15,-28.23) -- (19.15,-32.47);
+			\fill [black] (19.15,-32.47) -- (18.78,-31.6) -- (18.21,-32.42);
+			\draw [black] (23.96,-19.35) -- (30.74,-24.65);
+			\fill [black] (30.74,-24.65) -- (30.42,-23.76) -- (29.8,-24.55);
+			\draw [black] (24.09,-32.53) -- (30.61,-28.17);
+			\fill [black] (30.61,-28.17) -- (29.66,-28.2) -- (30.22,-29.03);
+			\draw [black] (36.1,-26.5) -- (43.8,-26.5);
+			\fill [black] (43.8,-26.5) -- (43,-26) -- (43,-27);
+		\end{tikzpicture}
+	\end{center}
+	\caption{Simple line graph}
+	\label{fig:simple_line}
+\end{figure}
+
+Node $0$ has a double circle around it because it contains a destination that will
+be shared.
+
+The verbose option on the configuration file is active so we will see both
+the outputs of the simulator.
+
+Both Withdraw and reannounce option are active so the node 0 will continiusly
+send withdraws and announcement of its destination, using the distributions defined
+in the environment.
+
+The simulation will endup when the max time will be reached.
+
+To run our first experiment use:
+
+\begin{lstlisting}[language=bash]
+	python3 fsm.py -c json/examples/line.json -r 0
+\end{lstlisting}
+
+You will see that almost instantly the simulation will end because of the
+small ammount of events.
+I suggest to use the following command to save the standard output on a file
+instead of the terminal.
+
+\begin{lstlisting}[language=bash]
+	python3 fsm.py -c json/examples/line.json -r 0 > line.log
+\end{lstlisting}
+
+Now you will see the standard output in the |log.tmp| file.
+In the next chapter, \Cref{subsec:des_output} I will take a look to this 
+output, and also the CSV output of this experiment.
+
 \subsection{Output of the experiment}
 \label{subsec:des_output}
+
+We will now analyze the output of the run executed with the command:
+
+\begin{lstlisting}[language=bash]
+	python3 fsm.py -c json/examples/line.json -r 0 > line.log
+\end{lstlisting}
+
+\\
+\textbf{STD output}
+\\
+
+The first ouptut that we will take a look is the standard output, the one that
+has been saved on the file |line.log|.
+
+Thanks to the option |verbose| active we will see a lot of information, but 
+we can divide the entire file in three section.
+
+The fist one is composed by the evolution of the environment, that is described
+by all the events that happen.
+All the line of tipe |time-node event| compose this category, as an example 
+you can look to this extract of the |line.log| file:
+
+\begin{lstlisting}[language=bash]
+....
+0.01865607111065223-0 Start TX packet: {'id': 1, 'type': 0, 'content': "{'addr': '10.0.0.0/24', 'nh': '0', 'path': ['0'], 'policy_value': '0'}"}
+0.024113202566068158-0 End TX packet: {'id': 1, 'type': 0, 'content': "{'addr': '10.0.0.0/24', 'nh': '0', 'path': ['0'], 'policy_value': '0'}"}
+0.8097564524414427-Lid:1 to 0_2 Transmitting msg: {'id': 1, 'type': 0, 'content': "{'addr': '10.0.0.0/24', 'nh': '0', 'path': ['0'], 'policy_value': '0'}"}
+0.8097664524414426-0_2 Start packet reception
+0.8169259999391142-0_2 End packet reception: {'id': 1, 'type': 0, 'content': "{'addr': '10.0.0.0/24', 'nh': '0', 'path': ['0'], 'policy_value': '0'}"}
+0.8169359999391141-0_2 Start pkt evalution {'id': 1, 'type': 0, 'content': "{'addr': '10.0.0.0/24', 'nh': '0', 'path': ['0'], 'policy_value': '0'}"}
+....
+\end{lstlisting}
+
+As you can see we can extract a lot of information from those lines, the transmission
+of a packet from node $0$ to node $0\_2$ and also the reception of it.
+For an explanation of all the possibile outputs please refers to \Cref{subsec:events}.
+Is possible to see that we get also the link output, in this case the third line
+represent that a link has took in charge a message for the node $0\_2$, links
+are identified by a \ac{LID} and them are \textbf{FIFO}, this is important
+because two messages on the same link will never reach the destination in 
+a different respect to the on that they have been sent.
+There could be different delays applied to different messages on the same
+link, but the order will be always the same.
+
+The second part on the standard output will be the node state at the end of 
+the run, you will find this part at the end of the file, and you will see something
+like that:
+
+\begin{lstlisting}[language=bash]
+....
+Node: 1
+Neighborhood: ['2']
+Destinations queue: 
+Routing Table:
+BGP RIB handler: 
+ADJ_RIB_in:
+LOC_rib:
+2 ADJ_RIB_out:
+Withdraw List: []
+....
+\end{lstlisting}
+
+This is a general description of the node $1$ and all the components that 
+are in it.
+You will see all the routing information, the \ac{RIB}, etc.
+In this case the node doesn't have any information on how to reach the destination
+this because near the end of the experiment it has received a withdraw of the
+route that it has evaluated.
+
+Try the experiment with the second run using the command:
+
+\begin{lstlisting}[language=bash]
+....
+python3 fsm.py -c json/examples/line.json -r 1 > line.log
+tail -n 30 line.log
+....
+\end{lstlisting}
+
+You will see an interesting difference on the node $1$ withdraw list, and in the
+node $2$ routing table, it has not yet received the route withdraw.
+
+The last part of the standard output is represent by two lines that are always
+printed also with the |verbose| option to false.
+
+\begin{lstlisting}[language=bash]
+Maximum simulation time reached. Terminating
+Total simulation time: 0 hours, 0 minutes, 0 seconds
+\end{lstlisting}
+
+It simply tells how much time has take the experiment to reach the simulation limit
+that in this case was \num{600}.
+
+\\
+\textbf{CSV Output}
+\\
+
+The second type of output that is produced by the simulator is the CSV file
+that contains the list of events that happened during the run.
+
+The CSV file will be saved accordingly with the |output| parameter of the
+json environment file.
+In this case the output parameter was:
+
+\begin{lstlisting}[language=json]
+"output" : "results/tests/line/line_{seed}.csv",
+\end{lstlisting}
+
+So we expect to find a CSV file inside the folder |results/tests/line/| with
+a name composed by |line_| and the accordingly to the one we used.
+If you have executed both the runs, with |-r 0|/|-r 1| you will find two file
+in the folder.
+
+The csv folder is composed as follow:
+\begin{lstlisting}[language=json]
+event_id|event_cause|event|time|node|value
+2|0|6|1e-05|0|{0}
+6|1|11|3.0000000000000004e-05|0|0_1
+7|1|11|3.0000000000000004e-05|0|0_2
+8|6|15|4e-05|0|{'id': 0, 'type': 0, 'content': "{'addr': '10.0.0.0/24', 'nh': '0', 'path': ['0'], 'policy_value': '0'}"}
+10|6|1|0.01864607111065223|0|{'id': 0, 'type': 0, 'content': "{'addr': '10.0.0.0/24', 'nh': '0', 'path': ['0'], 'policy_value': '0'}"}
+9|7|15|0.01865607111065223|0|{'id': 1, 'type': 0, 'content': "{'addr': '10.0.0.0/24', 'nh': '0', 'path': ['0'], 'policy_value': '0'}"}
+12|7|1|0.024113202566068158|0|{'id': 1, 'type': 0, 'content': "{'addr': '10.0.0.0/24', 'nh': '0', 'path': ['0'], 'policy_value': '0'}"}
+14|12|2|0.8169259999391142|0_2|{'id': 1, 'type': 0, 'content': "{'addr': '10.0.0.0/24', 'nh': '0', 'path': ['0'], 'policy_value': '0'}"}
+17|14|6|0.8169459999391141|0_2|{1}
+\end{lstlisting}
+
+\begin{itemize}
+	\item \textbf{event\_id} represents the id of the event that has been registered
+	\item \textbf{event\_cause} is the id of the event that has caused this one, is possible
+		that an event\_cause refers to an event that has not been registered
+	\item \textbf{event} this is the code identifier of the event, you can find
+		the list of possible events in \Cref{subsec:events}
+	\item \textbf{time} this value represent the instant in which the event
+		happened
+	\item \textbf{node} identifier of the node that triggered the event
+	\item \textbf{value} String that represent something valuable for the event,
+		for a message could be the content, etc.
+\end{itemize}
+
+This file can be used to study the evolution of the experiments with scripts.
+The \Cref{subsec:events} also explain for each event what will be printed
+if logged in the csv file.
+
+\subsection{Events}
+\label{subsec:events}
+
+\begin{longtable}[c]{| p{5.5cm} | p{1.5cm} | p{4cm} | p{4cm} |}
+
+ \hline
+ \multicolumn{4}{| c |}{Events Table}\\
+ \hline
+ Event name & Event id & Event csv value & Event description\\
+ \hline
+ \endfirsthead
+
+ \hline
+ \multicolumn{4}{|c|}{Continuation of the Events table}\\
+ \hline
+ Event name & Event id & Event csv value & Event description\\
+ \hline
+ \endhead
+
+ \hline
+ \endlastfoot
+
+ TX & 1 & |str(packet_transmitted)| & This event denote the end of a transmission
+	of a packet on a link\\
+ RX & 2 & |str(packet_received)| & This event denote the end of a packet reception,
+	the reception of a packet ends when it is passed to the packet evaluator\\
+ RT\_CHANGE & 3 & Not represented in the CSV & This event represent a change in the 
+	routing table (obsolete, not used)\\
+ NEW\_PATH & 4 & Not represented in the CSV & This event represent a path 
+	change (obsolete, not used)\\
+ REANNOUNCE & 5 & Not represented in the CSV & This event is used to trigger
+	a route reannounce in the simulator\\
+ RIB\_CHANGE & 6 & |set| of the known routes hash & This event is used when
+	there is a change in the \ac{RIB}, a new route or the removal of a known route\\
+ DST\_ADD & 7 & Not represented in the CSV & This event is triggered when there
+	is a new destination to add to the node, used at the boot of the network\\
+ UPDATE\_SEND\_PROCESS & 8 & Not represented in the CSV & This event is triggered
+	when at the end of a packet evaluation has been decided the new updates that
+	must be sent to neighbours and the variations on the LOC\_rib, RIB\_out caused
+	by the message\\
+ INTRODUCE\_NETWORKS & 9 & Not represented in the CSV & Event triggered when
+	a new Network must be introduced, added at the \ac{RIB}, it triggers the correct
+	function handler \\
+ REMOVE\_NETWORKS & 10 & Not represented in the CSV & Event triggerd when a 
+	network must be removed, removed from the \ac{RIB}, it triggers the correct
+	function handler \\
+ MRAI & 11 & |str(neighbour_id)| & This event is trigered when an \ac{MRAI} cicle/evaluation
+	is concluded\\
+ START\_RX & 12 & Not represented in the CSV & This event is triggered at the
+	beggining of a reception and schedule the end of the reception \\
+ START\_PKT\_EVAL & 13 & Not represented in the CSV & Event used to trigger 
+	the beggining of a packet evaluation, this process will evaluate the packet
+	before the introduction in the \ac{RIB} \\
+ END\_PKT\_EVAL & 14 & Not represented in the CSV & Event triggered when 
+	the evaluation of a packet is ended and the data has been sent to the \ac{RIB}
+	or ignored\\
+ START\_TX & 15 & |str(packet_to_transmit)| & This event represent the beginning
+	of a transmission\\
+ START\_UPDATE\_SEND\_PROCESS & 16 & Not represented in the CSV & This event 
+	represent the beginning of the process that evaluates the ADJ\_RIB\_in in order
+	to introduce/update netowrks\\
+ ROUTE\_REUSABLE & 17 & |str(route)| & This event triggers the 
+	function handler that will make a route usable again, afterh it has 
+	been suppressed by the \ac{RFD} \\
+ END\_T\_HOLD & 18 & |str(route)| & This event is used to trigger
+	the function handler that makes a route usable again after it has been suppressed
+	for T-hold time\\
+ FIGURE\_OF\_MERIT\_VARIATION & 19 & |str((route, figure-of-merit))|& This event
+	denotes a cShange in the figure of merit of a route, it is used for every
+	change, caused by new messages or a route reusable event, etc.\\
+ ROUTE\_SUPPRESSED & 20 & |str(route)| & Event triggere when a route has been
+	suppressed because the figure of merit passed the suppression threshold\\
+ \hline	
+ \caption{Events list\label{tbl:events}}\\
+\end{longtable}
+
+\Cref{tbl:events} gives a rough view of all the events that are used/triggerd 
+during the simulations and the meaning of them.
+Also in the table is possible to see the representation of them in the CSV output
+file and the associated value.
+
+I think that is also important to point out how are represented routes and packets.
+For example the following is a string that represent the dictionary used 
+for routes:
+\begin{lstlisting}[language=bash]
+{'addr': '10.0.0.0/24', 'nh': '1', 'path': ['1', '0_1', '0'], 'policy_value': '0'}
+\end{lstlisting}
+This string represent the destination |10.0.0.0/24| reached through the path |['1', '0_1', '0']|
+using as \ac{NH} the node $1$, the policy value associated with the route is $0$
+and it is used to evaluate through wich neighbour the network must be sent.
+
+A message is represented like it follows:
+\begin{lstlisting}[language=bash]
+{'id': 5, 'type': 0, 'content': "{'addr': '10.0.0.0/24', 'nh': '1', 'path': ['1', '0_1', '0'], 'policy_value': '0'}"}
+\end{lstlisting}
+The id of a message is unique for each message transmitted, the type determine if it
+is an advertisement or a withdraw, respecively \num{0}/\num{1}, and then 
+the content represent what is transmitted (|str(content)|)
 
 \section{Analyzer}
 \label{sec:analyzer}
 
+The analyzer is the part of the toolchain that takes as input the CSV output of
+the simulator and retrieves other CSVs that depends on the parameters that has
+been passed to it.
+Is possible to analyze in general the network evolution with multiple runs.
+Is possible to study how the network reacts to a specific signal.
+Is also possible to sudy how a specific node reacts during the network evolution.
+The analyzer can also plot some graphs or studies, but the main purpose of it 
+is to produce small CSVs that groups features that you want to study.
+
 \subsection{Analyzer parameters}
 \label{subsec:anal_param}
+
+using the command:
+\begin{lstlisting}[language=bash]
+python3 analyzer.py --help
+\end{lstlisting}
+You will see the list of possible arguments that can be passed to the analyzer
+some of them can coexists on the same command, others can't.
+I will now explain every parameters with some details about it, in the next
+sections (\Cref{subsec:anal_exec,subsec:anal_output}) will also be showed some
+usage of them and the results.
+
+The mandatory arguments are:
+\begin{itemize}
+	\item |-f/--file|, this argument define the file/s that the analyzer
+		should take as input, multiple files can be passed
+	\item |-o/--output| This argument defines where the output should
+		be placed, is possible also to give a special name that will be used,
+		for example |folder/folder/out_5| all the output files will be saved
+		using this path and all the files names will begin with |out_5|
+\end{itemize}
+
+The optional paramers are:
+\begin{itemize}
+	\item |-n/--node| defines which nodes should be studied, is possible
+		to use a subset of them |1 2 3| or study them all with the |all| tag
+	\item |-r/--render| tag that activate the render function, the analyzer
+		will automatically produce some plots, all of them are explained in the
+		\Cref{subsec:anal_exec}
+	\item |-d/--display| tag used to automatically display the \ac{FSM}
+		graph at the end of the analysis
+	\item |-S/--security| used to enable security checks, to avoid
+		overwriting already existing result files
+	\item |-t/--time| used to display the time required by the analyzer
+		to execute different sections of the study
+	\item |-v/--verbose| used to eneable the verbose mode
+	\item |-p/--progress| used to disable the progress bar
+	\item |-pi/--pickle| used to save in the output folder also the pickle
+		format of the results, if enable ti will also look for the pickle
+		file at the beginning of the anlysis to use them
+	\item |-s/--signaling| used to analyze experiments that use specific
+		signals instead of the random evolution
+	\item |-F/--fsm| tag used to disable the \ac{FSM} study of the nodes
+	\item |--rfd/--RFD| used to study the \ac{RFD} evolution of the runs
+\end{itemize}
 
 \subsection{Analyzer execution}
 \label{subsec:anal_exec}
@@ -771,13 +1297,16 @@ sequence on that file.
 \subsection{Analyzer output}
 \label{subsec:anal_output}
 
+\section{First signaling experiment}
+\label{sec:signaling_experiment}
+
 \section{Plot results}
 \label{sec:plot_results}
 
 \section{Graph generator}
 \label{sec:graph_generator}
 
-\subsection{Propery generators}
+\subsection{Property generators}
 \label{sec:graph_propery_generators}
 
 \section{Multiple experiments in parallel}

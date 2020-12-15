@@ -1567,7 +1567,6 @@
     </node>
     <node id="390">
       <data key="d0">C</data>
-      <data key="d2">100.0.0.0/24</data>
       <data key="d1">1.0, 0.0, 0.5, 6.0, 0.75, 3600, 900, 900, 3600, 3600, 5</data>
     </node>
     <node id="391">
@@ -2408,6 +2407,7 @@
     </node>
     <node id="600">
       <data key="d0">C</data>
+      <data key="d2">100.0.0.0/24</data>
       <data key="d1">1.0, 0.0, 0.5, 6.0, 0.75, 3600, 900, 900, 3600, 3600, 5</data>
     </node>
     <node id="601">
