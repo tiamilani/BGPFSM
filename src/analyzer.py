@@ -58,6 +58,7 @@ import timeit
 import pandas as pd
 import pickle
 from graphviz import Digraph
+import glob
 
 sys.path.insert(1, 'util')
 from analysis import FileAnalyzer, NodeAnalyzer
@@ -148,8 +149,8 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
     general_file_study = general_file_study.set_index(FileAnalyzer.GENERAL_STUDY_COLUMNS[0])
 
     # Check that the output file does not exists
-    if os.path.isfile(output_file_path) and options.security:
-        print("output file {} already exists".format(output_file_path))
+    if len(glob.glob(output_file_path + "*")) > 0 and options.security:
+        print("output files {}* already exist".format(output_file_path))
         sys.exit(1)
 
     # Obtain variables

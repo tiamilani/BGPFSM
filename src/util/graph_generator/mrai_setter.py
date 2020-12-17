@@ -27,7 +27,7 @@ from collections import defaultdict
 import random
 
 
-parser = argparse.ArgumentParser(usage="usage: %prog [options]",
+parser = argparse.ArgumentParser(usage="usage: mrai_setter.py [options]",
                       description="Generate different possible graphs",
                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-t", "--type", dest="type", default="random",

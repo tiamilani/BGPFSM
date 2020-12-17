@@ -763,7 +763,7 @@ class NodeConvergencePlotter():
         # ax.set_yscale("log")
         ax.set_ylabel("Centrality normalized")
         ax.set_xlabel("Hop distance groups")
-        ax2.set_ylabel("Route suppression to converge")
+        ax2.set_ylabel("# Route suppressed before convergence")
 
         if limit is not None and limit > 0:
             ax2.set_ylim(ax2.get_ylim()[0], limit)

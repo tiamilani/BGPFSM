@@ -150,7 +150,7 @@ def main():
     p.plot(options.outputFile, limit=options.limits)
     avg_time, avg_cent = p.plot_centrality_vs_convergence(options.outputFile, ordered_hops, limit=options.limits)
     avg_msg = p.plot_centrality_vs_messages(options.outputFile, ordered_hops, limit=options.limit_msg)
-    avg_sup = p.plot_centrality_vs_suppressions(options.outputFile, ordered_hops, limit=options.limit_msg)
+    avg_sup = p.plot_centrality_vs_suppressions(options.outputFile, ordered_hops, limit=options.limits)
 
     data = list(zip(group_hops, avg_cent, avg_time, avg_msg, avg_sup))
     df = pd.DataFrame(data, columns = ['group', 'avg_centr', 'avg_time', 'avg_msg', 'avg_sup'])

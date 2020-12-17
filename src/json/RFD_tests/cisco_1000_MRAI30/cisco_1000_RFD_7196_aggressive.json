@@ -17,7 +17,7 @@
 		// Signaling flag
 		"signaling": "True",
 		// Signaling sequence, ignored if signaling false
-		"signaling_sequence": "AWAWAWAWAWA",
+		"signaling_sequence": "AWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWA",
 		// Implicit withdraw of routes
 		"implicit_withdraw": "True",
 		// Withdraw signaling 
@@ -25,9 +25,9 @@
 		// Reannouncement of a destination after a withdraw
 		"reannouncement": "False",
 		// Withdraw interval distribution from the announcement
-		"withdraw_dist": {"distribution": "const", "mean": 300},
+		"withdraw_dist": {"distribution": "const", "mean": 3},
 		// announcement interval distribution from the withdraw 
-		"reannouncement_dist": {"distribution": "const", "mean": 300},
+		"reannouncement_dist": {"distribution": "const", "mean": 3},
 		// Transmission time required to start the actual message transmission 
 		"datarate": {"distribution": "exp", "lambda" : 100},
 		// Processing time distribution

@@ -12,6 +12,7 @@
 \graphicspath{images/}
 \usepackage{cite}
 \usepackage{url}
+\usepackage{caption}
 \usepackage{subcaption}
 \usepackage{float}
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
@@ -142,7 +143,7 @@
 \RequirePackage[index=true]{acro}
 \NewDocumentCommand\acrodef{mO{#1}mG{}}{\DeclareAcronym{#1}{short={#2}, long={#3}, #4}}
 \NewDocumentCommand\acused{m}{\acuse{#1}}
-
+\newcommand{\q}[1]{``#1''}
 
 \acrodef{ADV}{advertisement}
 \acrodef{AS}{Autonomous System}{short-plural=es}
@@ -1265,12 +1266,12 @@ The mandatory arguments are:
 		be placed, is possible also to give a special name that will be used,
 		for example |folder/folder/out_5| all the output files will be saved
 		using this path and all the files names will begin with |out_5|
+	\item |-n/--node| defines which nodes should be studied, is possible
+		to use a subset of them |1 2 3| or study them all with the |all| tag
 \end{itemize}
 
 The optional paramers are:
 \begin{itemize}
-	\item |-n/--node| defines which nodes should be studied, is possible
-		to use a subset of them |1 2 3| or study them all with the |all| tag
 	\item |-r/--render| tag that activate the render function, the analyzer
 		will automatically produce some plots, all of them are explained in the
 		\Cref{subsec:anal_exec}
@@ -1294,20 +1295,509 @@ The optional paramers are:
 \subsection{Analyzer execution}
 \label{subsec:anal_exec}
 
+Lets now start using the analyzer with the previous experiments that we have done
+don with the following commands:
+\begin{lstlisting}[language=bash]
+python3 fsm.py -c json/examples/line.json -r 0
+python3 fsm.py -c json/examples/line.json -r 1
+\end{lstlisting}
+
+Now doing |ls -la results/tests/line/| you should see something like that:
+\begin{lstlisting}[language=bash]
+total 128
+drwxr-xr-x 2 mattia mattia  4096 dic 15 15:05 .
+drwxr-xr-x 3 mattia mattia  4096 nov 17 12:23 ..
+-rw-r--r-- 1 mattia mattia  5153 dic 15 15:05 graph.pdf
+-rw-r--r-- 1 mattia mattia 54340 dic 15 15:05 line_0.csv
+-rw-r--r-- 1 mattia mattia 53587 dic 15 15:05 line_1.csv
+\end{lstlisting}
+
+The |graph.pdf| is a simple rendering of the line graph that we used for the
+experiments, the other two files are the output of the simulator with the 
+two different seeds.
+
+We can now use the analyzer to retrieve some data from those files using the basic
+functions of the analyzer.
+Using:
+\begin{lstlisting}[language=bash]
+python3 analyzer.py -f results/tests/line/line_0.csv -o results/tests/line/line_0_results -n 1
+\end{lstlisting}
+Using the command |ls -la results/tests/line/| you will see that now the 
+output has become:
+\begin{lstlisting}[language=bash]
+total 164
+drwxr-xr-x 2 mattia mattia  4096 dic 15 16:19 .
+drwxr-xr-x 3 mattia mattia  4096 nov 17 12:23 ..
+-rw-r--r-- 1 mattia mattia  5153 dic 15 15:05 graph.pdf
+-rw-r--r-- 1 mattia mattia 54340 dic 15 15:05 line_0.csv
+-rw-r--r-- 1 mattia mattia    74 dic 15 16:19 line_0_results_1__convergence.csv
+-rw-r--r-- 1 mattia mattia  1312 dic 15 16:19 line_0_results_1.gv
+-rw-r--r-- 1 mattia mattia    42 dic 15 16:19 line_0_results_1__rfd.csv
+-rw-r--r-- 1 mattia mattia   254 dic 15 16:19 line_0_results_1__routes.csv
+-rw-r--r-- 1 mattia mattia    58 dic 15 16:19 line_0_results_1__signal.csv
+-rw-r--r-- 1 mattia mattia   129 dic 15 16:19 line_0_results_1__states.csv
+-rw-r--r-- 1 mattia mattia   975 dic 15 16:19 line_0_results_1__transitions.csv
+-rw-r--r-- 1 mattia mattia   141 dic 15 16:19 line_0_results_average_node_convergence.csv
+-rw-r--r-- 1 mattia mattia   113 dic 15 16:19 line_0_resultsgeneral_study.csv
+-rw-r--r-- 1 mattia mattia 53587 dic 15 15:05 line_1.csv
+\end{lstlisting}
+There are \num{9} new files, all of them will be explained in \Cref{subsec:anal_output}.
+
+Suppose you add the option |-S| for security purposes, then you will obtain the
+following error:
+\begin{lstlisting}[language=bash]
+output files results/tests/line/line_0_results* already exist
+\end{lstlisting}
+
+Another case to consider is when you use the render option |-r|.
+You will see with the |ls| command that has been produced also some pdf files
+\begin{lstlisting}[language=bash]
+total 232
+drwxr-xr-x 2 mattia mattia  4096 dic 17 08:48 .
+drwxr-xr-x 3 mattia mattia  4096 nov 17 12:23 ..
+-rw-r--r-- 1 mattia mattia  9878 dic 17 08:48 convergence_time_boxplot.pdf
+-rw-r--r-- 1 mattia mattia  5153 dic 15 15:05 graph.pdf
+......
+-rw-r--r-- 1 mattia mattia 54340 dic 15 15:05 line_0.csv
+-rw-r--r-- 1 mattia mattia  1312 dic 17 08:48 line_0_results_1.gv
+-rw-r--r-- 1 mattia mattia 27114 dic 17 08:48 line_0_results_1.pdf
+.....
+-rw-r--r-- 1 mattia mattia 14382 dic 17 08:48 line_0_results_1_signaling_nmessage_prob.pdf
+......
+-rw-r--r-- 1 mattia mattia 53587 dic 15 15:05 line_1.csv
+-rw-r--r-- 1 mattia mattia  8845 dic 17 08:48 messages_boxplot.pdf
+\end{lstlisting}
+
+The options |-t/-v/-p| have effects during the execution and not on the output.
+for example, the command:
+\begin{lstlisting}[language=bash]
+python3 analyzer.py -f results/tests/line/line_0.csv -o results/tests/line/line_0_results -n 1 -t -v -p
+\end{lstlisting}
+Will print on the standard output:
+\begin{lstlisting}[language=bash]
+Processing results/tests/line/line_0.csv
+The init time has been: 0.004073547000189137
+Initialization done, csv file loaded
+The fsm study time has been: 0.23677632399994764
+fsm study done
+The general study time has been: 0.011548996999863448
+general study done
+The total study time has been: 0.2525103580001087
+Compleate study done
+Detailed FSM graph produced
+Graph saved in the output file
+\end{lstlisting}
+Those options are mostly used for debugging purposes.
+
+You can pass more than one file to the anlyzer and the results will be calculated
+on the average of the files passed, you can use the command:
+\begin{lstlisting}[language=bash]
+python3 analyzer.py -f results/tests/line/line_* -o results/tests/line_results/line_results -n 1
+\end{lstlisting}
+Note that I used a different folder for the results, I strongly reccomend to keep
+separates the simulation results from the anlysis results
+
+The remaning commands will be showed in the next chapters because we didn't do
+any signaling or \ac{RFD} experiments
+
 \subsection{Analyzer output}
 \label{subsec:anal_output}
+
+It's time now to look at the output file, i will start from the output files 
+of the command |python3 analyzer.py -f results/tests/line/line_0.csv -o results/tests/line_results/line_0_results -n 1|.
+All the output files have a name equal to |line_0_results| followed from 
+other information, the |general_study| and the |average_node_convergence| are 
+files that shows network properties, while all the other files
+have a number after |line_0_results_{num}_...| that number represent the node 
+which this file is refered to.\\
+
+|results/tests/line_results/line_0_resultsgeneral_study.csv|\\
+
+In this file we will find general results of the network, not specific results
+of the node that we have analyzed.
+
+\begin{lstlisting}[language=csv]
+id|file_name|convergence_time|total_messages|suppressions
+7026380117816832582|line_0.csv|598.7003642866296|103|0
+\end{lstlisting}
+
+This file is used to present general information about the experiment for each
+run executed (for each output file presented to the analyzer).
+The convergence time is given by the last RIB change that has been logged.
+Obviously we don't have any suppression because.
+
+If instead of the prevoious analyzer command, we pass both the simulation output
+files we would see something different in this file.
+|python3 analyzer.py -f results/tests/line/line_* -o results/tests/line_results/line_0_results -n 1|
+\begin{lstlisting}[language=csv]
+id|file_name|convergence_time|total_messages|suppressions
+-1322152928517784913|line_0.csv|598.7003642866296|103|0
+-7551142383611636716|line_1.csv|576.5186545239945|102|0
+\end{lstlisting}\\
+
+|results/tests/line_results/line_0_results_average_node_convergence.csv|\\
+
+This file presents aggregated data about how the nodes that we analyzed. it will
+use all the file that we passed and print the average result.
+\begin{lstlisting}[language=csv]
+node|avg_conv_time|std_conv_time|avg_in_messages|std_in_messages|avg_suppressed_routes|std_suppressed_routes
+1|573.5295034317081||40.0||0.0|
+\end{lstlisting}
+Obviously analyzing just one file we can't calculate the std deviation from the
+average and also the average is the exact value.
+Instead, if we use |results/tests/line/line_*| the file should contain something
+like:
+\begin{lstlisting}[language=csv]
+node|avg_conv_time|std_conv_time|avg_in_messages|std_in_messages|avg_suppressed_routes|std_suppressed_routes
+1|574.150357153866|0.8780197541254442|40.0|0.0|0.0|0.0
+\end{lstlisting}
+As you can see now it has been possible to calculate also the deviation from the
+average.
+
+Note that also the file |line_0_results_1__convergence.csv| presents the node 1
+convergence statistics, but not in an aggregated form, 
+if we pass as nodes |-n 1 2| we will see that we obtain a lot of more files
+also for the node 2, but only one |line_0_resultsgeneral_study.csv| and |line_0_results_average_node_convergence.csv|\\
+
+|results/tests/line_results/line_0_results_1.gv|\\
+
+This file is the graphviz representation of the \ac{FSM} of the node one.\\
+
+|results/tests/line_results/line_0_results_1__rfd.csv|\\
+
+This file represent the evolution of the \ac{RFD} on the node 1.
+Empty in this case because we didn't configure the \ac{RFD} in any node.\\
+
+|results/tests/line_results/line_0_results_1__signal.csv|\\
+
+Also this file is empty because it represents all the possible signals transmitted 
+by the node \num{1} in multiple signaling experiments.
+More deep explanations about it in \Cref{sec:signaling_experiment}.\\
+
+|results/tests/line_results/line_0_results_1__routes.csv|\\
+
+This file contains a representation of all the routes received and transmitted
+by the node 1, assigning to each of them a unique id.
+\begin{lstlisting}[language=csv]
+id|value|addr|nh|path|policy_value
+1894634589033231394|1|10.0.0.0/24|0_2|['0_2', '0']|0
+-5755438676865707819|2|10.0.0.0/24|1|['1', '0_2', '0']|0
+-4472341673038433328|3|10.0.0.0/24|0_1|['0_1', '0']|0
+-9083818747451372038|4|10.0.0.0/24|1|['1', '0_1', '0']|0
+\end{lstlisting}
+Is possible to notice that the node \num{1} knows both the routes to reach
+node \num{0} and it has transmitted at least one time both of them.\\
+
+|results/tests/line_results/line_0_results_1__states.csv|\\
+
+The states file contains all the states that has been touched by the node \num{1}.
+The state is represented by the set of known routes by the node.
+\begin{lstlisting}[language=csv]
+id|state|counter
+1060477203861791528|{1}|11
+3353180653710611801|{1, 3}|18
+1762654176507502817|set()|19
+-1930499203708399266|{3}|4
+\end{lstlisting}
+As you can notice there is a correspondence between the state set content and the
+routes values.
+The counter represent how many a state has been found.\\
+
+|results/tests/line_results/line_0_results_1__transitions.csv|\\
+
+This file is used to represent the transitions from one state to another
+one, each transition is identified by an id and it contains also the ids of
+the start node and end node.
+\begin{lstlisting}[language=csv]
+id|start_node|end_node|cause|response|counter
+-7374939777205695837|1762654176507502817|1060477203861791528|['A1']|['A2']|6
+-5601227869930507009|1060477203861791528|3353180653710611801|['A3']|['A4']|4
+8621310724169699302|3353180653710611801|1762654176507502817|['W1', 'W3']|['W4']|10
+-5935475766038854671|1762654176507502817|3353180653710611801|['A1', 'A3']|['A4']|12
+4515479477876608287|3353180653710611801|-1930499203708399266|['W1']||2
+-197909198936378917|-1930499203708399266|1762654176507502817|['W3']|['W4']|2
+4907285418933092385|1060477203861791528|1060477203861791528|['A3', 'W3']||1
+484503475781783072|1060477203861791528|1762654176507502817|['W1']|['W2']|4
+-744345072339781392|1762654176507502817|-1930499203708399266|['A3']|['A4']|2
+-339627959492168022|-1930499203708399266|3353180653710611801|['A1']||2
+5642663864176330979|3353180653710611801|1762654176507502817|['W1', 'W3']||2
+-6700397420022823562|3353180653710611801|1060477203861791528|['W3']|['A2']|4
+-4857757235854716039|1060477203861791528|1762654176507502817|['A3', 'W1', 'W3']|['W2']|1
+\end{lstlisting}
+This file also presents the causes and the responses that will be placed in the
+on the edge.
+Is also possible to define the most frequent edges thanks to the counter.\\
+
+Let's now take a look to what happen when you use also the options |-r|.
+
+For each node that you analyze will be rendered some files that are created
+taking the average results of all the runs passed.
+
+I will now present the resut of the following command:
+\begin{lstlisting}[language=bash]
+python3 analyzer.py -f results/tests/line/line_* -o results/tests/line_results/line_0_results -n 1 -r
+\end{lstlisting}
+
+The first file we will look at is: |line_0_results_1.pdf|. this file represent
+the \ac{FSM} produced by node one, presented in \Cref{fig:line_fsm}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.5]{images/line/line_0_results_1.pdf}
+	\caption{Line \ac{FSM} representation}
+    \label{fig:line_fsm}
+\end{figure}
+
+The bold number in the states represent the chosen best path, the \q{:} on the
+edges delimit the received messages from the sent messages to react to the change.
+No reaction messages is a possible situation when the best route has been already
+advertised.
+
+MRAI was setted to \SI{30}{\second} so is possible to have multiple edges
+with different values.
+
+Use the table in the top right corner to correlate numbers with routes.
+
+The other files we can analyze are the boxplots automatically produced.
+
+\begin{figure}[H]
+     \centering
+     \begin{subfigure}[b]{0.48\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{images/line/convergence_time_boxplot.pdf}
+         \caption{convergence time boxplot}
+         \label{fig:line_time_boxplot}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.48\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{images/line/messages_boxplot.pdf}
+         \caption{Messages transmitted boxplot}
+         \label{fig:line_messages_boxplot}
+     \end{subfigure}
+	 \caption{Boxplots of the average performances of node \num{1}}
+     \label{fig:line_boxplot}
+\end{figure}
+
+Those boxplots in \Cref{fig:line_boxplot} use the data present in the |line_0_resultsgeneral_study.csv|.
+
+The file |results/tests/line_results/line_0_results_1_signaling_nmessage_prob.pdf|
+is empty because of the fact that we didn't execute any signaling experiment.
 
 \section{First signaling experiment}
 \label{sec:signaling_experiment}
 
-\section{Plot results}
-\label{sec:plot_results}
+In this chapter we will execute our first signaling experiment, I wont goo to 
+deep in the explanation because the majority of the material has already been
+saw in the previous chapters.
+
+The environment we are going to use is the |json/examples/line_signaling.json| file.
+\begin{lstlisting}[language=json]
+"seed" : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+"output" : "results/tests/line_signaling/line_{seed}.csv",
+// Signaling flag
+"signaling": "True",
+// Signaling sequence, ignored if signaling false
+"signaling_sequence": "AWAWA",
+"withdraw_dist": {"distribution": "unif", "min": 10, "max": 30, "int": 0.001}
+"reannouncement_dist": {"distribution": "unif", "min": 10, "max": 30, "int": 0.001}
+\end{lstlisting}
+I reported here just the important changes respect to the previous json file
+that we have analyzed, in total we have 10 possible different runs where
+the node \num{0} will send \num{5} messages with the sequence \q{AWAWA}.
+The environment is verbose, so feel free to analyze the standard output if you
+want.
+\ac{MRAI} is equal to \SI{30}{\second}.
+
+For this experiment I would like to run all the \num{10} different runs, so I will
+use the following bash for loop directly in my console:
+\begin{lstlisting}[language=bash]
+for i in {0..9}; do python3 fsm.py -c json/examples/line_signaling.json -r ${i} > line_${i}.log; done
+\end{lstlisting}
+This command will also produce 10 different log files named |line_{i}.log| with
+the std output produced by each run.
+
+using |ls -la results/tests/line_signaling/| we will see that there are
+\num{10} different files, one for each run.
+
+Now we will procead with the analysis of all those runs. I will analyze the node
+\num{1} with all the runs, looking for the average data.
+I will use the following commands:
+\begin{lstlisting}[language=bash]
+mkdir results/tests/line_signaling_results
+python3 analyzer.py -f results/tests/line_signaling/line_* -o results/tests/line_signaling_results/line -n 1 -r -s
+\end{lstlisting}
+Notice that I have inserted also the |-s| tag, to analyze the signaling process.
+
+One the analyzer has ened you should see in the |results/tests/line_signaling|
+the same files as without the signaling tag, but thanks to it the |line_1__signal.csv|
+file contains some information about the signals that the node \num{1} has transmitted.
+Those output signals of the node \num{1} has been caused by the node \num{0} signaling
+and the interaction between \ac{MRAI} and the queues.
+
+You can also notice that the file |linegeneral_study.csv| has more lines, because
+we executed all the \num{10} possible varaints of our experiment environment.
+
+We can also take a look to the file |line_1_signaling_nmessage_prob.pdf| showed
+in \Cref{fig:line_singaling}.
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.5]{images/line_signaling/line_1_signaling_nmessage_prob.pdf}
+	\caption{Line signaling representation}
+    \label{fig:line_singaling}
+\end{figure}
+
+The $x$ axis represents the number of messages in the output sequence.            
+An output sequence \q{A1W1A2} contains \num{3} messages, \num{2} advertisement and
+\num{1} withdraw.
+The first $y$ axis, the one on the left, represents the probability to have a certain
+number of messages in the output sequence and should be used with \q{withdraw     
+messages}, \q{Advertisement messages} and \q{Total messages} lines.                 
+For example in \Cref{fig:line_singaling} we can see that there is a really
+high probability to have \num{2} withdraws in the output sequence, and we would never
+see more than \num{3} withdraw by the fact that the "withdraw line" doesn't go over that
+value of the $x$ axis.                                                          
+In the same way, we can read the other lines, for example in the same figure is 
+possible to see that the is equi-probable to get an output signal composed by 
+\num{3} or \num{4} messages.
+And there is a \num{0.6} probability to see at least \num{3} advertisemente
+messages in an output sequence.
+The second $y$ axis, the one on the right, represents the number of \textbf{unique}
+sequences produced by the node \num{1}.                                                                         
+This axis should be used with the line that represents the \q{possible outputs}.  
+Looking \Cref{fig:line_singaling} is possible to see that for       
+output signals with \num{4} messages we have \num{3} uniques output  
+states. 
+
+And looking into the |line_1__signal.csv| we would find that those output sequences
+of \num{4} messages are: \q{A1A2W2A2}, \q{A1W1A1A2} and \q{A2A1W1A2}.
 
 \section{Graph generator}
 \label{sec:graph_generator}
 
-\subsection{Property generators}
-\label{sec:graph_propery_generators}
+Is possible to create specific graphs with specific topologies and porpertis
+thanks to the graph generator that is inside |src/util/graph_generator|.
+I will now present some usage of this software to create different topologies.
+
+For now all the software pieces are disconnected one another, but in the future
+works could be nice to create a unique interface to use to generate graphs
+with specific properties decided by time to time.
+
+Lets first take a look to all the components in this folder using |ls -la|.
+\begin{lstlisting}[language=bash]
+-rw-r--r-- 1 mattia mattia  5768 ott 25 16:23 graph_generator.py
+-rw-r--r-- 1 mattia mattia  3749 dic  2 15:31 insert_centrality.py
+-rw-r--r-- 1 mattia mattia  7212 nov  9 12:57 insert_destination.py
+-rw-r--r-- 1 mattia mattia  4974 ott 20 10:21 milaniBGPLoad.py
+-rw-r--r-- 1 mattia mattia 10068 nov  8 14:49 mrai_setter.py
+-rw-r--r-- 1 mattia mattia  6150 dic  9 15:52 rfd_setter.py
+\end{lstlisting}
+
+The main file is the |graph_generator.py| is the first one that should
+be used to generate a topology accordingly to what required.
+Up to now is possible to generate the following topologies:
+\begin{itemize}
+		\item \textbf{elmokashfi}, Used to generate an internet like topology
+		\item \textbf{clique}, used to generate a clique topology with also
+			a destination node attached to the first node of the clique
+\end{itemize}
+Is possible to add new topology genertors by introducing new functions with
+the name |apply_{name}_strategy| that receives the same attributes as the other
+functions already present.
+The name will be then used to produce the graph.
+
+For example using:
+\begin{lstlisting}[language=bash]
+python3 graph_generator.py -t clique -n 10 -o clique_test.graphml
+\end{lstlisting}
+We now have a file called |clique_test.graphml| that contains the graph we required.
+
+If instead you use:
+\begin{lstlisting}[language=bash]
+python3 graph_generator.py -t elmokashfi -n 100 -o internet_test.graphml -s 1
+\end{lstlisting}
+You will generate an internet like graph of 100 nodes (using as a seed 1).
+The program has also generated two pdf files, that are a graphical representation
+of your graph, also presented in \Cref{fig:internet_like}.
+
+\begin{figure}[H]
+     \centering
+     \begin{subfigure}[b]{0.38\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{images/internetTopologies/internet_test_dot.pdf}
+         \caption{Dot representation}
+         \label{fig:internet_like_dot}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.38\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{images/internetTopologies/internet_test_twopi.pdf}
+         \caption{twopi representation}
+         \label{fig:internet_like_twopi}
+     \end{subfigure}
+	 \caption{Internet like graph representations}
+     \label{fig:internet_like}
+\end{figure}
+Different colors represent different type of nodes \{C, CP, M, T\}.
+
+There is also an other graph produced it's called |internet_test_original.graphml|,
+it will be used to calculate the centrality and introduce it in the graph.
+Unfortunatly my \ac{DPC} calculator |milaniBGPLoad.py| doesn't work with the graphml format of
+|internt_test.graphml| for this reason is necessary to use the other file.
+
+Let's introduce the centrality in the file |internet_test.graphml| with the following
+command:
+\begin{lstlisting}[language=bash]
+python3 insert_centrality.py -t dpc -f internet_test_original.graphml -o internet_test.graphml
+\end{lstlisting}
+this will introduce in the |internet_test.graphml| file the centrality value
+for each node.
+Other than the |dpc| strategy is possible to use also the |betweenness| one.
+
+Is now time to introduce a destination inside the graphml, for this purpose you
+can use the |insert_destination.py| script, the following command is an example:
+\begin{lstlisting}[language=bash]
+python3 insert_destination.py -t random -n 1 -f internet_test.graphml -o internet_test.graphml -s 0
+\end{lstlisting}
+The random strategy will introduce a destination (with the |-n| parameter you
+can change the number of networks introduced) chosing a random node from the
+set of the \q{C} nodes.
+Is also possible to use a |hierarchical| strategy where the random node will
+be chosen from the set of nodes that are at a certain number of hops from the center
+clique, using the |-H| parameter is possible to define the level.
+This option may require some time in proportion to the dimensions of the graph.
+The seed permits to have reproducible executions.
+
+The last scripts in this folder are used to insert \ac{MRAI} on the edges
+and \ac{RFD} on the nodes.
+Is possible to use the different strategies and introduce new ones
+in the |mrai_setter.py| script, for example if we want to introduce
+on each link a constant \ac{MRAI} strategy we can use the following command:
+\begin{lstlisting}[language=bash]
+python3 mrai_setter.py -t constant -f internet_test.graphml -o internet_test.graphml -m 30 -M 30
+\end{lstlisting}
+Is important to notice the last |-M| parameter, is particularly important for 
+the |dpc| strategy, and to compare multiple experiments, because it permits to
+have the same MRAI mean value on multiple implementations.
+Like before, the possibilites can be expanded adding new mrai streategies at the file.
+
+For the \ac{RFD} setter we will use the |rfd_setter.py|, by now the type of \ac{RFD}
+that is possible to use are:
+\begin{itemize}
+	\item cisco
+	\item juniper
+	\item cisco7196aggressive
+	\item juniper7196aggressive
+	\item cisco7196conservative
+	\item juniper7196conservative
+\end{itemize}
+Use the following command to introduce the default Cisco \ac{RFD}:
+\begin{lstlisting}[language=bash]
+python3 rfd_setter.py -t cisco -f internet_test.graphml -o internet_test.graphml
+\end{lstlisting}
+
+After this sequence of commands you shold have something like the graph
+I saved under |/graphs/examples/|.
 
 \section{Multiple experiments in parallel}
 \label{sec:multiple_experiments}
@@ -1320,6 +1810,9 @@ The optional paramers are:
 
 \subsection{Different MRAIs}
 \label{subsec:MRAI_types}
+
+\section{Plot results}
+\label{sec:plot_results}
 
 \section{Examples}
 \label{sec:examples}
