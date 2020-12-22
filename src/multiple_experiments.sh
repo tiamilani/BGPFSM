@@ -10,12 +10,14 @@ usage () {
 	echo "Usage: $0 -n ID [-s SECTION -j PP]"
 	echo "options:"
 	echo "	'-n' experiment identifier that limits the sequence of experiments"
+	echo "	'-c' Configuration file identifier"
 	echo "	'-s' (default = simulation) defines which section of the configuration"
-	echo "	will be required"
-	echo "	'-j' (default = 1) if setted it will use the parallelize the execution of the experiments"
+	echo "	file will be executed"
+	echo "	'-j' (default = 1) if setted it will parallelize the execution of the experiments"
 	echo "	The argument given to the j determines how much processes will be executed in parallel"
 	echo "	'-o' (default = .) set the output directory for the log files with the"
 	echo "	STDOUT of all the process"
+	echo "	'-S tag used to silence the output'"
 	exit 1
 }
 

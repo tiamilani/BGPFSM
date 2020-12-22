@@ -17,7 +17,7 @@
 		// Signaling flag
 		"signaling": "True",
 		// Signaling sequence, ignored if signaling false
-		"signaling_sequence": "AWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWA",
+		"signaling_sequence": "AWAWAWAWAWA",
 		// Implicit withdraw of routes
 		"implicit_withdraw": "True",
 		// Withdraw signaling 

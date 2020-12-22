@@ -1802,11 +1802,122 @@ I saved under |/graphs/examples/|.
 \section{Multiple experiments in parallel}
 \label{sec:multiple_experiments}
 
+It's possible to run multiple experiments in parallel thanks to |parallel|, a
+unix software that permits multiple parallel executions of different commands.
+I used it to permit multiple different runs to be executed at the same time.
+
+Before we wrote ten different lines of code to execute all the possible runs
+of the line experiments, thanks to parallel is possible to run a single |bash|
+script that will execute all of them at the same time.
+
+\textbf{Multiple runs will not collide if the output file is different for
+each run.}
+
+The script that executes multiple experiments is |multiple_experiments.sh| it's 
+parameters are:
+\begin{itemize}
+	\item \textbf{-n}: defines which is the last run that needs to be executed
+	\item \textbf{-c}: Defines the configuration file that needs to be use
+	\item \textbf{-s}: Defines the simulation environment inside the configuration
+		file that needs to be used
+	\item \textbf{-j}: Defines how many parallel processes will be executed
+	\item \textbf{-o}: Defines the output directory for the logs files
+	\item \textbf{-S}: Silent mode, if used the bar will be silenced
+\end{itemize}
+
 \subsection{Parallel experiments examples}
 \label{subsec:parallel_examples}
 
+The first parallel experiments that we can try is the parallelization of the
+line example.
+
+First of all delete the results contents, we will regenerete them, don't worry ;)
+\begin{lstlisting}[language=bash]
+rm -rf results/tests/line_signaling/*
+\end{lstlisting}
+
+Now we know that the last run of the signaling experiments has an id equal to \num{9}.
+If you want to discover which is the id of your last run in one of youre environments
+just use the fsm |-l| command like this:
+\begin{lstlisting}[language=bash]
+python3 fsm.py -c json/examples/line_signaling.json -l
+\end{lstlisting}
+The last line of the output will show you the \q{r} value corresponding to the last
+run id.
+
+To run all the \num{9} expriments in parallel we will use the following command:
+\begin{lstlisting}[language=bash]
+./multiple_experiments.sh -n 9 -c json/examples/line_signaling.json -s simulation -j 4
+\end{lstlisting}
+The |-n 9| means that we want to execute all the runs with an id in [0, 9], the
+|-s simulation| determines which environment in the |json/examples/line_signaling.json|
+we want to use. the last parameter, |-j 4|, represents the number of parallel 
+runs that will be executed.
+
+As you will notie a progress bar will appear in the terminal, this bar represents
+the number of runs that has been executed, use the |-S| tag if you don't want
+any STDOUT output from the bash script.
+
+The output result will be of two tipes:
+\begin{itemize}
+		\item The standard output from the single run will be saved on a log
+			file, by default the output log will be |/dev/null| so the previous
+			script has not produced any log file, but if you add the 
+			|-o| parameter you will notice that the script will generate \num{10} output
+			log files, one for each run.
+		\item All the runs will have produced the |CSV| output file correspondent
+			them all are stored in |results/tests/line_signaling|
+\end{itemize}
+
+Is then possible to study all the |CSV| files as before.
+
 \section{Parallel experiments with multiple MRAIs}
 \label{sec:parallel_mrais}
+
+Is possible to execute different experiments with multiple \ac{MRAI}s in order
+to be able to compare then and study the network parameters (Convergence time, number
+of messages etc) with different \ac{MRAIs}.
+
+The script used for this purpose are:
+\begin{itemize}
+	\item \textbf{multiple_mrais.sh} used to execute multiple experiments with
+		parallel runs with different \ac{MRAI} values associated to each
+		experiment.
+	\item \textbf{multi_general_csv_analyzer.sh} script used to aggregate 
+		results from different \ac{MRAI} experiments, is then possible to 
+		have a unique CSV file with the performances of each network with
+		particular \ac{MRAI} configurations
+	\item \textbf{mrais.sh} orchestrator of the other two scripts.
+\end{itemize}
+
+The only script we will use to produce \ac{MRAI} experiments is the last
+one.
+The parameters of the |mrais.sh| script are the following:
+\begin{itemize}
+	\item \textbf{-n} Number of Experiments that needs to be executed
+	\item \textbf{-j} Number of parallel runs that needs to be executed
+	\item \textbf{-J} Number of parallel Experiments that needs to be executed
+	\item \textbf{-c} Configuration file to use
+	\item \textbf{-l} Max value of \ac{MRAI} that will be used
+	\item \textbf{-m} Type of \ac{MRAI} to use, use the mrai\_setter.py to see
+		the list of possible types
+	\item \textbf{-M} \ac{MRAI} Mean value that needs to be respected during the
+		\ac{MRAI} assignment
+	\item \textbf{-o} Output file name, the output files are multiple plots that
+		evaluate the network with the different \ac{MRAI}s
+	\item \textbf{-u} Number of experiments for each experiment process (-J)
+		if \num{0} then all the experiments will be equally divided by all the
+		processes
+	\item \textbf{-s} Starting point for the experiments
+	\item \textbf{-a} Aggregate tag, used when the results should be aggregated
+		with other mrai results, otherwise the content of previous experiments
+		will be erased.
+	\item \textbf{-Y} Automatically delete previous experiments results, the result
+		folder is retrieved by an analysis of the |json| file, it could be subject
+		to bugs or errors, \textbf{use only if you are sure that the result folder
+		interpretation}, is possible to have situations where the command |rm -rf /|
+		will be executed, \textbf{don't use if you are not sure of what you are doing}.
+\end{itemize}
 
 \subsection{Different MRAIs}
 \label{subsec:MRAI_types}

@@ -24,10 +24,10 @@ usage () {
 	echo "	-n	[value]	Number of experiments to run (default = 3)"
 	echo "	-l	[value]	limit to apply to the MRAI setter of the graph (default = 60)"
 	echo "	-s	[value]	Number of experiment used as start point (default 1)"
-	echo "	-j	[value]	umber of parallel runs to execute (default = 4)"
-	echo "	-c	[value]	onfiguration file to use (default = conf.json)"
-	echo "	-m	[value]	RAI type to use [random, constant] (default = random)"
-	echo "	-M	[value]	RAI mean to respect (default = 30.0)"
+	echo "	-j	[value]	number of parallel runs to execute (default = 4)"
+	echo "	-c	[value]	configuration file to use (default = conf.json)"
+	echo "	-m	[value]	MRAI type to use [random, constant] (default = random)"
+	echo "	-M	[value]	MRAI mean to respect (default = 30.0)"
 	echo "	-v		Deactivate the verbose mode"
 	exit 1
 }
