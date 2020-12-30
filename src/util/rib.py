@@ -652,6 +652,8 @@ class ADJ_RIB_out(BaseRib): # pylint: disable=invalid-name, too-many-ancestors
         if hash(route.addr) not in self.withdraws.keys():
             raise KeyError("{} not in the withdraws".format(route.addr))
         self.withdraws[hash(route.addr)].remove(route)
+        if len(self.withdraws[hash(route.addr)]) == 0:
+            del self.withdraws[hash(route.addr)]
 
     def del_withdraws(self, index: hash) -> None:
         """del_withdraws.

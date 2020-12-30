@@ -41,7 +41,7 @@ class Link:
     """
 
     __link_counter = 0
-    __waiter = 0.00001
+    __waiter = 0.001
 
     DELAY = "delay"
     POLICY_FUNCTION = "policy"

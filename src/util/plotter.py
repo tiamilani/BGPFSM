@@ -36,6 +36,7 @@ from matplotlib.ticker import MaxNLocator
 from analysis import NodeAnalyzer
 from policies import PolicyValue
 from matplotlib.lines import Line2D
+from matplotlib.ticker import MaxNLocator
 
 class Plotter():
     """
@@ -189,13 +190,18 @@ class Plotter():
         ax2 = ax.twinx()
 
         legend1 = ax.plot(advertisement['messages'], advertisement['probability'],
-                      label="Advertisement messages")
+                      label="Advertisement messages", marker=4)
         legend2 = ax.plot(withdraw['messages'], withdraw['probability'],
-                      label="Withdraw messages")
+                      label="Withdraw messages", marker=5)
         legend3 = ax.plot(total_gr['messages'], total_gr['probability'],
-                      label="Total messages")
+                      label="Total messages", marker=6)
         legend4 = ax2.plot(total_size['messages'].values, total_size[0].values,
-                      'r', label="# possible outputs")
+                      'r', label="# possible outputs", marker=7)
+        
+        yint = range(min(total_size[0].values) - 1, 
+                     math.ceil(max(total_size[0].values))+1)
+        ax2.set_yticks(yint)
+
         ax.grid()
         ax2.grid()
         lns = legend1+legend2+legend3+legend4

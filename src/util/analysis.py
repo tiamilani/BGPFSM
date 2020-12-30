@@ -153,6 +153,7 @@ class NodeAnalyzer():
         self.actual_state = set()
         self.experiment_actual_state = set()
         self.route_counter = 0
+        self.rx_values_tmp = None
 
     def load_pickle(self, input_file: str) -> bool:
         """load_pickle.
@@ -423,6 +424,8 @@ class NodeAnalyzer():
                 new_state = self.__statate_incremental_variation(rx_value, new_state)
             else:
                 new_state = self.__statate_swap_variation(rx_value, new_state)
+        else:
+            new_state = self.actual_state.copy()
 
         return new_state
 
@@ -516,7 +519,8 @@ class NodeAnalyzer():
         # Keep a list of received and transmitted routes
         received_routes = []
         transmitted_routes = []
-        rx_value = None
+        rx_value = [] if self.rx_values_tmp is None else self.rx_values_tmp
+        # rx_events = []
 
         memory_actual_state = self.actual_state.copy()
 
@@ -524,25 +528,34 @@ class NodeAnalyzer():
             return
 
         # Check each row of the events caused by the reception
-        for row_event, row_value in zip(events_before[NodeAnalyzer.EVALUATION_COLUMNS[2]],
+        for row_id, row_event, row_value in zip(events_before[NodeAnalyzer.EVALUATION_COLUMNS[0]],
+                                        events_before[NodeAnalyzer.EVALUATION_COLUMNS[2]],
                                         events_before[NodeAnalyzer.EVALUATION_COLUMNS[5]]):
             # If the event is a change in the state, I update the local
             # variable that keeps the state
             if row_event == Events.RIB_CHANGE:
-                if rx_value is not None:
+                if len(rx_value) > 0:
                     if new_state is None:
                         new_state = set()
                     else:
                         self.actual_state = new_state
                     new_state = NodeAnalyzer.__evaluate_rib_change(row_value)
-                    new_state = self.__state_analyzer(new_state, rx_value)
-            # If the event is a TX i update the corresponding sets
+                    rx_v = rx_value.pop(0)
+                    # rx_events.pop(0)
+                    new_state = self.__state_analyzer(new_state, rx_v)
+            # If the event is a RX i update the corresponding sets
             if row_event == Events.RX:
-                rx_value = row_value
+                rx_value.append(row_value)
+                # rx_events.append(row_id)
                 elem = self.__evaluate_rx(row_value)
                 if elem not in received_routes:
                     received_routes.append(elem)
 
+        if len(rx_value) > 0:
+            self.rx_values_tmp = rx_value
+        else:
+            self.rx_values_tmp = None
+    
         new_state = set() if new_state is None else new_state
         self.actual_state = memory_actual_state
         self.__state_register(new_state)

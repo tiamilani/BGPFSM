@@ -1,13 +1,17 @@
 {
 	"simulation" : {
 		// seed(s) to initialize PRNGs
-		"seed" : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+		"seed" : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 
+				  10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+				  20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+				  30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+				  40, 41, 42, 43, 44, 45, 46, 47, 48, 49],
 		// duration of each simulation in seconds
 		"duration" : 300,
 		// Graph file to simulate
 		"graph": "graphs/fig_4_fsm_model/fig_4_fsm_model.graphml",
 		// log file name using configuration parameters, use {seed} or {date-time}
-		"output" : "results/test/experiment_fig_4/output_{seed}_{withdraw_dist.min}_{reannouncement_dist.min}_{datarate.lambda}.csv",
+		"output" : "results/test/experiment_fig_4/output_{seed}_{delay.max}.csv",
 		// Verbose value
 		"verbose": "True",
 		// Signaling flag
@@ -21,19 +25,16 @@
 		// Reannouncement of a destination after a withdraw
 		"reannouncement": "True",
 		// Withdraw interval distribution from the announcement
-		"withdraw_dist": [{"distribution": "unif", "min": 20, "max": 30, "int": 0.1},
-						  {"distribution": "unif", "min": 2, "max": 3, "int": 0.1}],
+		"withdraw_dist": {"distribution": "unif", "min": 20, "max": 30, "int": 0.1},
 		// announcement interval distribution from the withdraw 
-		"reannouncement_dist": [{"distribution": "unif", "min": 20, "max": 40, "int": 0.1},
-							    {"distribution": "unif", "min": 1, "max": 3, "int": 0.1}],
+		"reannouncement_dist": {"distribution": "unif", "min": 20, "max": 30, "int": 0.1},
 		// Transmission time required to start the actual message transmission 
-		"datarate": [{"distribution": "exp", "lambda" : 100},
-					 {"distribution": "exp", "lambda" : 200},
-					 {"distribution": "exp", "lambda" : 500}],
+		"datarate": {"distribution": "exp", "lambda" : 100},
 		// Processing time distribution
-		"processing": {"distribution": "const", "mean": 0.00001},
+		"processing": {"distribution": "const", "mean": 0.0001},
 		// Network delay distribution
-		"delay": {"distribution": "unif", "min": 0.001, "max": 1, "int": 0.001}
+		"delay": [{"distribution": "unif", "min": 0.001, "max": 1, "int": 0.001},
+				  {"distribution": "unif", "min": 0.012, "max": 3, "int": 0.001}]
 	},
 	"policy_function_test" : {
 		// seed(s) to initialize PRNGs

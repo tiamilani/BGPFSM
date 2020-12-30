@@ -20,7 +20,7 @@
     <node id="10" />
     <node id="11" />
     <edge source="1" target="2_1">
-		<data key="d1">{"distribution": "unif", "min": 1, "max": 3, "int": 0.001}</data>	
+		<data key="d1">{"distribution": "unif", "min": 10, "max": 30, "int": 0.001}</data>	
 		<data key="d2">0, inf, inf</data>
 		<data key="d3">0.0</data>	
 	</edge>

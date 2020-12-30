@@ -752,8 +752,8 @@ class Node(Module):
         # Log the reception
         self._print("Start packet reception")
         
-        data_rate = self.rate.get_value()
-        end_rx = Event(data_rate, event.event_cause, Events.RX, self, self, 
+        proc_time = self.proc_time.get_value()
+        end_rx = Event(proc_time, event.event_cause, Events.RX, self, self, 
                        obj=(request, event.obj))
         self.event_store.put(end_rx)
 
@@ -898,7 +898,6 @@ class Node(Module):
                 if not route.mine:
                     share_flag = True
                 adj_rib_out.remove(route)
-                # TODO check if exists withdraws 
                 if self.implicit_withdraw and adj_rib_out.exists_withdraws(route):
                     key = hash(route.addr)
                     for route in adj_rib_out.get_withdraws(key):
@@ -930,10 +929,11 @@ class Node(Module):
                     self.send_msg_to_dst(packet, event, neigh_node)
                     if not route.mine:
                         share_flag = True
-                    self._print("Removed route from the list")
                     adj_rib_out.remove_from_withdraws(route)
-            if len(adj_rib_out.get_withdraws(key)) == 0:
-                adj_rib_out.del_withdraws(key)
+            #self._print("Attempting to remove a key")
+            #if len(adj_rib_out.get_withdraws(key)) == 0:
+            #    self._print("The list for " + str(key) + " is empty")
+            #    adj_rib_out.del_withdraws(key)
         return share_flag
 
     def __evaluate_routing_table(self) -> None:
