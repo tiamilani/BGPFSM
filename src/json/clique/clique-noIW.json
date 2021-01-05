@@ -27,7 +27,7 @@
 		// Transmission time required to start the actual message transmission 
 		"datarate": {"distribution": "exp", "lambda" : 100},
 		// Processing time distribution
-		"processing": {"distribution": "unif", "min": 0.01, "max": 1, "int": 0.01},
+		"processing": {"distribution": "unif", "min": 0.0001, "max": 0.5, "int": 0.001},
 		// Network delay distribution
 		"delay": {"distribution": "unif", "min": 0.012, "max": 0.1, "int": 0.001}
 	}

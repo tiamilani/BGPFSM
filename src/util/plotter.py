@@ -198,9 +198,10 @@ class Plotter():
         legend4 = ax2.plot(total_size['messages'].values, total_size[0].values,
                       'r', label="# possible outputs", marker=7)
         
-        yint = range(min(total_size[0].values) - 1, 
-                     math.ceil(max(total_size[0].values))+1)
-        ax2.set_yticks(yint)
+        if len(total_size[0].values) < 2:
+            yint = range(min(total_size[0].values) - 1, 
+                         math.ceil(max(total_size[0].values))+1)
+            ax2.set_yticks(yint)
 
         ax.grid()
         ax2.grid()
@@ -223,7 +224,7 @@ class Plotter():
         ax2.set_ylabel("# Of Outputs")
         ax.set_title("Out signaling")
 
-        fig.savefig(output_file, format="pdf")
+        fig.savefig(output_file, format="pdf", bbox_inches='tight')
 
 class GeneralPlotter():
     """
@@ -239,7 +240,7 @@ class GeneralPlotter():
 
     def ges_boxplot(self, output_file_name: str, _column: str) -> None:
         boxplot = self.ges.boxplot(column=_column)
-        plt.savefig(output_file_name, format="pdf")
+        plt.savefig(output_file_name, format="pdf", bbox_inches='tight')
         plt.close()
 
 class RFDPlotter():
@@ -311,7 +312,7 @@ class RFDPlotter():
             ax.set_ylabel("Figure of merit")
             ax.set_title("RFD evolution for route {} nh {}".format(route.addr, route.nh))
 
-            fig.savefig(output_file_name + "_R"+str(r) + ".pdf", format="pdf")
+            fig.savefig(output_file_name + "_R"+str(r) + ".pdf", format="pdf", bbox_inches='tight')
             plt.close()
 
             #########################
@@ -387,7 +388,7 @@ class NodeConvergencePlotter():
         ax.set_xlabel("Time from the starting event [s]")
         ax.set_ylabel("# Converged nodes")
 
-        fig.savefig(output_file_name, format="pdf")
+        fig.savefig(output_file_name, format="pdf", bbox_inches='tight')
 
     def plot_centrality_vs_convergence(self, output_file_name, hops, limit=None):
 

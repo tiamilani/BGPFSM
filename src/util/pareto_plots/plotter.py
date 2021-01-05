@@ -39,7 +39,7 @@ def plot_scatter(x: np.array, y: np.array, pareto_front=None, label="label",
     ax.set_ylabel(ylabel)
     plt.title(title)
 
-    plt.savefig(output_file_name, format="pdf")
+    plt.savefig(output_file_name, format="pdf", bbox_inches='tight')
     plt.close()
 
 def legends(lns, axes):
@@ -79,7 +79,7 @@ def plot_messages_time_comparison(x, time, messages, title="title",
     ax2.set_ylabel("# Packets")
     ax.set_title(title)
 
-    fig.savefig(output_file_name, format="pdf")
+    fig.savefig(output_file_name, format="pdf", bbox_inches='tight')
     plt.close()
 
 def make_patch_spines_invisible(ax):
@@ -115,7 +115,7 @@ def plot_messages_suppression_time_comparison(x, time, messages, suppression,
     ax3.set_ylabel("# Suppressions")
     ax.set_title(title)
 
-    fig.savefig(output_file_name, format="pdf")
+    fig.savefig(output_file_name, format="pdf", bbox_inches='tight')
     plt.close()
 
 
@@ -139,7 +139,7 @@ def plot_messages_time_comparison_error_bars(x, time, messages, std_time, std_me
     ax2.set_ylabel("# Packets")
     ax.set_title(title)
 
-    fig.savefig(output_file_name, format="pdf")
+    fig.savefig(output_file_name, format="pdf", bbox_inches='tight')
     plt.close()
 
 def plot_messages_time_comparison_error_bars_alpha(x, time, messages, std_time, 
@@ -167,7 +167,7 @@ def plot_messages_time_comparison_error_bars_alpha(x, time, messages, std_time,
     ax2.set_ylabel("# Packets")
     ax.set_title(title)
 
-    fig.savefig(output_file_name, format="pdf")
+    fig.savefig(output_file_name, format="pdf", bbox_inches='tight')
     plt.close()
 
 def plot_boxplot_pandasDataframe(df, title="Title", ylabel="ylabel", output_file_name="boxplot.pdf"):
@@ -186,5 +186,5 @@ def plot_boxplot_pandasDataframe(df, title="Title", ylabel="ylabel", output_file
     plt.margins(0.2)
     plt.subplots_adjust(bottom=0.30)
 
-    fig.savefig(output_file_name, format="pdf")
+    fig.savefig(output_file_name, format="pdf", bbox_inches='tight')
     plt.close()

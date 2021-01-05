@@ -9,7 +9,7 @@
 		// log file name using configuration parameters, use {seed} or {date-time}
 		"output" : "results/clique/des_output/output_{seed}.csv",
 		// Verbose value
-		"verbose": "True",
+		"verbose": "False",
 		// Signaling flag
 		"signaling": "True",
 		// Signaling sequence, ignored if signaling false
@@ -23,12 +23,12 @@
 		// Withdraw interval distribution from the announcement
 		"withdraw_dist": {"distribution": "unif", "min": 1, "max": 5, "int": 0.1},
 		// announcement interval distribution from the withdraw 
-		"reannouncement_dist": {"distribution": "const", "mean": 30},
+		"reannouncement_dist": {"distribution": "const", "mean": 5},
 		// Transmission time required to start the actual message transmission 
 		"datarate": {"distribution": "exp", "lambda" : 100},
 		// Processing time distribution
-		"processing": {"distribution": "unif", "min": 0.01, "max": 1, "int": 0.01},
+		"processing": {"distribution": "unif", "min": 0.01, "max": 0.5, "int": 0.001},
 		// Network delay distribution
-		"delay": {"distribution": "unif", "min": 0.012, "max": 0.1, "int": 0.001}
+		"delay": {"distribution": "unif", "min": 0.012, "max": 1, "int": 0.001}
 	}
 }

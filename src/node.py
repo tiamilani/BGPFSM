@@ -774,7 +774,7 @@ class Node(Module):
         self.event_store.put(start_pkt_evaluation)
 
         # Release the resource
-        yield self._env.timeout(self.proc_time.get_value())
+        # yield self._env.timeout(self.proc_time.get_value())
         self.processing_res.release(request)
 
     def start_pkt_eval(self, event: Event) -> None:
@@ -811,14 +811,15 @@ class Node(Module):
             self.remove_network(route, event)
 
         if not self.__already_scheduled_decision_process:
-            proc_time = self.proc_time.get_value()
+            # proc_time = self.proc_time.get_value()
+            proc_time = 0
             decision_process = Event(proc_time, event.event_cause, Events.START_UPDATE_SEND_PROCESS,
                                   self, self, obj=None)
             self.event_store.put(decision_process)
             self.__already_scheduled_decision_process = True
 
         # Release the resource
-        yield self._env.timeout(self.proc_time.get_value())
+        # yield self._env.timeout(self.proc_time.get_value())
         self.processing_res.release(request)
 
 
@@ -923,7 +924,14 @@ class Node(Module):
         withdraw_keys = adj_rib_out.get_withdraws_keys()
         for key in withdraw_keys:
             for route in adj_rib_out.get_withdraws(key):
-                if not self.implicit_withdraw or not adj_rib_out.exists(route):
+                feasible = False
+                if adj_rib_out.exists(route):
+                    link = self._neighbors[neigh_node.id]
+                    for adv_route in adj_rib_out[route]:
+                        if link.test(adv_route.policy_value).value != math.inf:
+                            feasible = True
+                if not self.implicit_withdraw or not adj_rib_out.exists(route) or \
+                   not feasible:
                     packet = Packet(Packet.WITHDRAW, deepcopy(route))
                     self._print("rib_out transmitting withdraw {}".format(route))
                     self.send_msg_to_dst(packet, event, neigh_node)

@@ -5,7 +5,7 @@
 		// duration of each simulation in seconds
 		"duration" : 6000,
 		// Graph file to simulate
-		"graph": "graphs/internet_like/graph-100-DPC/graph.graphml",
+		"graph": "graphs/internet_like/different_destinations-1000/dpc-d0/graph_0.graphml",
 		// log file name using configuration parameters, use {seed} or {date-time}
 		"output" : "results/internet_like/graph-100-DPC-noIW/des_output/output_{seed}.csv",
 		// Verbose value
@@ -21,7 +21,7 @@
 		// Reannouncement of a destination after a withdraw
 		"reannouncement": "False",
 		// Withdraw interval distribution from the announcement
-		"withdraw_dist": {"distribution": "unif", "min": 0.1, "max": 5, "int": 0.1},
+		"withdraw_dist": {"distribution": "unif", "min": 1, "max": 60, "int": 0.1},
 		// announcement interval distribution from the withdraw 
 		"reannouncement_dist": {"distribution": "const", "mean": 30},
 		// Transmission time required to start the actual message transmission 

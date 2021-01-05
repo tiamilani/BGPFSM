@@ -7,15 +7,15 @@
 		// Graph file to simulate
 		"graph": "graphs/internet_like/different_destinations-1000/constant-d0/graph_0.graphml",
 		// log file name using configuration parameters, use {seed} or {date-time}
-		"output" : "results/internet_like/graph-100-constant-noIW/des_output/output_{seed}.csv",
+		"output" : "results/internet_like/graph-1000-constant-AWA/des_output/output_{seed}.csv",
 		// Verbose value
 		"verbose": "True",
 		// Signaling flag
 		"signaling": "True",
 		// Signaling sequence, ignored if signaling false
-		"signaling_sequence": "AW",
+		"signaling_sequence": "AWA",
 		// Implicit withdraw of routes
-		"implicit_withdraw": "False",
+		"implicit_withdraw": "True",
 		// Withdraw signaling 
 		"withdraw": "False",
 		// Reannouncement of a destination after a withdraw
@@ -23,7 +23,7 @@
 		// Withdraw interval distribution from the announcement
 		"withdraw_dist": {"distribution": "unif", "min": 1, "max": 60, "int": 0.1},
 		// announcement interval distribution from the withdraw 
-		"reannouncement_dist": {"distribution": "const", "mean": 30},
+		"reannouncement_dist": {"distribution": "unif", "min": 1, "max": 60, "int": 0.1},
 		// Transmission time required to start the actual message transmission 
 		"datarate": {"distribution": "exp", "lambda" : 100},
 		// Processing time distribution

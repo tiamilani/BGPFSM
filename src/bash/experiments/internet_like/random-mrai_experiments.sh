@@ -14,7 +14,7 @@ source ${USE_PATH}env/bin/activate
 
 cd $USE_PATH
 
-experiments=10
+experiments=100
 i=1
 for elem in $foo; do
 	obj=$(echo "$elem" | sed -r 's/,/\./g')
