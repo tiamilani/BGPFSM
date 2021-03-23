@@ -54,14 +54,17 @@ def main():
     levels = {}
 
     for f in options.inputFile:
-        print(f)
         file_name = f.rsplit('/', 1)[-1].split('.')[0]
-        level = math.floor(int(file_name.split('-')[-1].split('l')[-1])/3)
+        level = math.floor((int(file_name.split('-')[-1].split('l')[-1])+1)%4)
+        if level == 0:
+            level = 4
+        print("{} -> {}".format(file_name,level))
         if level not in levels:
             levels[level] = [f]
         else:
             levels[level].append(f)
 
+    print(levels)
     levels_df = {}
     for level in levels:
         for f in levels[level]:
@@ -103,10 +106,10 @@ def main():
     for level in levels_mean:
         i += 1
         df = levels_mean[level]
-        l_time_cent = simple_plotter.plot_line(df.index.values, df.avg_centr.values, 'b', label="Group " + str(level) + " avg centrality", ax=ax_time, marker=markers[i])
-        l_msg_cent = simple_plotter.plot_line(df.index.values, df.avg_centr.values, 'b', label="Group " + str(level) + " avg centrality", ax=ax_msg, marker=markers[i])
-        l_time_time = simple_plotter.plot_line(df.index.values, df.avg_time.values, 'g', label="Group " + str(level) + " avg convergence time", ax=ax2_time, marker=markers[i])
-        l_msg_msg = simple_plotter.plot_line(df.index.values, df.avg_msg.values, 'purple', label="Group " + str(level) + " avg Messages to converge", ax=ax2_msg, marker=markers[i])
+        l_time_cent = simple_plotter.plot_line(df.index.values, df.avg_centr.values, 'b', label="Level " + str(level) + " avg centrality", ax=ax_time, marker=markers[i])
+        l_msg_cent = simple_plotter.plot_line(df.index.values, df.avg_centr.values, 'b', label="Level " + str(level) + " avg centrality", ax=ax_msg, marker=markers[i])
+        l_time_time = simple_plotter.plot_line(df.index.values, df.avg_time.values, 'g', label="Level " + str(level) + " avg convergence time", ax=ax2_time, marker=markers[i])
+        l_msg_msg = simple_plotter.plot_line(df.index.values, df.avg_msg.values, 'purple', label="Level " + str(level) + " avg Messages to converge", ax=ax2_msg, marker=markers[i])
 
         if time_labels is None:
             time_labels = l_time_cent + l_time_time

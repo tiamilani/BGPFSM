@@ -338,12 +338,22 @@ class Node(Module):
                 # if history_route and the route are equal then treat it as a
                 # reannouncement
                 history_route = self.rib_handler.history_rib[route]
+
+                if self.rib_handler.history_rib.filter(history_route) and \
+                   self.rib_handler.history_rib.filter(route):
+                    self._print("{} ignored by the RFD filter".format(route))
+                    self.__copy_history_values(route, history_route, True)
+                    res = self.rib_handler.history_rib.insert(route)
+                    self.rib_handler.receive_advertisement(route, event)
+                    return
+
                 t_diff = self._env.now - history_route.last_time_updated
                 self.__update_figure_of_merit(history_route, t_diff)
 
                 # Log the actual figure of merit
                 event.obj = (str(history_route), history_route.figure_of_merit)
                 self.logger.log_figure_of_merit(self, event)
+
                 # Add the reannouncement penalty
                 if history_route.path != route.path:
                     self._print("It's an attribute change")
@@ -359,9 +369,9 @@ class Node(Module):
 
                 self._print("{} New figure of merit: {}, flapped: {}".format(route, 
                     history_route.figure_of_merit, history_route.flaps))
-                event.obj = (str(history_route), history_route.figure_of_merit)
+                event.obj = (str(route), history_route.figure_of_merit)
                 self.logger.log_figure_of_merit(self, event)
-    
+
                 # Substitute the old route with the new one, with the updated
                 # variables
                 self.__copy_history_values(route, history_route, True)
@@ -405,6 +415,8 @@ class Node(Module):
                     reuse_process = Event(t, event.id, Events.ROUTE_REUSABLE,
                                           self, self, obj=route)
                     self.event_store.put(reuse_process)
+                    # This insertion will alway work because to reach this
+                    # point it has already passed one
                     self.rib_handler.history_rib.insert(route)
                 
                 if route.figure_of_merit == 0:
@@ -452,18 +464,33 @@ class Node(Module):
 
             if route.mine or not self.rib_handler.history_rib.exists(route):
                 route.figure_of_merit = 0
-                self.__increase_figure_of_merit(route, route, self.rfd.w_penalty, 
-                                                self.rfd.rfd_ng.ceiling)
                 event.obj = (str(route), route.figure_of_merit)
                 self.logger.log_figure_of_merit(self, event)
+
+                self.__increase_figure_of_merit(route, route, self.rfd.w_penalty, 
+                                                self.rfd.rfd_ng.ceiling)
+                # event.obj = (str(route), route.figure_of_merit)
+                # self.logger.log_figure_of_merit(self, event)
                 route.last_time_updated = self._env.now
                 route.flaps = 0
                 route.usable = True
                 route.reachable = False
-                self.rib_handler.history_rib.insert(route)
+                if self.rib_handler.history_rib.insert(route) is not None:
+                    self._print("The route has not been filtered")
+                    event.obj = (str(route), route.figure_of_merit)
+                    self.logger.log_figure_of_merit(self, event)
                 self.rib_handler.receive_withdraw(route, event)
             else:
                 history_route = self.rib_handler.history_rib[route]
+
+                if self.rib_handler.history_rib.filter(history_route) and \
+                   self.rib_handler.history_rib.filter(route):
+                    self._print("{} ignored by the RFD filter".format(route))
+                    self.__copy_history_values(route, history_route, True)
+                    res = self.rib_handler.history_rib.insert(route)
+                    self.rib_handler.receive_withdraw(route, event)
+                    return
+
                 t_diff = self._env.now - history_route.last_time_updated
                 self.__update_figure_of_merit(history_route, t_diff)
 
@@ -484,7 +511,7 @@ class Node(Module):
                 # Substitute the old route with the new one, with the updated
                 # variables
                 self.__copy_history_values(route, history_route, False)
-                self.rib_handler.history_rib.insert(route)
+                res = self.rib_handler.history_rib.insert(route)
 
                 # Evaluate if it is possible to use the route
                 if route.usable and route.figure_of_merit < self.rfd.cut:
@@ -1164,7 +1191,9 @@ class Node(Module):
                     route.reusable_event.interrupt()
                 route_reintroduction = self._env.process(self.route_reusable(event))
                 route.reusable_event = route_reintroduction
-                self.rib_handler.history_rib.insert(route)
+                res = self.rib_handler.history_rib.insert(route)
+                if res is None:
+                    self._print("Something strange pt.1")
             elif event.event_type == Events.END_T_HOLD:
                 route = self.rib_handler.history_rib[event.obj]
                 if route.t_hold_event is not None:
@@ -1173,7 +1202,9 @@ class Node(Module):
                     exit(2)
                 route_t_hold = self._env.process(self.t_hold_experiation(event))
                 route.t_hold_event = route_t_hold
-                self.rib_handler.history_rib.insert(route)
+                res = self.rib_handler.history_rib.insert(route)
+                if res is None:
+                    self._print("Something strange pt.2")
             else:
                 raise ValueError("{} is not a valid event type".format(event.event_type))
             # Delete the processed event

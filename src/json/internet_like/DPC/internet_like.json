@@ -7,7 +7,7 @@
 		// Graph file to simulate
 		"graph": "graphs/internet_like/different_destinations-1000/dpc-d0/graph_0.graphml",
 		// log file name using configuration parameters, use {seed} or {date-time}
-		"output" : "results/internet_like/graph-100-DPC/des_output/output_{seed}.csv",
+		"output" : "results/internet_like/graph-1000-DPC/des_output/output_{seed}.csv",
 		// Verbose value
 		"verbose": "True",
 		// Signaling flag

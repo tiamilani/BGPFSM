@@ -14,8 +14,9 @@ source ${USE_PATH}env/bin/activate
 
 cd $USE_PATH
 
-experiments=100
-i=1
+experiments=10
+echo "Experiments per execution: ${experiments}"
+i=551
 for elem in $foo; do
 	obj=$(echo "$elem" | sed -r 's/,/\./g')
 	echo $i

@@ -107,6 +107,7 @@ def main():
     centrality=nx.get_node_attributes(G, 'centrality')
     ss = max(centrality.values())
     centrality = {i: v/ss for i,v in centrality.items()}
+    print(centrality)
     source_node = list(nx.get_node_attributes(G, 'destinations').keys())[0]
     hops = {}
 

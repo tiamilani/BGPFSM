@@ -80,7 +80,7 @@ def main():
               fancybox=True, ncol=3)
 
     ax.set_xlabel("Messages transmitted")
-    ax.set_ylabel("Convergence time")
+    ax.set_ylabel("Convergence time [s]")
     plt.title("Distribution comparison")
 
     plt.savefig(options.outputFile, format="pdf")

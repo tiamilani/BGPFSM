@@ -116,12 +116,12 @@ def load_pickle(general_file_study: pd.DataFrame, input_file: str) -> pd.DataFra
                                               FileAnalyzer.GENERAL_STUDY_FILE_NAME + \
                                               _format, "rb"))
     else:
-        return None 
+        return None
     return general_file_study
 
 def save_gfs_df(df: pd.DataFrame, output_file: str, pickling = False) -> None:
     """save_df
-    Function used to save all the dataframes controlled by the FileAnalyzer 
+    Function used to save all the dataframes controlled by the FileAnalyzer
 
     :param output_file: Output file, this is the path and the first part of
     the name that must be used to save the files
@@ -176,7 +176,7 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
                     node_analyzers[node] = NodeAnalyzer()
     # Load general analyzer file pickle
     if options.pickle and pickle_loading:
-        general_file_study = load_pickle(general_file_study, 
+        general_file_study = load_pickle(general_file_study,
                                          "/".join(output_file_path.split("/")[:-1]) + "/")
         if general_file_study is None:
             pickle_loading = False
@@ -274,9 +274,9 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
             for node in node_analyzers:
                 rfd_plt = RFDPlotter(node_analyzers[node].rfd)
                 rfd_plt.line_evolution(output_file_path + "_" + str(node) + "_rfd")
-    
+
     # Save results
-    average_nodes_convergence = pd.DataFrame(columns=['node', 'avg_conv_time', 
+    average_nodes_convergence = pd.DataFrame(columns=['node', 'avg_conv_time',
                                     'std_conv_time', 'avg_in_messages', 'std_in_messages',
                                     'avg_suppressed_routes', 'std_suppressed_routes'])
     average_nodes_convergence = average_nodes_convergence.set_index('node')
@@ -300,6 +300,7 @@ def main(): # pylint: disable=missing-function-docstring,too-many-locals,too-man
         # plt.states_stage_boxplot(output_file_path + "_states_boxplot.pdf")
         dot = Digraph(comment='Node Graph')
         graph = plt.get_detailed_fsm_graphviz(dot)
+        #graph = plt.get_fsm_graphviz(dot)
         if options.verbose:
             print("Detailed FSM graph produced")
 

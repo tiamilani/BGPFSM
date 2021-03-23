@@ -737,6 +737,7 @@ class FileAnalyzer():
         self._df = pd.read_csv(open(input_file_path), sep='|',
                                index_col=FileAnalyzer.EVALUATION_COLUMNS[1],
                                dtype=FileAnalyzer.EVALUATION_COLUMNS_TYPES)
+                               # nrows=1000000)
         self.nodes = node_analyzers
         self.none_type = type(None)
         if isinstance(general_study_df, self.none_type):

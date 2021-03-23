@@ -32,6 +32,8 @@ parser.add_argument("-o", "--output", dest="outputFile", default="paretoplot.pdf
                     action="store", help="Where to save the results")
 parser.add_argument("-r", "--render", dest="render", default=True,
                     action='store_false', help="Render the results on a pdf file in")
+parser.add_argument("-fs", "--fontsize", dest="font_size", default=10,
+                    action="store", type=int, help="Redefine the font size")
 
 COLUMNS=["id", "file_name", "convergence_time", "total_messages", "suppressions"]
 
@@ -42,7 +44,7 @@ def main():
     suppressions_df = pd.DataFrame()
 
     output_file = options.outputFile.split('.')[0]
-    
+
     for _file in options.inputFile:
         file_name=_file.split('/')[-1].split('.')[0]
 
@@ -52,15 +54,18 @@ def main():
         messages_df[file_name] = df[COLUMNS[3]].values
         suppressions_df[file_name] = df[COLUMNS[4]].values
 
-    plotter.plot_boxplot_pandasDataframe(time_df, title = "Convergence time comparison",
+    plotter.plot_boxplot_pandasDataframe(time_df, title="Convergence time comparison",
                                          ylabel="Convergence time [s]",
-                                         output_file_name=output_file+"_time_boxplot.pdf")
-    plotter.plot_boxplot_pandasDataframe(messages_df, title = "total messages comparison",
+                                         output_file_name=output_file+"_time_boxplot.pdf",
+                                         fs=options.font_size)
+    plotter.plot_boxplot_pandasDataframe(messages_df, title="total messages comparison",
                                          ylabel="# messages",
-                                         output_file_name=output_file+"_messages_boxplot.pdf")
-    plotter.plot_boxplot_pandasDataframe(suppressions_df, title = "total suppressions comparison",
+                                         output_file_name=output_file+"_messages_boxplot.pdf",
+                                         fs=options.font_size)
+    plotter.plot_boxplot_pandasDataframe(suppressions_df, title="total suppressions comparison",
                                          ylabel="# suppressions",
-                                         output_file_name=output_file+"_suppressions_boxplot.pdf")
+                                         output_file_name=output_file+"_suppressions_boxplot.pdf",
+                                         fs=options.font_size)
 
 if __name__ == "__main__":
     main()

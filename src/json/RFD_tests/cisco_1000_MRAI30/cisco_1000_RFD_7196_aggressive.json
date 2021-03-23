@@ -20,15 +20,15 @@
 		"signaling_sequence": "AWAWAWAWAWA",
 		// Implicit withdraw of routes
 		"implicit_withdraw": "True",
-		// Withdraw signaling 
+		// Withdraw signaling
 		"withdraw": "True",
 		// Reannouncement of a destination after a withdraw
 		"reannouncement": "False",
 		// Withdraw interval distribution from the announcement
 		"withdraw_dist": {"distribution": "const", "mean": 300},
-		// announcement interval distribution from the withdraw 
+		// announcement interval distribution from the withdraw
 		"reannouncement_dist": {"distribution": "const", "mean": 300},
-		// Transmission time required to start the actual message transmission 
+		// Transmission time required to start the actual message transmission
 		"datarate": {"distribution": "exp", "lambda" : 100},
 		// Processing time distribution
 		"processing": {"distribution": "const", "mean": 0.00001},

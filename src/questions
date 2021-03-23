@@ -1,0 +1,33 @@
+graph
+-Graph topology
+-Centrality
+-Graph attributes
+--Prefix
+--MRAI
+--RFD
+
+Environment
+-Env name
+-seed
+-duration
+-GraphToUse
+-Output
+-Verbose
+-Signaling
+-+Signal sequence
+-implicit withdraw
+-+withdraw distribution
+-reannouncement
+-+reannouncement distribution
+-+datarate
+-+processing
+-+delay
+
+Execution
+-Single execution
+-multiple execution
+-multiple MRAI mean values
+
+Analysis
+-Single file analysis
+-Multiple files analysis

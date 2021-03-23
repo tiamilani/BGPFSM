@@ -462,6 +462,33 @@ class HISTORY_rib(BaseRib): # pylint: disable=invalid-name, too-many-ancestors
             return self._destinations[i][0]
         raise KeyError("{} key not found in the RIB".format(i))
 
+    def __loop_detection(self, route: Route) -> bool:
+        """__loop_detection.
+        Function to avoid loops in a received route
+        Filter function
+
+        :param route: Route to check
+        :type route: Route
+        :rtype: bool
+        """
+        if self.node_id in route.path:
+            return True
+        return False
+
+    def filter(self, route: Route) -> bool:
+        """filter.
+        Filters that needs to be applyied to the Route before the introduction
+        in the rib.
+        A route must pass all the checks
+
+        :param route: Route that needs to be checked
+        :type route: Route
+        :rtype: bool
+        """
+        if self.__loop_detection(route):
+            return True
+        return False
+
     def insert(self, v: Route) -> BaseRib.insertion_response:
         """insert.
         Insertion function for the HISTORY-rib
@@ -476,6 +503,9 @@ class HISTORY_rib(BaseRib): # pylint: disable=invalid-name, too-many-ancestors
         :rtype: BaseRib.insertion_response See the rib insertion function
         to see the possible value
         """
+        if self.filter(v):
+            print("Route insertion in the history_rib rejected by filters")
+            # return None
         i = hash(str(v.addr) + str(v.nh))
         if i in self._destinations:
             del self._destinations[i]

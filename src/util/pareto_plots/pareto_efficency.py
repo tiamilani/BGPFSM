@@ -34,10 +34,25 @@ parser.add_argument("-r", "--render", dest="render", default=True,
                     action='store_false', help="Render the results on a pdf file in")
 parser.add_argument("-m", "--mrai_type", dest="mrai_type", default="random",
                     action='store', help="type of mrai used in the experiments")
+parser.add_argument("--tmin", dest="time_min", default=None, action="store",
+                    type=int, help="min time range for the plot")
+parser.add_argument("--tmax", dest="time_max", default=None, action="store",
+                    type=int, help="Max time range for the plot")
+parser.add_argument("--mmin", dest="messages_min", default=None, action="store",
+                    type=int, help="min messages range for the plot")
+parser.add_argument("--mmax", dest="messages_max", default=None, action="store",
+                    type=int, help="Max messages range for the plot")
+parser.add_argument("--rmin", dest="rfd_min", default=None, action="store",
+                    type=int, help="min rfd range for the plot")
+parser.add_argument("--rmax", dest="rfd_max", default=None, action="store",
+                    type=int, help="Max rfd range for the plot")
+parser.add_argument("-fs", "--fontsize", dest="font_size", default=10,
+                    action="store", type=int, help="Redefine the font size")
 
-COLUMNS=["id", "mrai" ,"avg_time", "avg_msg", "avg_suppressions", "n95_perc_time", 
+
+COLUMNS=["id", "mrai","avg_time", "avg_msg", "avg_suppressions", "n95_perc_time",
          "n05_perc_time", "std_time",
-         "n95_perc_msg", "n05_perc_msg", "std_msg", 
+         "n95_perc_msg", "n05_perc_msg", "std_msg",
          "n95_perc_sup", "n05_perc_sup", "std_sup"]
 xmin=200
 ymin=0
@@ -104,10 +119,10 @@ def main():
     out_name = options.outputFile.split('.')[0]
 
     if options.render:
-        plotter.plot_scatter(df[COLUMNS[3]].values, df[COLUMNS[2]].values, 
+        plotter.plot_scatter(df[COLUMNS[3]].values, df[COLUMNS[2]].values,
                              pareto_front=(pareto_front[COLUMNS[3]].values, pareto_front[COLUMNS[2]].values),
                              label=str(options.mrai_type) + " MRAI experiments",
-                             xlabel="Messages transmitted", ylabel="Convergence time",
+                             xlabel="Messages transmitted", ylabel="Convergence time [s]",
                              title="Experiments efficency",
                              output_file_name= out_name+".pdf")
 
@@ -116,23 +131,53 @@ def main():
             plotter.plot_messages_time_comparison(df[COLUMNS[1]].values,
                                                   df[COLUMNS[2]].values, df[COLUMNS[3]].values,
                                                   title="MRAI " + options.mrai_type + " performances",
-                                                  output_file_name=out_name+"_mrai_evolution.pdf")
+                                                  output_file_name=out_name+"_mrai_evolution.pdf",
+                                                  time_max=options.time_max,
+                                                  time_min=options.time_min,
+                                                  messages_max=options.messages_max,
+                                                  messages_min=options.messages_min,
+                                                  fs=options.font_size)
+
+            plotter.plot_suppression(df[COLUMNS[1]].values,
+                                     df[COLUMNS[4]].values,
+                                     title="Suppression detected",
+                                     output_file_name=out_name+"_suppression_evolution.pdf",
+                                     sup_max=options.rfd_max,
+                                     sup_min=options.rfd_min,
+                                     fs=options.font_size)
 
             plotter.plot_messages_suppression_time_comparison(df[COLUMNS[1]].values,
                                                   df[COLUMNS[2]].values, df[COLUMNS[3]].values,
                                                   df[COLUMNS[4]].values,
                                                   title="MRAI + RFD " + options.mrai_type + " performances",
-                                                  output_file_name=out_name+"_mrai_rfd_evolution.pdf")
+                                                  output_file_name=out_name+"_mrai_rfd_evolution.pdf",
+                                                  time_max=options.time_max,
+                                                  time_min=options.time_min,
+                                                  messages_max=options.messages_max,
+                                                  messages_min=options.messages_min,
+                                                  rfd_max=options.rfd_max,
+                                                  rfd_min=options.rfd_min,
+                                                  fs=options.font_size)
 
             plotter.plot_messages_time_comparison_error_bars(df[COLUMNS[1]].values,
                     df[COLUMNS[2]].values, df[COLUMNS[3]].values, df[COLUMNS[6]].values,
                     df[COLUMNS[9]].values, title = "MRAI " + options.mrai_type + " performances " +
-                    "with Std deviation", output_file_name=out_name+"_mrai_evolution_std.pdf")
+                    "with Std deviation", output_file_name=out_name+"_mrai_evolution_std.pdf",
+                     time_max=options.time_max,
+                     time_min=options.time_min,
+                     messages_max=options.messages_max,
+                     messages_min=options.messages_min,
+                     fs=options.font_size)
 
             plotter.plot_messages_time_comparison_error_bars_alpha(df[COLUMNS[1]].values,
                     df[COLUMNS[2]].values, df[COLUMNS[3]].values, df[COLUMNS[6]].values,
                     df[COLUMNS[9]].values, title = "MRAI " + options.mrai_type + " performances " +
-                    "with Std deviation", output_file_name=out_name+"_mrai_evolution_std_alpha.pdf")
+                    "with Std deviation", output_file_name=out_name+"_mrai_evolution_std_alpha.pdf",
+                     time_max=options.time_max,
+                     time_min=options.time_min,
+                     messages_max=options.messages_max,
+                     messages_min=options.messages_min,
+                     fs=options.font_size)
 
 if __name__ == "__main__":
     main()

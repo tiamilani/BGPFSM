@@ -19,8 +19,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_scatter(x: np.array, y: np.array, pareto_front=None, label="label", 
-                 xlabel="xlabel", ylabel="ylabel", title="title", 
+def plot_scatter(x: np.array, y: np.array, pareto_front=None, label="label",
+                 xlabel="xlabel", ylabel="ylabel", title="title",
                  output_file_name="out_scatter.pdf", colormap=['b', 'r']):
 
     fig, ax = plt.subplots()
@@ -62,22 +62,67 @@ def get_axes():
     fig, ax = plt.subplots()
     return (fig, ax)
 
-def plot_messages_time_comparison(x, time, messages, title="title", 
-                                  output_file_name="mrai_evolution.pdf"):
+def set_ylimits(ax, lower_bound, upper_bound):
+    if lower_bound is None:
+        lower_bound = ax.get_ylim()[0]
+    if upper_bound is None:
+        upper_bound = ax.get_ylim()[1]
+    ax.set_ylim(lower_bound, upper_bound)
+
+
+def plot_messages_time_comparison(x, time, messages, title="title",
+                                  output_file_name="mrai_evolution.pdf",
+                                  time_max=None, time_min=None, messages_max=None,
+                                  messages_min=None, fs: int = 10):
 
     fig, ax = plt.subplots()
     ax2 = ax.twinx()
 
-    l1 = plot_line(x, time, 'g', label="Convergence time", ax=ax)
+    l1 = plot_line(x, time, 'g', label="Convergence time [s]", ax=ax)
     l2 = plot_line(x, messages, 'r', label="# Messages", ax=ax2)
 
     lns = l1 + l2
+
+    plt.rcParams['font.size'] = str(fs)
+    # Set tick font size
+    for label in (ax.get_xticklabels() + ax.get_yticklabels()
+                  + ax2.get_yticklabels()):
+        label.set_fontsize(fs)
+
     legends(lns, [ax, ax2])
 
-    ax.set_xlabel("MRAI value")
-    ax.set_ylabel("Convergence time [s]")
-    ax2.set_ylabel("# Packets")
+    ax.set_xlabel("MRAI value", fontsize=fs)
+    ax.set_ylabel("Convergence time [s]", fontsize=fs)
+    ax2.set_ylabel("# Packets", fontsize=fs)
     ax.set_title(title)
+    set_ylimits(ax, time_min, time_max)
+    set_ylimits(ax2, messages_min, messages_max)
+
+    fig.savefig(output_file_name, format="pdf", bbox_inches='tight')
+    plt.close()
+
+def plot_suppression(x, suppression, title="title",
+                                  output_file_name="suppression.pdf",
+                                  sup_max=None,
+                                  sup_min=None, fs: int = 10):
+
+    fig, ax = plt.subplots()
+
+    l1 = plot_line(x, suppression, 'b', label="# Suppression", ax=ax)
+
+    lns = l1
+
+    plt.rcParams['font.size'] = str(fs)
+    # Set tick font size
+    for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+        label.set_fontsize(fs)
+
+    legends(lns, [ax])
+
+    ax.set_xlabel("MRAI value", fontsize=fs)
+    ax.set_ylabel("# suppression", fontsize=fs)
+    ax.set_title(title)
+    set_ylimits(ax, sup_min, sup_max)
 
     fig.savefig(output_file_name, format="pdf", bbox_inches='tight')
     plt.close()
@@ -89,9 +134,12 @@ def make_patch_spines_invisible(ax):
         sp.set_visible(False)
 
 
-def plot_messages_suppression_time_comparison(x, time, messages, suppression, 
-                                  title="title", 
-                                  output_file_name="mrai_evolution.pdf"):
+def plot_messages_suppression_time_comparison(x, time, messages, suppression,
+                                  title="title",
+                                  output_file_name="mrai_evolution.pdf",
+                                  time_max=None, time_min=None, messages_max=None,
+                                  messages_min=None, rfd_max=None, rfd_min=None,
+                                  fs:int = 10):
 
     fig, ax = plt.subplots()
     fig.subplots_adjust(right=0.75)
@@ -107,20 +155,33 @@ def plot_messages_suppression_time_comparison(x, time, messages, suppression,
     l3 = plot_line(x, suppression, 'b', label="Suppressions", ax=ax3)
 
     lns = l1 + l2 + l3
+
+    plt.rcParams['font.size'] = str(fs)
+    # Set tick font size
+    for label in (ax.get_xticklabels() + ax.get_yticklabels()
+                  + ax2.get_yticklabels() + ax3.get_yticklabels()):
+        label.set_fontsize(fs)
+
     legends(lns, [ax, ax2, ax3])
 
-    ax.set_xlabel("MRAI value")
-    ax.set_ylabel("Convergence time [s]")
-    ax2.set_ylabel("# Packets")
-    ax3.set_ylabel("# Suppressions")
+    ax.set_xlabel("MRAI value", fontsize=fs)
+    ax.set_ylabel("Convergence time [s]", fontsize=fs)
+    ax2.set_ylabel("# Packets", fontsize=fs)
+    ax3.set_ylabel("# Suppressions", fontsize=fs)
     ax.set_title(title)
+    set_ylimits(ax, time_min, time_max)
+    set_ylimits(ax2, messages_min, messages_max)
+    set_ylimits(ax3, rfd_min, rfd_max)
 
     fig.savefig(output_file_name, format="pdf", bbox_inches='tight')
     plt.close()
 
 
 def plot_messages_time_comparison_error_bars(x, time, messages, std_time, std_messages,
-        title="Title", output_file_name="mrai_evolution_errorBars.pdf"):
+        title="Title", output_file_name="mrai_evolution_errorBars.pdf",
+                                  time_max=None, time_min=None, messages_max=None,
+                                  messages_min=None,
+                                  fs:int = 10):
 
     fig, ax = plt.subplots()
     ax2 = ax.twinx()
@@ -132,18 +193,29 @@ def plot_messages_time_comparison_error_bars(x, time, messages, std_time, std_me
     ax2.errorbar(x, messages, yerr = std_messages, fmt="none", color='r')
 
     lns = l1 + l2
+
+    plt.rcParams['font.size'] = str(fs)
+    # Set tick font size
+    for label in (ax.get_xticklabels() + ax.get_yticklabels()
+                  + ax2.get_yticklabels()):
+        label.set_fontsize(fs)
+
     legends(lns, [ax, ax2])
 
-    ax.set_xlabel("MRAI value")
-    ax.set_ylabel("Convergence time [s]")
-    ax2.set_ylabel("# Packets")
+    ax.set_xlabel("MRAI value", fontsize=fs)
+    ax.set_ylabel("Convergence time [s]", fontsize=fs)
+    ax2.set_ylabel("# Packets", fontsize=fs)
     ax.set_title(title)
+    set_ylimits(ax, time_min, time_max)
+    set_ylimits(ax2, messages_min, messages_max)
 
     fig.savefig(output_file_name, format="pdf", bbox_inches='tight')
     plt.close()
 
-def plot_messages_time_comparison_error_bars_alpha(x, time, messages, std_time, 
-        std_messages, title="Title", output_file_name="mrai_evolution_errorBars.pdf"):
+def plot_messages_time_comparison_error_bars_alpha(x, time, messages, std_time,
+        std_messages, title="Title", output_file_name="mrai_evolution_errorBars.pdf",
+                                  time_max=None, time_min=None, messages_max=None,
+                                  messages_min=None, fs:int = 10):
 
     fig, ax = plt.subplots()
     ax2 = ax.twinx()
@@ -154,23 +226,33 @@ def plot_messages_time_comparison_error_bars_alpha(x, time, messages, std_time,
     time_y1 = time - std_time
     time_y2 = time + std_time
     ax.fill_between(x, time_y2, time_y1, facecolor='g', alpha=0.5)
-    
+
     msg_y1 = messages - std_messages
     msg_y2 = messages + std_messages
     ax2.fill_between(x, msg_y2, msg_y1, facecolor='r', alpha=0.5)
 
     lns = l1 + l2
+
+    plt.rcParams['font.size'] = str(fs)
+    # Set tick font size
+    for label in (ax.get_xticklabels() + ax.get_yticklabels()
+                  + ax2.get_yticklabels()):
+        label.set_fontsize(fs)
+
     legends(lns, [ax, ax2])
 
-    ax.set_xlabel("MRAI value")
-    ax.set_ylabel("Convergence time [s]")
-    ax2.set_ylabel("# Packets")
+    ax.set_xlabel("MRAI value", fontsize=fs)
+    ax.set_ylabel("Convergence time [s]", fontsize=fs)
+    ax2.set_ylabel("# Packets", fontsize=fs)
     ax.set_title(title)
+    set_ylimits(ax, time_min, time_max)
+    set_ylimits(ax2, messages_min, messages_max)
 
     fig.savefig(output_file_name, format="pdf", bbox_inches='tight')
     plt.close()
 
-def plot_boxplot_pandasDataframe(df, title="Title", ylabel="ylabel", output_file_name="boxplot.pdf"):
+def plot_boxplot_pandasDataframe(df, title="Title", ylabel="ylabel",
+                                output_file_name="boxplot.pdf", fs: int = 10):
 
     fig, ax = plt.subplots()
     ax.boxplot(df)
@@ -178,8 +260,13 @@ def plot_boxplot_pandasDataframe(df, title="Title", ylabel="ylabel", output_file
     ticks = range(1, len(df.columns)+1)
     labels = list(df.columns)
 
+    plt.rcParams['font.size'] = str(fs)
+    # Set tick font size
+    for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+        label.set_fontsize(fs)
+
     ax.set_title(title)
-    ax.set_ylabel(ylabel)
+    ax.set_ylabel(ylabel, fontsize=fs)
 
     plt.xticks(ticks,labels)
     plt.xticks(rotation=45)

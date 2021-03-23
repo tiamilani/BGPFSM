@@ -159,8 +159,8 @@ class Plotter():
             dot = self.get_fsm_graphviz(dot)
 
         # Create the message table
-        with graph.subgraph(node_attr={'shape': 'record'}) as table:
-            table = self.__message_table(table)
+        #with graph.subgraph(node_attr={'shape': 'record'}) as table:
+        #    table = self.__message_table(table)
 
         return graph
 
@@ -197,9 +197,9 @@ class Plotter():
                       label="Total messages", marker=6)
         legend4 = ax2.plot(total_size['messages'].values, total_size[0].values,
                       'r', label="# possible outputs", marker=7)
-        
+
         if len(total_size[0].values) < 2:
-            yint = range(min(total_size[0].values) - 1, 
+            yint = range(min(total_size[0].values) - 1,
                          math.ceil(max(total_size[0].values))+1)
             ax2.set_yticks(yint)
 
@@ -266,8 +266,8 @@ class RFDPlotter():
             route = route_evolution.head(1)[RFDPlotter.COLUMNS[2]].values[0]
 
             route_evolution = route_evolution.astype({str(RFDPlotter.COLUMNS[4]): str})
-            route_evolution[RFDPlotter.COLUMNS[4]] = route_evolution[RFDPlotter.COLUMNS[4]].map({'False': 'blue', 'True': 'red'}) 
-    
+            route_evolution[RFDPlotter.COLUMNS[4]] = route_evolution[RFDPlotter.COLUMNS[4]].map({'False': 'blue', 'True': 'red'})
+
             route_evolution['change'] = route_evolution.suppressed.ne(route_evolution.suppressed.shift().bfill()).astype(int)
             route_evolution['subgroup'] = route_evolution['change'].cumsum()
 
@@ -319,7 +319,7 @@ class RFDPlotter():
 
             #route_evolution = self.rfd_df[self.rfd_df.id == _id]
             #time = route_evolution[RFDPlotter.COLUMNS[1]].tolist()
-            #figure_of_merit = route_evolution[RFDPlotter.COLUMNS[3]].tolist() 
+            #figure_of_merit = route_evolution[RFDPlotter.COLUMNS[3]].tolist()
             #route = route_evolution.head(1)[RFDPlotter.COLUMNS[2]].values[0]
 
             #fig, ax = plt.subplots() # pylint: disable=invalid-name
@@ -354,7 +354,7 @@ class NodeConvergencePlotter():
 
     Used to plot the graph of nodes convergence
     """
-    
+
     COLUMNS=["avg_conv_time", "std_conv_time", "avg_in_messages", "std_in_messages"]
 
     def __init__(self, df: pd.DataFrame, centrality: dict):
@@ -400,10 +400,10 @@ class NodeConvergencePlotter():
 
         l = ax.plot(hops.keys(), hops_centrality, 'b', label="DPC centrality", zorder = 10, linewidth=0.7)
         l2 = ax2.plot(hops.keys(), hops_conv_time, 'g', label="Convergence time", zorder = 3, linewidth=0.6)
-        
+
         # Set the tick positions
         ax.set_xticks(list(hops.keys()))
-    
+
         actual_dist = 0
         groups = [[]]
         for node in hops:
@@ -440,7 +440,7 @@ class NodeConvergencePlotter():
         custom_lines = [Line2D([0], [0], color="orange", ls = '--', label = "Hop group separator"),
                         Line2D([0], [0], color="blue", ls = '--', label = "AVG centrality in the group"),
                         Line2D([0], [0], color="r", ls = '--', label = "AVG convergence time in the group")]
-    
+
         lns = l + l2 + custom_lines
         labs = [l.get_label() for l in lns]
         # Shrink current axis's height by 10% on the bottom
@@ -519,8 +519,8 @@ class NodeConvergencePlotter():
                     bbox_extra_artists=(lgd,), bbox_inches='tight')
 
         plt.close()
-        
-        return avg_times, avg_centr  
+
+        return avg_times, avg_centr
 
     def plot_centrality_vs_messages(self, output_file_name, hops, limit=None):
 
@@ -532,10 +532,10 @@ class NodeConvergencePlotter():
 
         l = ax.plot(hops.keys(), hops_centrality, 'b', label="DPC centrality", zorder = 10, linewidth=0.7)
         l2 = ax2.plot(hops.keys(), hops_conv_time, 'purple', label="# In messages to converge", zorder = 3, linewidth=0.6)
-        
+
         # Set the tick positions
         ax.set_xticks(list(hops.keys()))
-    
+
         actual_dist = 0
         groups = [[]]
         for node in hops:
@@ -572,7 +572,7 @@ class NodeConvergencePlotter():
         custom_lines = [Line2D([0], [0], color="orange", ls = '--', label = "Hop group separator"),
                         Line2D([0], [0], color="blue", ls = '--', label = "AVG centrality in the group"),
                         Line2D([0], [0], color="magenta", ls = '--', label = "AVG in messages in the group")]
-    
+
         lns = l + l2 + custom_lines
         labs = [l.get_label() for l in lns]
         # Shrink current axis's height by 10% on the bottom
@@ -652,7 +652,7 @@ class NodeConvergencePlotter():
 
         plt.close()
 
-        return avg_msg 
+        return avg_msg
 
     def plot_centrality_vs_suppressions(self, output_file_name, hops, limit=None):
 
@@ -664,10 +664,10 @@ class NodeConvergencePlotter():
 
         l = ax.plot(hops.keys(), hops_centrality, 'b', label="DPC centrality", zorder = 10, linewidth=0.7)
         l2 = ax2.plot(hops.keys(), hops_conv_time, 'r', label="# suppressed routes", zorder = 3, linewidth=0.6)
-        
+
         # Set the tick positions
         ax.set_xticks(list(hops.keys()))
-    
+
         actual_dist = 0
         groups = [[]]
         for node in hops:
@@ -704,7 +704,7 @@ class NodeConvergencePlotter():
         custom_lines = [Line2D([0], [0], color="orange", ls = '--', label = "Hop group separator"),
                         Line2D([0], [0], color="blue", ls = '--', label = "AVG centrality in the group"),
                         Line2D([0], [0], color="magenta", ls = '--', label = "AVG suppressions in the group")]
-    
+
         lns = l + l2 + custom_lines
         labs = [l.get_label() for l in lns]
         # Shrink current axis's height by 10% on the bottom
@@ -784,10 +784,10 @@ class NodeConvergencePlotter():
 
         plt.close()
 
-        return avg_sup 
+        return avg_sup
 
 class simple_plotter:
-    
+
     def legends(lns, axes):
         labs = [l.get_label() for l in lns]
         # Shrink current axis's height by 10% on the bottom
@@ -799,11 +799,11 @@ class simple_plotter:
         lgd = axes[0].legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, -0.15),
                   fancybox=True, ncol=2)
         return lgd
-    
+
     def plot_line(x, y, color, label="label", ax=None, marker=None):
         l = ax.plot(x, y, color, label=label, marker=marker)
         return l
-    
+
     def get_axes():
         fig, ax = plt.subplots()
         return (fig, ax)
