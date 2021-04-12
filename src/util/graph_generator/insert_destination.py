@@ -17,7 +17,7 @@
 Insert destination module
 ======================
 
-Module used to insert a destination in a graph 
+Module used to insert a destination in a graph
 """
 
 import networkx as nx
@@ -35,8 +35,8 @@ import milaniBGPLoad as DPC
 parser = argparse.ArgumentParser(usage="usage: graph_generator [options]",
                       description="Generate different possible graphs",
                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument("-t", "--type", dest="type", default="elmokashfi",
-                  action="store", help="define the type of network to generate")
+parser.add_argument("-t", "--type", dest="type", default="random",
+                  action="store", help="define the strategy to use")
 parser.add_argument("-n", "--networks", dest="networks", default=100, action="store",
                   help="defines the number of networks to generate", type=int)
 parser.add_argument("-f", "--file", dest="input", default="graph.graphml",
@@ -104,7 +104,7 @@ def shortest_valid_path(G, paths):
                 # If I get something from a client every
                 # direction is valid
                 previous_policy = policy
-            elif previous_policy == peer or previous_policy == servicer:    
+            elif previous_policy == peer or previous_policy == servicer:
                 # If I get something from a peer or a servicer then
                 # only servicer links are valid
                 if policy != servicer:
@@ -151,7 +151,7 @@ def apply_hierarchical_strategy(G: nx.DiGraph, destination: ipaddress.IPv4Addres
                 levels[str(len(shortest_d))] = [elem]
             else:
                 levels[str(len(shortest_d))].append(elem)
-        
+
         file_pi = open('levels.pkl', 'wb')
         pickle.dump(levels, file_pi)
 
@@ -168,7 +168,7 @@ def apply_hierarchical_strategy(G: nx.DiGraph, destination: ipaddress.IPv4Addres
 
 def main():
     options = parser.parse_args()
-    
+
     random.seed(options.seed)
     out_name = options.out.rsplit('.', 1)[0]
     G = nx.read_graphml(options.input)

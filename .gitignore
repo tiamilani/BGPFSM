@@ -32,3 +32,4 @@ centrality-*-mrai-graph_*.graphml
 reverse_banded_centrality-*-mrai-graph_*.graphml
 reverse_centrality-*-mrai-graph_*.graphml
 reverse_dpc-*-mrai-graph_*.graphml
+src/graphs/test

@@ -255,7 +255,14 @@ def plot_boxplot_pandasDataframe(df, title="Title", ylabel="ylabel",
                                 output_file_name="boxplot.pdf", fs: int = 10):
 
     fig, ax = plt.subplots()
-    ax.boxplot(df)
+    bp = ax.boxplot(df)
+
+    #boxes = [box.get_ydata() for box in bp["boxes"]]
+    #quantiles = df.quantile([0.01, 0.25, 0.5, 0.75, 0.99])
+    #stats = df.describe()
+    #print(boxes)
+    #print(quantiles)
+    #print(stats)
 
     ticks = range(1, len(df.columns)+1)
     labels = list(df.columns)

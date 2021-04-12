@@ -42,7 +42,7 @@ parser.add_argument("-s", "--seed", dest="seed", default=1234, action="store",
                   help="defines the seed used during the generation", type=int)
 parser.add_argument("-M", "--mean", dest="mean", default=-1, action="store",
                   help="defines the default mean of mrais timers that need to be \
-                        respected, with 0.0 the mean should not be evaluated", type=float)
+                        respected, with 0.0 the mean will not be evaluated", type=float)
 
 mrai_strategies = []
 
@@ -85,7 +85,7 @@ def apply_random_strategy(G: nx.DiGraph, value: float) -> None:
         G.edges[(edge[0], edge[1])]['mrai'] = round(f, 3)
 
 @mrai_strategy
-def apply_dpc_strategy(G: nx.DiGraph, value:float) -> None:
+def apply_dpc_noNorm_strategy(G: nx.DiGraph, value:float) -> None:
     T = value  # max mrai in seconds
     adv_node = find_adv_node(G)
     cent = {i[0]: i[1]['centrality'] for i in G.nodes(data=True) }
@@ -120,7 +120,7 @@ def apply_dpc_strategy(G: nx.DiGraph, value:float) -> None:
                         fifo.add((j, z))
 
 @mrai_strategy
-def apply_dpc2_strategy(G: nx.DiGraph, value:float) -> None:
+def apply_dpc_strategy(G: nx.DiGraph, value:float) -> None:
     T = value  # max mrai in seconds
     adv_node = find_adv_node(G)
     cent = {i[0]: i[1]['centrality'] for i in G.nodes(data=True) }
@@ -260,7 +260,7 @@ def main():
     options = parser.parse_args()
 
     random.seed(options.seed)
-    
+
     G = nx.read_graphml(options.inputFile)
     mrai_strategyfy(options.type, G, options.default_mrai)
     if options.mean >= 0.0:
