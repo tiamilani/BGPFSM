@@ -1,0 +1,36 @@
+{{
+	"{env_name}" : {{
+		// seed(s) to initialize PRNGs
+		"seed" : {seed_array},
+		// duration of each simulation in seconds
+		"duration" : {duration},
+		// Graph file to simulate
+		"graph": "{graph_file}",
+		// log file name using configuration parameters, use {{seed}} or {{date-time}}
+		"output" : "{output_file}",
+		// Verbose value
+		"verbose": "{verbose_flag}",
+		// Signaling flag
+		"signaling": "{signaling_flag}",
+		// Signaling sequence, ignored if signaling false
+		"signaling_sequence": "{signaling_sequence}",
+		// Implicit withdraw of routes
+		"implicit_withdraw": "{implicit_withdraw_flag}",
+		// Withdraw signaling
+		"withdraw": "{withdraw_flag}",
+		// Reannouncement of a destination after a withdraw
+		"reannouncement": "{reannouncement_flag}",
+		// Withdraw interval distribution from the announcement
+		"withdraw_dist": {withdraw_distribution},
+		// announcement interval distribution from the withdraw
+		"reannouncement_dist": {reannouncement_distribution},
+		// Transmission time required to start the actual message transmission
+		"datarate": {datarate_distribution},
+		// Processing time distribution
+		"processing": {processing_distribution},
+		// Network delay distribution
+		"delay": {delay_distribution}
+	}}
+}}
+
+

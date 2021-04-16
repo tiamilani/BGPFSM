@@ -26,6 +26,7 @@ from PyInquirer import Separator
 from PyInquirer import Validator, ValidationError
 import strings as s
 import os.path
+import re
 
 
 class int_validator(Validator):
@@ -35,6 +36,17 @@ class int_validator(Validator):
         except ValueError:
             raise ValidationError(
                 message=s.not_a_number_error,
+                cursor_position=len(document.text))
+
+
+class integer_list_validator(Validator):
+    def validate(self, document):
+        try:
+            l = list(document.text.split())
+            l2 = list(map(int, l))
+        except ValueError:
+            raise ValidationError(
+                message=s.not_a_number_list_error,
                 cursor_position=len(document.text))
 
 
@@ -80,6 +92,15 @@ class destination_validator(Validator):
                 cursor_position=len(document.text))
 
 
+class json_validator(Validator):
+    def validate(self, document):
+        if not os.path.isfile(document.text) or\
+                not document.text.split('.')[-1] == "json":
+            raise ValidationError(
+                message=s.invalid_json_file,
+                cursor_position=len(document.text))
+
+
 class graphml_validator(Validator):
     def validate(self, document):
         if not os.path.isfile(document.text) or\
@@ -95,6 +116,14 @@ class folder_validator(Validator):
             raise ValidationError(
                 message=s.invalid_folder,
                 cursor_position=len(document.text))
+
+class signal_validator(Validator):
+    def validate(self, document):
+        pattern = re.compile('^[AW]+$')
+        if not re.search(pattern, document.text):
+            raise ValidationError(
+                    message=s.invalid_signal_sequence,
+                    cursor_position=len(document.text))
 
 
 generic_file_load = [
@@ -277,3 +306,107 @@ graph_RFD_intro = [
         'choices': s.graph_RFD_strategies_list,
     },
 ]
+
+environment_load = [
+    {
+        'type': 'confirm',
+        'name': s.load_env_name,
+        'message': s.load_env_message,
+        'default': True,
+    }
+]
+
+environment_definition = [
+    {
+        'type': 'input',
+        'name': s.env_file_name,
+        'message': s.env_file_message,
+        'filter': lambda env_name: env_name + ".json" \
+                if ".json" not in env_name else env_name
+    },
+    generic_folder_load[0],
+    {
+        'type': 'input',
+        'name': s.environment_tag_name,
+        'message': s.env_name_message,
+        'default': s.environment_default_name,
+    },
+    {
+        'type': 'input',
+        'name': s.environment_tag_seed,
+        'message': s.env_seeds_message,
+        'validate': integer_list_validator,
+        'filter': lambda env_seed: str(list(map(int, list(env_seed.split()))))
+    },
+    {
+        'type': 'input',
+        'name': s.environment_tag_duration,
+        'message': s.env_duration_message,
+        'validate': positive_int_validator,
+    },
+    {
+        'type': 'input',
+        'name': s.environment_tag_output,
+        'message': s.env_output_message,
+        'default': s.environment_default_output,
+    },
+    {
+        'type': 'confirm',
+        'name': s.environment_tag_s_flag,
+        'message': s.env_signal_flag_message,
+        'default': True,
+    },
+    {
+        'type': 'input',
+        'name': s.environment_tag_s_sequence,
+        'message': s.env_signal_message,
+        'default': s.environment_default_s_sequence,
+        'validate': signal_validator,
+        'when': lambda answers: answers[s.environment_tag_s_flag]
+    },
+    {
+        'type': 'confirm',
+        'name': s.environment_tag_iw_flag,
+        'message': s.env_iw_flag_message,
+        'default': True,
+    },
+    {
+        'type': 'confirm',
+        'name': s.environment_tag_w_flag,
+        'message': s.env_w_flag_message,
+        'default': True,
+        'when': lambda answers: not answers[s.environment_tag_s_flag]
+        },
+    {
+        'type': 'confirm',
+        'name': s.environment_tag_r_flag,
+        'message': s.env_r_flag_message,
+        'default': True,
+        'when': lambda answers: not answers[s.environment_tag_s_flag]
+    }
+]
+
+experiments = [
+    {
+        'type': 'list',
+        'name': s.exp_type_name,
+        'message': s.exp_type_message,
+        'choices': s.exp_type_list,
+    },
+    {
+        'type': 'input',
+        'name': s.exp_single_run_sim_name,
+        'message': s.exp_single_run_sim_message,
+        'default': s.environment_default_name,
+        'when': lambda answers: answers[s.exp_type_name] == s.exp_single_run
+    },
+    {
+        'type': 'input',
+        'name': s.exp_single_run_id_name,
+        'message': s.exp_single_run_id_message,
+        'default': '0',
+        'validate': positive_int_validator,
+        'when': lambda answers: answers[s.exp_type_name] == s.exp_single_run
+    }
+]
+
